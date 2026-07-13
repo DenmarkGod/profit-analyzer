@@ -537,6 +537,7 @@
             const folders = Object.values(foldersData);
             const childrenMap = {};
             
+            // Группируем детей по родителям
             folders.forEach(f => {
                 if (f.parentId) {
                     if (!childrenMap[f.parentId]) childrenMap[f.parentId] = [];
@@ -544,17 +545,30 @@
                 }
             });
             
-            function buildNode(folder) {
+            console.log('Построение дерева. Всего папок:', folders.length);
+            console.log('Папок с детьми:', Object.keys(childrenMap).length);
+            
+            function buildNode(folder, depth = 0) {
                 const children = (childrenMap[folder.id] || [])
-                    .map(child => buildNode(child))
+                    .map(child => buildNode(child, depth + 1))
                     .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+                
+                if (depth < 2 && children.length > 0) {
+                    console.log(`${'  '.repeat(depth)}${folder.name} -> ${children.length} детей`);
+                }
+                
                 return { ...folder, children };
             }
             
-            return folders
-                .filter(f => !f.parentId)
+            // Находим корневые папки (без родителя)
+            const rootFolders = folders.filter(f => !f.parentId);
+            console.log('Корневых папок для дерева:', rootFolders.length);
+            
+            const tree = rootFolders
                 .map(f => buildNode(f))
                 .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+            
+            return tree;
         }
 
         function renderFolderTree(node, depth = 0) {
@@ -767,21 +781,63 @@
         }
 
         async function loadFolders(headers) {
-            const cached = localStorage.getItem('folders_cache_v2');
-            if (cached) return JSON.parse(cached);
-
-            const rows = await fetchAllPages('productfolder', headers);
-            const folders = {};
-            for (const row of rows) {
-                folders[row.id] = {
-                    id: row.id,
-                    name: row.name || 'Без названия',
-                    parentId: row.parent?.id || null
-                };
-            }
-            localStorage.setItem('folders_cache_v2', JSON.stringify(folders));
+        const cached = localStorage.getItem('folders_cache_v3');
+        if (cached) {
+            const folders = JSON.parse(cached);
+            console.log('Загружено папок из кэша:', Object.keys(folders).length);
+            
+            // Отладка: покажи структуру
+            const rootFolders = Object.values(folders).filter(f => !f.parentId);
+            console.log('Корневых папок:', rootFolders.length);
+            rootFolders.slice(0, 5).forEach(f => {
+                const children = Object.values(folders).filter(c => c.parentId === f.id);
+                console.log(`  ${f.name} -> ${children.length} детей`);
+                children.slice(0, 3).forEach(c => {
+                    const grandchildren = Object.values(folders).filter(gc => gc.parentId === c.id);
+                    console.log(`    ${c.name} -> ${grandchildren.length} внуков`);
+                });
+            });
+            
             return folders;
         }
+    
+        const rows = await fetchAllPages('productfolder', headers);
+        const folders = {};
+        
+        console.log('Всего папок от API:', rows.length);
+        
+        for (const row of rows) {
+            // Правильно извлекаем ID родительской папки
+            let parentId = null;
+            if (row.parent && row.parent.id) {
+                parentId = row.parent.id;
+            } else if (row.parentFolder && row.parentFolder.id) {
+                parentId = row.parentFolder.id;
+            }
+            
+            folders[row.id] = {
+                id: row.id,
+                name: row.name || 'Без названия',
+                parentId: parentId
+            };
+        }
+        
+        localStorage.setItem('folders_cache_v3', JSON.stringify(folders));
+        
+        // Отладка структуры
+        const rootFolders = Object.values(folders).filter(f => !f.parentId);
+        console.log('Корневых папок:', rootFolders.length);
+        rootFolders.slice(0, 5).forEach(f => {
+            const children = Object.values(folders).filter(c => c.parentId === f.id);
+            console.log(`  ${f.name} -> ${children.length} детей`);
+            children.slice(0, 3).forEach(c => {
+                const grandchildren = Object.values(folders).filter(gc => gc.parentId === c.id);
+                console.log(`    ${c.name} -> ${grandchildren.length} внуков`);
+            });
+        });
+        
+        return folders;
+    }
 
         async function fetchPositions(url, headers) {
             try {
