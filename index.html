@@ -11,42 +11,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
-
         .glass {
             background: rgba(17, 24, 39, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
         .gradient-bg {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
         }
-
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(30px); }
             to { opacity: 1; transform: translateX(0); }
         }
-
         .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
         .animate-slide-in-right { animation: slideInRight 0.5s ease-out forwards; }
-
         .metric-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .metric-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
-
         .btn-gradient {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             transition: all 0.3s ease;
@@ -62,28 +54,22 @@
             cursor: not-allowed;
             transform: none;
         }
-
         html { scroll-behavior: smooth; }
-
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
-
         .product-item { transition: all 0.3s ease; }
         .product-item:hover {
             background: rgba(59, 130, 246, 0.1);
             transform: translateX(8px);
         }
-
         .delay-100 { animation-delay: 0.1s; }
         .delay-200 { animation-delay: 0.2s; }
         .delay-300 { animation-delay: 0.3s; }
         .delay-400 { animation-delay: 0.4s; }
         .delay-500 { animation-delay: 0.5s; }
-
         .animate-on-load { opacity: 0; }
-
         .loading-overlay {
             position: fixed;
             inset: 0;
@@ -95,7 +81,6 @@
             justify-content: center;
             flex-direction: column;
         }
-
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -107,7 +92,6 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
         .period-btn {
             transition: all 0.2s ease;
         }
@@ -139,6 +123,18 @@
             <h2 class="text-3xl font-bold mb-6">Подключение к МойСклад</h2>
             <div class="space-y-6">
                 <div>
+                    <label class="block text-sm font-medium mb-3 text-gray-300">URL Cloudflare Worker (прокси)</label>
+                    <input 
+                        type="text" 
+                        id="proxy-input"
+                        placeholder="https://moysklad-proxy.твой-логин.workers.dev"
+                        class="w-full px-5 py-4 bg-gray-800/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-white placeholder-gray-500"
+                    >
+                    <p class="text-xs text-gray-500 mt-2">
+                        Ссылка на твой Cloudflare Worker (без слэша в конце)
+                    </p>
+                </div>
+                <div>
                     <label class="block text-sm font-medium mb-3 text-gray-300">Токен API МойСклад</label>
                     <input 
                         type="text" 
@@ -150,13 +146,22 @@
                         МойСклад → Настройки → API-ключи → Создать токен (права: Товары, Продажи)
                     </p>
                 </div>
-                <button 
-                    id="connect-btn"
-                    onclick="connectToMoySklad()"
-                    class="w-full btn-gradient text-white font-semibold py-4 px-6 rounded-xl text-lg"
-                >
-                    Подключить и загрузить данные
-                </button>
+                <div class="flex gap-3">
+                    <button 
+                        id="connect-btn"
+                        onclick="connectToMoySklad()"
+                        class="flex-1 btn-gradient text-white font-semibold py-4 px-6 rounded-xl text-lg"
+                    >
+                        Подключить и загрузить данные
+                    </button>
+                    <button 
+                        onclick="clearCache()"
+                        class="px-6 py-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl text-sm"
+                        title="Очистить кэш товаров"
+                    >
+                        Очистить кэш
+                    </button>
+                </div>
                 <div id="connection-status" class="hidden"></div>
             </div>
         </div>
@@ -254,6 +259,19 @@
 
         // ================== УТИЛИТЫ ==================
 
+        function getProxyUrl() {
+            return document.getElementById('proxy-input').value.trim();
+        }
+
+        function proxyFetch(targetUrl, headers) {
+            const proxyUrl = getProxyUrl();
+            if (!proxyUrl) {
+                throw new Error('Не указан URL Cloudflare Worker');
+            }
+            const fullUrl = `${proxyUrl}?url=${encodeURIComponent(targetUrl)}`;
+            return fetch(fullUrl, { headers });
+        }
+
         function prepareAuthHeaders(token) {
             token = token.trim();
             if (token.startsWith("Basic ") || token.startsWith("Bearer ")) {
@@ -312,29 +330,40 @@
             localStorage.setItem('products_cache', JSON.stringify(products));
         }
 
+        function clearCache() {
+            if (confirm('Очистить кэш товаров? При следующей загрузке товары будут скачаны заново.')) {
+                localStorage.removeItem('products_cache');
+                alert('Кэш очищен');
+            }
+        }
+
         // ================== ЗАГРУЗКА ДАННЫХ ==================
 
         async function fetchAllPages(baseEndpoint, headers, filterStr = '') {
             const allRows = [];
             let offset = 0;
             const limit = 1000;
-            
-            // ВАЖНО: Замени на свою ссылку Cloudflare Worker!
-            const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
 
             while (true) {
-                const params = new URLSearchParams({ limit, offset });
+                const params = new URLSearchParams({ limit: limit, offset: offset });
                 if (filterStr) {
                     params.append('filter', filterStr);
                     params.append('order', 'moment,desc');
                 }
 
                 const targetMsUrl = `https://api.moysklad.ru/api/remap/1.2/entity/${baseEndpoint}?${params.toString()}`;
-                const proxyRequestUrl = `${PROXY_URL}?url=${encodeURIComponent(targetMsUrl)}`;
+                
+                let response;
+                try {
+                    response = await proxyFetch(targetMsUrl, headers);
+                } catch (e) {
+                    console.error('Ошибка запроса:', e);
+                    break;
+                }
 
-                const response = await fetch(proxyRequestUrl, { headers });
                 if (response.status !== 200) {
-                    console.error('Ошибка прокси:', await response.text());
+                    const errorText = await response.text();
+                    console.error(`Ошибка ${response.status}:`, errorText);
                     break;
                 }
 
@@ -342,9 +371,14 @@
                 const rows = data.rows || [];
                 allRows.push(...rows);
 
+                console.log(`  Загружено ${rows.length} записей (всего: ${allRows.length})`);
+
                 if (rows.length < limit) break;
                 offset += limit;
-                if (offset > 15000) break;
+                if (offset > 15000) {
+                    console.warn('Достигнут лимит загрузки (15000)');
+                    break;
+                }
             }
 
             return allRows;
@@ -358,15 +392,14 @@
             }
 
             console.log('Загружаем товары из МойСклад...');
-            const rows = await fetchAllPages(
-                'https://api.moysklad.ru/api/remap/1.2/entity/product',
-                headers
-            );
+            const rows = await fetchAllPages('product', headers);
 
             const products = {};
+            let withoutPrice = 0;
             for (const row of rows) {
                 const productId = row.id;
                 const purchasePrice = row.buyPrice?.value ? row.buyPrice.value / 100 : 0;
+                if (purchasePrice === 0) withoutPrice++;
                 
                 let salePrice = 0;
                 if (row.salePrices) {
@@ -386,16 +419,17 @@
             }
 
             saveProductsToCache(products);
-            console.log(`Загружено и закэшировано ${Object.keys(products).length} товаров`);
+            console.log(`Загружено и закэшировано ${Object.keys(products).length} товаров (без цены закупки: ${withoutPrice})`);
             return products;
         }
 
         async function fetchPositions(url, headers, products) {
             try {
-                const PROXY_URL = 'https://moysklad-proxy.твой-логин.workers.dev'; // ЗАМЕНИ НА СВОЮ!
-                const proxyUrl = `${PROXY_URL}?url=${encodeURIComponent(url)}`;
-                const response = await fetch(proxyUrl, { headers });
-                if (response.status !== 200) return [];
+                const response = await proxyFetch(url, headers);
+                if (response.status !== 200) {
+                    console.warn('Ошибка загрузки позиций:', response.status);
+                    return [];
+                }
 
                 const data = await response.json();
                 const posRows = data.rows || [];
@@ -438,9 +472,14 @@
 
         async function connectToMoySklad() {
             const token = document.getElementById('token-input').value.trim();
+            const proxyUrl = getProxyUrl();
             const statusDiv = document.getElementById('connection-status');
             const btn = document.getElementById('connect-btn');
 
+            if (!proxyUrl) {
+                showStatus(statusDiv, 'Укажите URL Cloudflare Worker', 'error');
+                return;
+            }
             if (!token) {
                 showStatus(statusDiv, 'Введите токен', 'error');
                 return;
@@ -455,14 +494,12 @@
 
                 // Проверка подключения
                 const targetUrl = 'https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1';
-                const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev/'; // ЗАМЕНИ НА СВОЮ!
-                const proxyUrl = `${PROXY_URL}?url=${encodeURIComponent(targetUrl)}`;
-
-                const connectResponse = await fetch(proxyUrl, { headers });
+                const connectResponse = await proxyFetch(targetUrl, headers);
 
                 if (!connectResponse.ok) {
-                    const error = await connectResponse.json();
-                    throw new Error(error.errors?.[0]?.error || 'Неверный токен');
+                    const errorText = await connectResponse.text();
+                    console.error('Ошибка подключения:', errorText);
+                    throw new Error(`Ошибка ${connectResponse.status}: ${errorText}`);
                 }
 
                 showStatus(statusDiv, 'Подключение успешно. Загружаем данные...', 'success');
@@ -476,11 +513,12 @@
                 salesByType = data.sales_by_type || {};
 
                 localStorage.setItem('moysklad_token', token);
+                localStorage.setItem('moysklad_proxy', proxyUrl);
 
                 hideLoading();
 
                 if (allSales.length === 0) {
-                    alert('В МойСклад не найдено ни одной продажи!');
+                    alert('В МойСклад не найдено ни одной продажи за выбранный период!\n\nПопробуйте увеличить период или проверить наличие продаж в МойСклад.');
                     btn.disabled = false;
                     btn.textContent = 'Подключить и загрузить данные';
                     return;
@@ -496,162 +534,129 @@
             }
         }
 
-    async function syncAllData(token) {
-    const headers = prepareAuthHeaders(token);
-    const period = currentPeriod;
+        async function syncAllData(token) {
+            const headers = prepareAuthHeaders(token);
+            const period = currentPeriod;
 
-    console.log('=== НАЧАЛО СИНХРОНИЗАЦИИ ===');
-    console.log('Период:', period, 'дней');
+            console.log('=== НАЧАЛО СИНХРОНИЗАЦИИ ===');
+            console.log('Период:', period, 'дней');
 
-    // Загрузка товаров
-    console.log('1. Загружаем товары...');
-    const products = await loadProducts(headers);
-    console.log('   Товаров загружено:', Object.keys(products).length);
+            // Загрузка товаров
+            console.log('1. Загружаем товары...');
+            const products = await loadProducts(headers);
+            console.log('   Товаров загружено:', Object.keys(products).length);
 
-    // Даты
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - period);
-    const dateFrom = startDate.toISOString().split('T')[0] + ' 00:00:00';
-    console.log('2. Период с:', dateFrom);
+            // Даты
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - period);
+            const dateFrom = startDate.toISOString().split('T')[0] + ' 00:00:00';
+            console.log('2. Период с:', dateFrom);
 
-    // Загрузка розничных продаж
-    console.log('3. Загружаем retaildemand...');
-    const retailDocs = await fetchAllPages(
-        'retaildemand',
-        headers,
-        `moment>=${dateFrom}`
-    );
-    console.log('   Найдено retaildemand:', retailDocs.length);
+            // Загрузка розничных продаж
+            console.log('3. Загружаем retaildemand...');
+            const retailDocs = await fetchAllPages(
+                'retaildemand',
+                headers,
+                `moment>=${dateFrom}`
+            );
+            console.log('   Найдено retaildemand:', retailDocs.length);
 
-    // Если retaildemand нет, пробуем demand
-    let allDocs = retailDocs;
-    if (retailDocs.length === 0) {
-        console.log('4. retaildemand не найдено, пробуем demand...');
-        const demandDocs = await fetchAllPages(
-            'demand',
-            headers,
-            `moment>=${dateFrom}`
-        );
-        console.log('   Найдено demand:', demandDocs.length);
-        allDocs = demandDocs;
-    }
-
-    // Если и demand нет, пробуем customerorder
-    if (allDocs.length === 0) {
-        console.log('5. demand не найдено, пробуем customerorder...');
-        const orderDocs = await fetchAllPages(
-            'customerorder',
-            headers,
-            `moment>=${dateFrom}`
-        );
-        console.log('   Найдено customerorder:', orderDocs.length);
-        allDocs = orderDocs;
-    }
-
-    console.log('6. Всего документов:', allDocs.length);
-
-    if (allDocs.length === 0) {
-        console.warn('ВНИМАНИЕ: Документы не найдены за период!');
-        console.warn('Попробуйте увеличить период или проверить наличие продаж в МойСклад');
-    }
-
-    // Обработка документов
-    const finalSales = [];
-    const productStats = {};
-    let totalRevenue = 0;
-    let totalCogs = 0;
-
-    // Загружаем позиции для первых 200 документов
-    const docsToFetch = allDocs.slice(0, 200);
-    console.log('7. Загружаем позиции для', docsToFetch.length, 'документов...');
-
-    const positionPromises = [];
-
-    for (const doc of allDocs) {
-        const docSum = doc.sum || 0;
-        const docMoment = doc.moment || '';
-
-        if (docSum === 0 || !docMoment) continue;
-
-        const dateIso = docMoment.split('T')[0] || docMoment.split(' ')[0];
-        const revenue = docSum / 100;
-        totalRevenue += revenue;
-
-        const saleRecord = {
-            id: doc.id,
-            name: doc.name || '',
-            type: doc.type || 'unknown',
-            date: dateIso,
-            moment: docMoment,
-            revenue,
-            positions: []
-        };
-        finalSales.push(saleRecord);
-
-        if (docsToFetch.includes(doc)) {
-            const positionsUrl = doc.positions?.meta?.href;
-            if (positionsUrl) {
-                positionPromises.push(
-                    fetchPositions(positionsUrl, headers, products).then(positions => {
-                        saleRecord.positions = positions;
-                        console.log('   Позиций для', doc.name || doc.id, ':', positions.length);
-                        return positions;
-                    })
+            // Если retaildemand нет, пробуем demand
+            let allDocs = retailDocs;
+            let docType = 'retaildemand';
+            if (retailDocs.length === 0) {
+                console.log('4. retaildemand не найдено, пробуем demand...');
+                const demandDocs = await fetchAllPages(
+                    'demand',
+                    headers,
+                    `moment>=${dateFrom}`
                 );
-            } else {
-                console.warn('   У документа', doc.name || doc.id, 'нет URL позиций');
+                console.log('   Найдено demand:', demandDocs.length);
+                if (demandDocs.length > 0) {
+                    allDocs = demandDocs;
+                    docType = 'demand';
+                }
             }
-        }
-    }
 
-    // Ждём загрузки всех позиций
-    console.log('8. Ожидаем загрузку позиций...');
-    await Promise.all(positionPromises);
-
-    // Агрегируем данные
-    console.log('9. Агрегируем данные...');
-    for (const sale of finalSales) {
-        for (const pos of sale.positions) {
-            totalCogs += pos.cogs;
-            const pid = pos.product_id;
-            if (!productStats[pid]) {
-                productStats[pid] = { name: pos.name, quantity: 0, revenue: 0, profit: 0 };
+            // Если и demand нет, пробуем customerorder
+            if (allDocs.length === 0) {
+                console.log('5. demand не найдено, пробуем customerorder...');
+                const orderDocs = await fetchAllPages(
+                    'customerorder',
+                    headers,
+                    `moment>=${dateFrom}`
+                );
+                console.log('   Найдено customerorder:', orderDocs.length);
+                if (orderDocs.length > 0) {
+                    allDocs = orderDocs;
+                    docType = 'customerorder';
+                }
             }
-            productStats[pid].quantity += pos.quantity;
-            productStats[pid].revenue += pos.revenue;
-            productStats[pid].profit += pos.profit;
-        }
-    }
 
-    finalSales.sort((a, b) => b.moment.localeCompare(a.moment));
+            console.log('6. Всего документов:', allDocs.length, 'тип:', docType);
 
-    const profit = totalRevenue - totalCogs;
-    const margin = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0;
+            if (allDocs.length === 0) {
+                console.warn('ВНИМАНИЕ: Документы не найдены за период!');
+                console.warn('Попробуйте увеличить период или проверить наличие продаж в МойСклад');
+            }
 
-    console.log('=== ИТОГИ ===');
-    console.log('Выручка:', totalRevenue);
-    console.log('Себестоимость:', totalCogs);
-    console.log('Прибыль:', profit);
-    console.log('Маржа:', margin, '%');
-    console.log('Продаж:', finalSales.length);
-    console.log('Топ товаров:', Object.keys(productStats).length);
+            // Обработка документов
+            const finalSales = [];
+            const productStats = {};
+            let totalRevenue = 0;
+            let totalCogs = 0;
 
-    return {
-        sales: finalSales,
-        products_count: Object.keys(products).length,
-        sales_by_type: { 
-            retaildemand: retailDocs.length,
-            demand: allDocs === retailDocs ? 0 : allDocs.length
-        }
-    };
-}
+            // Загружаем позиции для первых 200 документов
+            const docsToFetch = allDocs.slice(0, 200);
+            console.log('7. Загружаем позиции для', docsToFetch.length, 'документов...');
+
+            const positionPromises = [];
+            const docsToFetchSet = new Set(docsToFetch.map(d => d.id));
+
+            for (const doc of allDocs) {
+                const docSum = doc.sum || 0;
+                const docMoment = doc.moment || '';
+
+                if (docSum === 0 || !docMoment) continue;
+
+                const dateIso = docMoment.split('T')[0] || docMoment.split(' ')[0];
+                const revenue = docSum / 100;
+                totalRevenue += revenue;
+
+                const saleRecord = {
+                    id: doc.id,
+                    name: doc.name || '',
+                    type: docType,
+                    date: dateIso,
+                    moment: docMoment,
+                    revenue,
+                    positions: []
+                };
+                finalSales.push(saleRecord);
+
+                if (docsToFetchSet.has(doc.id)) {
+                    const positionsUrl = doc.positions?.meta?.href;
+                    if (positionsUrl) {
+                        positionPromises.push(
+                            fetchPositions(positionsUrl, headers, products).then(positions => {
+                                saleRecord.positions = positions;
+                                console.log('   Позиций для', doc.name || doc.id, ':', positions.length);
+                                return positions;
+                            })
+                        );
+                    } else {
+                        console.warn('   У документа', doc.name || doc.id, 'нет URL позиций');
+                    }
+                }
+            }
 
             // Ждём загрузки всех позиций
-            console.log(`Загружаем детализацию для ${positionPromises.length} чеков...`);
+            console.log('8. Ожидаем загрузку позиций...');
             await Promise.all(positionPromises);
 
             // Агрегируем данные
+            console.log('9. Агрегируем данные...');
             for (const sale of finalSales) {
                 for (const pos of sale.positions) {
                     totalCogs += pos.cogs;
@@ -670,12 +675,21 @@
             const profit = totalRevenue - totalCogs;
             const margin = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0;
 
-            console.log(`ИТОГИ: Выручка=${totalRevenue}, Прибыль=${profit}`);
+            console.log('=== ИТОГИ ===');
+            console.log('Выручка:', totalRevenue);
+            console.log('Себестоимость:', totalCogs);
+            console.log('Прибыль:', profit);
+            console.log('Маржа:', margin, '%');
+            console.log('Продаж:', finalSales.length);
+            console.log('Топ товаров:', Object.keys(productStats).length);
+
+            const salesByTypeResult = {};
+            salesByTypeResult[docType] = finalSales.length;
 
             return {
                 sales: finalSales,
                 products_count: Object.keys(products).length,
-                sales_by_type: { retaildemand: finalSales.length }
+                sales_by_type: salesByTypeResult
             };
         }
 
@@ -901,11 +915,15 @@
 
         async function refreshData() {
             const token = localStorage.getItem('moysklad_token');
-            if (!token) {
-                alert('Токен не найден.');
+            const proxyUrl = localStorage.getItem('moysklad_proxy');
+            if (!token || !proxyUrl) {
+                alert('Токен или URL прокси не найден.');
                 location.reload();
                 return;
             }
+
+            document.getElementById('token-input').value = token;
+            document.getElementById('proxy-input').value = proxyUrl;
 
             try {
                 showLoading('Обновляем данные...', '');
@@ -925,8 +943,12 @@
 
         window.addEventListener('load', () => {
             const savedToken = localStorage.getItem('moysklad_token');
+            const savedProxy = localStorage.getItem('moysklad_proxy');
             if (savedToken) {
                 document.getElementById('token-input').value = savedToken;
+            }
+            if (savedProxy) {
+                document.getElementById('proxy-input').value = savedProxy;
             }
         });
     </script>
