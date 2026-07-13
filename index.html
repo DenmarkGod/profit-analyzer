@@ -40,11 +40,18 @@
         .data-table tr:hover td { background: rgba(59, 130, 246, 0.05); }
 
         /* Дерево категорий */
-        .tree-item { border-left: 2px solid #334155; margin-left: 12px; padding-left: 12px; }
-        .tree-item:hover { background: rgba(59, 130, 246, 0.05); }
-        .tree-toggle { cursor: pointer; user-select: none; }
-        .tree-children { display: none; }
-        .tree-children.expanded { display: block; }
+        .tree-node { margin-left: 0; }
+        .tree-node .tree-children { margin-left: 20px; border-left: 2px solid #334155; padding-left: 12px; }
+        .tree-node .tree-children.expanded { display: block; }
+        .tree-node .tree-children:not(.expanded) { display: none; }
+        
+        .tree-header { cursor: pointer; user-select: none; transition: all 0.2s; }
+        .tree-header:hover { background: rgba(59, 130, 246, 0.1); }
+        .tree-icon { transition: transform 0.2s; }
+        .tree-icon.rotated { transform: rotate(90deg); }
+        
+        .product-row { background: rgba(15, 23, 42, 0.3); }
+        .product-row:hover { background: rgba(59, 130, 246, 0.1); }
     </style>
 </head>
 <body class="gradient-bg text-white h-screen flex overflow-hidden">
@@ -68,7 +75,7 @@
             </button>
             <button onclick="switchView('categories')" id="nav-categories" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                Категории (дерево)
+                Дерево категорий
             </button>
             <button onclick="switchView('products')" id="nav-products" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
@@ -158,9 +165,14 @@
                 </div>
             </div>
 
-            <!-- 2. ДЕРЕВО КАТЕГОРИЙ -->
+            <!-- 2. ДЕРЕВО КАТЕГОРИЙ С ТОВАРАМИ -->
             <div id="view-categories" class="view-section space-y-6">
-                <h2 class="text-2xl font-bold mb-6">Дерево категорий из МойСклад</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Дерево категорий и товаров</h2>
+                    <button onclick="expandAllCategories()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition">
+                        Развернуть всё
+                    </button>
+                </div>
                 <div class="glass rounded-xl p-6">
                     <div id="category-tree"></div>
                 </div>
@@ -225,7 +237,7 @@
         let mainChart = null;
         
         let globalProductStats = {};
-        let globalCategoryTree = {};
+        let categoryTreeData = {};
         let productsData = {};
 
         async function proxyFetch(targetUrl, headers) {
@@ -484,34 +496,50 @@
         }
 
         function buildCategoryTree(folders) {
-            globalCategoryTree = {};
+            categoryTreeData = {};
             
+            // Создаём узлы для всех папок
             for (const folderId in folders) {
                 const folder = folders[folderId];
-                if (!globalCategoryTree[folderId]) {
-                    globalCategoryTree[folderId] = {
-                        id: folderId,
-                        name: folder.name,
-                        parentId: folder.parentId,
-                        children: {},
-                        quantity: 0, revenue: 0, cogs: 0, profit: 0, productCount: 0
-                    };
-                }
+                categoryTreeData[folderId] = {
+                    id: folderId,
+                    name: folder.name,
+                    parentId: folder.parentId,
+                    children: [],
+                    products: [],
+                    quantity: 0, revenue: 0, cogs: 0, profit: 0
+                };
             }
 
+            // Добавляем товары в их папки
             for (const productId in globalProductStats) {
                 const product = globalProductStats[productId];
-                let folderId = product.parentFolderId;
+                const folderId = product.parentFolderId;
                 
-                while (folderId && globalCategoryTree[folderId]) {
-                    const cat = globalCategoryTree[folderId];
+                if (folderId && categoryTreeData[folderId]) {
+                    categoryTreeData[folderId].products.push({
+                        id: productId,
+                        name: product.name,
+                        quantity: product.quantity,
+                        revenue: product.revenue,
+                        cogs: product.cogs,
+                        profit: product.profit
+                    });
+                    
+                    // Агрегируем статистику папки
+                    const cat = categoryTreeData[folderId];
                     cat.quantity += product.quantity;
                     cat.revenue += product.revenue;
                     cat.cogs += product.cogs;
                     cat.profit += product.profit;
-                    cat.productCount++;
-                    
-                    folderId = cat.parentId;
+                }
+            }
+
+            // Строим иерархию: добавляем дочерние папки к родительским
+            for (const folderId in categoryTreeData) {
+                const folder = categoryTreeData[folderId];
+                if (folder.parentId && categoryTreeData[folder.parentId]) {
+                    categoryTreeData[folder.parentId].children.push(folder);
                 }
             }
         }
@@ -571,35 +599,59 @@
         function renderCategoryTree() {
             const treeDiv = document.getElementById('category-tree');
             
-            const rootFolders = Object.values(globalCategoryTree).filter(f => !f.parentId);
+            const rootFolders = Object.values(categoryTreeData).filter(f => !f.parentId);
             
             if (rootFolders.length === 0) {
                 treeDiv.innerHTML = '<p class="text-gray-500 text-center py-8">Категории не найдены</p>';
                 return;
             }
 
-            const html = rootFolders.map(folder => renderFolderNode(folder)).join('');
+            const html = rootFolders
+                .sort((a, b) => b.profit - a.profit)
+                .map(folder => renderFolderNode(folder))
+                .join('');
             treeDiv.innerHTML = html;
         }
 
-        function renderFolderNode(folder, depth = 0) {
-            const margin = depth * 20;
-            const hasChildren = Object.keys(folder.children).length > 0;
+        function renderFolderNode(folder) {
+            const hasChildren = folder.children.length > 0;
+            const hasProducts = folder.products.length > 0;
             const marginPercent = folder.revenue > 0 ? ((folder.profit / folder.revenue) * 100).toFixed(1) : 0;
             
-            const childrenHtml = Object.values(folder.children)
+            const childrenHtml = folder.children
                 .sort((a, b) => b.profit - a.profit)
-                .map(child => renderFolderNode(child, depth + 1))
+                .map(child => renderFolderNode(child))
                 .join('');
 
+            const productsHtml = folder.products
+                .sort((a, b) => b.profit - a.profit)
+                .map(product => {
+                    const pMargin = product.revenue > 0 ? ((product.profit / product.revenue) * 100).toFixed(1) : 0;
+                    return `
+                        <div class="product-row flex items-center justify-between p-3 ml-8 border-l-2 border-slate-700">
+                            <div class="flex items-center gap-3 flex-1 min-w-0">
+                                <svg class="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm text-gray-300 truncate">${product.name}</div>
+                                    <div class="text-xs text-gray-600">${formatNumber(product.quantity)} шт</div>
+                                </div>
+                            </div>
+                            <div class="text-right flex-shrink-0 ml-4">
+                                <div class="text-sm font-medium text-green-400">${formatMoney(product.revenue)}</div>
+                                <div class="text-xs text-blue-400">${formatMoney(product.profit)} (${pMargin}%)</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
             return `
-                <div class="tree-item" style="margin-left: ${margin}px">
-                    <div class="tree-toggle flex items-center justify-between p-3 hover:bg-slate-800 rounded-lg" onclick="toggleTree(this)">
+                <div class="tree-node mb-2">
+                    <div class="tree-header flex items-center justify-between p-3 rounded-lg" onclick="toggleTree(this)">
                         <div class="flex items-center gap-3 flex-1 min-w-0">
                             ${hasChildren ? '<svg class="w-4 h-4 text-gray-500 tree-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>' : '<span class="w-4"></span>'}
                             <div class="flex-1 min-w-0">
                                 <div class="font-medium text-white truncate">${folder.name}</div>
-                                <div class="text-xs text-gray-500">${folder.productCount} товаров</div>
+                                <div class="text-xs text-gray-500">${folder.products.length} товаров · ${formatNumber(folder.quantity)} шт продано</div>
                             </div>
                         </div>
                         <div class="text-right flex-shrink-0 ml-4">
@@ -609,6 +661,7 @@
                     </div>
                     <div class="tree-children">
                         ${childrenHtml}
+                        ${productsHtml}
                     </div>
                 </div>
             `;
@@ -620,9 +673,14 @@
             if (children) {
                 children.classList.toggle('expanded');
                 if (icon) {
-                    icon.style.transform = children.classList.contains('expanded') ? 'rotate(90deg)' : '';
+                    icon.classList.toggle('rotated');
                 }
             }
+        }
+
+        function expandAllCategories() {
+            document.querySelectorAll('.tree-children').forEach(el => el.classList.add('expanded'));
+            document.querySelectorAll('.tree-icon').forEach(el => el.classList.add('rotated'));
         }
 
         function renderProductTable() {
