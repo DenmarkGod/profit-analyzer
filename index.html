@@ -314,20 +314,29 @@
 
         // ================== ЗАГРУЗКА ДАННЫХ ==================
 
-        async function fetchAllPages(url, headers, filterStr = '') {
+        async function fetchAllPages(baseEndpoint, headers, filterStr = '') {
             const allRows = [];
             let offset = 0;
             const limit = 1000;
+            
+            // ВАЖНО: Замени на свою ссылку Cloudflare Worker!
+            const PROXY_URL = 'https://moysklad-proxy.твой-логин.workers.dev';
 
             while (true) {
-                const params = { limit, offset };
+                const params = new URLSearchParams({ limit, offset });
                 if (filterStr) {
-                    params.filter = filterStr;
-                    params.order = 'moment,desc';
+                    params.append('filter', filterStr);
+                    params.append('order', 'moment,desc');
                 }
 
-                const response = await fetch(url + '?' + new URLSearchParams(params), { headers });
-                if (response.status !== 200) break;
+                const targetMsUrl = `https://api.moysklad.ru/api/remap/1.2/entity/${baseEndpoint}?${params.toString()}`;
+                const proxyRequestUrl = `${PROXY_URL}?url=${encodeURIComponent(targetMsUrl)}`;
+
+                const response = await fetch(proxyRequestUrl, { headers });
+                if (response.status !== 200) {
+                    console.error('Ошибка прокси:', await response.text());
+                    break;
+                }
 
                 const data = await response.json();
                 const rows = data.rows || [];
@@ -383,7 +392,9 @@
 
         async function fetchPositions(url, headers, products) {
             try {
-                const response = await fetch(url, { headers });
+                const PROXY_URL = 'https://moysklad-proxy.твой-логин.workers.dev'; // ЗАМЕНИ НА СВОЮ!
+                const proxyUrl = `${PROXY_URL}?url=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl, { headers });
                 if (response.status !== 200) return [];
 
                 const data = await response.json();
@@ -443,10 +454,11 @@
                 const headers = prepareAuthHeaders(token);
 
                 // Проверка подключения
-                const connectResponse = await fetch(
-                    'https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1',
-                    { headers }
-                );
+                const targetUrl = 'https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1';
+                const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev/'; // ЗАМЕНИ НА СВОЮ!
+                const proxyUrl = `${PROXY_URL}?url=${encodeURIComponent(targetUrl)}`;
+
+                const connectResponse = await fetch(proxyUrl, { headers });
 
                 if (!connectResponse.ok) {
                     const error = await connectResponse.json();
