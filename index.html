@@ -781,63 +781,67 @@
         }
 
         async function loadFolders(headers) {
-        const cached = localStorage.getItem('folders_cache_v3');
-        if (cached) {
-            const folders = JSON.parse(cached);
-            console.log('Загружено папок из кэша:', Object.keys(folders).length);
+            // Очищаем старый кэш
+            localStorage.removeItem('folders_cache_v2');
+            localStorage.removeItem('folders_cache_v3');
             
-            // Отладка: покажи структуру
-            const rootFolders = Object.values(folders).filter(f => !f.parentId);
-            console.log('Корневых папок:', rootFolders.length);
-            rootFolders.slice(0, 5).forEach(f => {
-                const children = Object.values(folders).filter(c => c.parentId === f.id);
-                console.log(`  ${f.name} -> ${children.length} детей`);
-                children.slice(0, 3).forEach(c => {
-                    const grandchildren = Object.values(folders).filter(gc => gc.parentId === c.id);
-                    console.log(`    ${c.name} -> ${grandchildren.length} внуков`);
-                });
+            const rows = await fetchAllPages('productfolder', headers);
+            const folders = {};
+            
+            console.log('=== СТРУКТУРА ПАПОК ИЗ API ===');
+            console.log('Всего папок:', rows.length);
+            
+            // Показываем первые 5 папок ПОЛНОСТЬЮ
+            console.log('Примеры папок (первые 5):');
+            rows.slice(0, 5).forEach((row, i) => {
+                console.log(`\n${i+1}. ${row.name || 'Без названия'}`);
+                console.log('   ID:', row.id);
+                console.log('   parent:', row.parent);
+                console.log('   parentFolder:', row.parentFolder);
+                console.log('   Все ключи:', Object.keys(row).join(', '));
             });
             
-            return folders;
-        }
-    
-        const rows = await fetchAllPages('productfolder', headers);
-        const folders = {};
-        
-        console.log('Всего папок от API:', rows.length);
-        
-        for (const row of rows) {
-            // Правильно извлекаем ID родительской папки
-            let parentId = null;
-            if (row.parent && row.parent.id) {
-                parentId = row.parent.id;
-            } else if (row.parentFolder && row.parentFolder.id) {
-                parentId = row.parentFolder.id;
+            for (const row of rows) {
+                // Пробуем разные варианты получения parentId
+                let parentId = null;
+                
+                if (row.parent && typeof row.parent === 'object' && row.parent.id) {
+                    parentId = row.parent.id;
+                } else if (row.parentFolder && typeof row.parentFolder === 'object' && row.parentFolder.id) {
+                    parentId = row.parentFolder.id;
+                } else if (row.parentId) {
+                    parentId = row.parentId;
+                }
+                
+                folders[row.id] = {
+                    id: row.id,
+                    name: row.name || 'Без названия',
+                    parentId: parentId
+                };
             }
             
-            folders[row.id] = {
-                id: row.id,
-                name: row.name || 'Без названия',
-                parentId: parentId
-            };
+            // Считаем сколько папок имеют родителя
+            const withParent = Object.values(folders).filter(f => f.parentId !== null).length;
+            const rootFolders = Object.values(folders).filter(f => f.parentId === null).length;
+            
+            console.log('\n=== ИТОГИ ===');
+            console.log('Папок с родителем:', withParent);
+            console.log('Корневых папок:', rootFolders);
+            
+            // Показываем примеры иерархии
+            if (withParent > 0) {
+                const sampleParent = Object.values(folders).find(f => f.parentId !== null);
+                if (sampleParent) {
+                    const parentFolder = folders[sampleParent.parentId];
+                    console.log('\nПример иерархии:');
+                    console.log(`  Родитель: ${parentFolder ? parentFolder.name : 'не найден'} (${sampleParent.parentId})`);
+                    console.log(`  -> ${sampleParent.name} (${sampleParent.id})`);
+                }
+            }
+            
+            localStorage.setItem('folders_cache_v4', JSON.stringify(folders));
+            return folders;
         }
-        
-        localStorage.setItem('folders_cache_v3', JSON.stringify(folders));
-        
-        // Отладка структуры
-        const rootFolders = Object.values(folders).filter(f => !f.parentId);
-        console.log('Корневых папок:', rootFolders.length);
-        rootFolders.slice(0, 5).forEach(f => {
-            const children = Object.values(folders).filter(c => c.parentId === f.id);
-            console.log(`  ${f.name} -> ${children.length} детей`);
-            children.slice(0, 3).forEach(c => {
-                const grandchildren = Object.values(folders).filter(gc => gc.parentId === c.id);
-                console.log(`    ${c.name} -> ${grandchildren.length} внуков`);
-            });
-        });
-        
-        return folders;
-    }
 
         async function fetchPositions(url, headers) {
             try {
