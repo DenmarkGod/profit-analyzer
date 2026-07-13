@@ -92,9 +92,7 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        .period-btn {
-            transition: all 0.2s ease;
-        }
+        .period-btn { transition: all 0.2s ease; }
         .period-btn.active {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
@@ -142,7 +140,6 @@
                     <button 
                         onclick="clearCache()"
                         class="px-6 py-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl text-sm"
-                        title="Очистить кэш товаров"
                     >
                         Сброс кэша
                     </button>
@@ -238,9 +235,20 @@
         let salesChart = null;
 
         // ================== УТИЛИТЫ ==================
-        function proxyFetch(targetUrl, headers) {
-            const fullUrl = `${PROXY_URL}?url=${encodeURIComponent(targetUrl)}`;
-            return fetch(fullUrl, { headers });
+        async function proxyFetch(targetUrl, headers) {
+            // Отправляем POST-запрос на прокси с JSON в теле
+            const response = await fetch(PROXY_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    url: targetUrl,
+                    headers: headers,
+                    method: 'GET'
+                })
+            });
+            return response;
         }
 
         function prepareAuthHeaders(token) {
@@ -284,7 +292,7 @@
         }
 
         function clearCache() {
-            if (confirm('Очистить кэш товаров? Следующая загрузка займет больше времени.')) {
+            if (confirm('Очистить кэш товаров?')) {
                 localStorage.removeItem('products_cache');
                 alert('Кэш очищен');
             }
@@ -297,13 +305,19 @@
             const limit = 1000;
 
             while (true) {
-                const params = new URLSearchParams({ limit: limit, offset: offset });
+                // ВАЖНО: используем только дату без времени и без пробелов в фильтре
+                const params = new URLSearchParams();
+                params.append('limit', limit);
+                params.append('offset', offset);
+                
                 if (filterStr) {
                     params.append('filter', filterStr);
                     params.append('order', 'moment,desc');
                 }
 
                 const targetMsUrl = `https://api.moysklad.ru/api/remap/1.2/entity/${baseEndpoint}?${params.toString()}`;
+                
+                console.log('Запрос:', targetMsUrl);
                 
                 let response;
                 try {
@@ -314,12 +328,21 @@
                 }
 
                 if (response.status !== 200) {
-                    console.error(`Ошибка API ${response.status}:`, await response.text());
+                    const errorText = await response.text();
+                    console.error(`Ошибка API ${response.status}:`, errorText);
                     break;
                 }
 
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    console.error('Ошибка парсинга JSON:', await response.text());
+                    break;
+                }
+                
                 const rows = data.rows || [];
+                console.log(`  Получено строк: ${rows.length}`);
                 allRows.push(...rows);
 
                 if (rows.length < limit) break;
@@ -332,11 +355,11 @@
         async function loadProducts(headers) {
             const cached = loadProductsFromCache();
             if (cached) {
-                console.log(`Товары загружены из кэша: ${Object.keys(cached).length} шт.`);
+                console.log(`Товары из кэша: ${Object.keys(cached).length} шт.`);
                 return cached;
             }
 
-            console.log('Загрузка справочника товаров...');
+            console.log('Загрузка товаров...');
             const rows = await fetchAllPages('product', headers);
             const products = {};
             
@@ -355,7 +378,7 @@
                 };
             }
             saveProductsToCache(products);
-            console.log(`Товары загружены и закэшированы: ${Object.keys(products).length} шт.`);
+            console.log(`Товаров: ${Object.keys(products).length}`);
             return products;
         }
 
@@ -371,7 +394,6 @@
                     const assortment = pos.assortment || {};
                     let productId = assortment.id;
                     
-                    // Критически важное исправление: извлекаем ID из ссылки, если его нет напрямую
                     if (!productId && assortment.meta?.href) {
                         productId = assortment.meta.href.split('/').pop();
                     }
@@ -400,7 +422,7 @@
             }
         }
 
-        // ================== ЛОГИКА ПРИЛОЖЕНИЯ ==================
+        // ================== ЛОГИКА ==================
         async function connectToMoySklad() {
             const token = document.getElementById('token-input').value.trim();
             const statusDiv = document.getElementById('connection-status');
@@ -440,7 +462,7 @@
                 document.getElementById('loading-overlay').classList.add('hidden');
 
                 if (allSales.length === 0) {
-                    alert('Продажи за выбранный период не найдены. Попробуйте увеличить период.');
+                    alert('Продажи за выбранный период не найдены.\n\nВозможные причины:\n1. В МойСклад нет продаж за этот период\n2. Продажи оформлены через другой тип документов\n3. Попробуйте увеличить период (например, "Год")\n\nЕсли проблема сохраняется, напишите разработчику.');
                     btn.disabled = false;
                     btn.textContent = 'Подключить и загрузить данные';
                     return;
@@ -460,29 +482,52 @@
 
         async function syncAllData(token) {
             const headers = prepareAuthHeaders(token);
+            
+            // ИСПРАВЛЕНО: используем только дату без времени
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - currentPeriod);
-            const dateFrom = startDate.toISOString().split('T')[0] + ' 00:00:00';
+            const dateFrom = startDate.toISOString().split('T')[0]; // Только YYYY-MM-DD
+            const filterStr = `moment>=${dateFrom}`;
+            
+            console.log('Фильтр:', filterStr);
 
             const products = await loadProducts(headers);
             
             console.log('Поиск retaildemand...');
-            let allDocs = await fetchAllPages('retaildemand', headers, `moment>=${dateFrom}`);
+            let allDocs = await fetchAllPages('retaildemand', headers, filterStr);
             let docType = 'retaildemand';
+            console.log(`Найдено retaildemand: ${allDocs.length}`);
 
             if (allDocs.length === 0) {
                 console.log('Поиск demand...');
-                allDocs = await fetchAllPages('demand', headers, `moment>=${dateFrom}`);
+                allDocs = await fetchAllPages('demand', headers, filterStr);
                 docType = 'demand';
+                console.log(`Найдено demand: ${allDocs.length}`);
             }
 
             if (allDocs.length === 0) {
                 console.log('Поиск customerorder...');
-                allDocs = await fetchAllPages('customerorder', headers, `moment>=${dateFrom}`);
+                allDocs = await fetchAllPages('customerorder', headers, filterStr);
                 docType = 'customerorder';
+                console.log(`Найдено customerorder: ${allDocs.length}`);
             }
 
-            console.log(`Найдено документов: ${allDocs.length}`);
+            if (allDocs.length === 0) {
+                console.warn('Не найдено ни одного типа продаж за период!');
+                console.log('Пробуем загрузить все продажи без фильтра...');
+                // Последняя попытка - без фильтра
+                allDocs = await fetchAllPages('retaildemand', headers);
+                docType = 'retaildemand';
+                console.log(`Всего retaildemand без фильтра: ${allDocs.length}`);
+                
+                if (allDocs.length === 0) {
+                    allDocs = await fetchAllPages('demand', headers);
+                    docType = 'demand';
+                    console.log(`Всего demand без фильтра: ${allDocs.length}`);
+                }
+            }
+
+            console.log(`Итог: ${allDocs.length} документов типа ${docType}`);
 
             const finalSales = [];
             const productStats = {};
@@ -531,6 +576,11 @@
 
             finalSales.sort((a, b) => b.moment.localeCompare(a.moment));
             const profit = totalRevenue - totalCogs;
+
+            console.log('=== ИТОГИ ===');
+            console.log('Документов:', finalSales.length);
+            console.log('Выручка:', totalRevenue);
+            console.log('Прибыль:', profit);
 
             return {
                 sales: finalSales,
