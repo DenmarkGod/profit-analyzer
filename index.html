@@ -73,7 +73,7 @@
         .loading-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(8px);
             z-index: 100;
             display: flex;
@@ -102,7 +102,6 @@
     </style>
 </head>
 <body class="gradient-bg text-white min-h-screen">
-    <!-- Loading overlay -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="spinner mb-4"></div>
         <div id="loading-text" class="text-xl text-gray-300">Загрузка данных...</div>
@@ -110,7 +109,6 @@
     </div>
 
     <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <!-- Заголовок -->
         <div class="mb-12 animate-fade-in-up">
             <h1 class="text-5xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
                 Profit Analyzer
@@ -118,22 +116,9 @@
             <p class="text-gray-400 text-lg">Анализ прибыльности бизнеса на данных МойСклад</p>
         </div>
 
-        <!-- Форма подключения -->
         <div id="connection-form" class="glass rounded-2xl p-8 mb-8 animate-fade-in-up delay-100 animate-on-load">
             <h2 class="text-3xl font-bold mb-6">Подключение к МойСклад</h2>
             <div class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium mb-3 text-gray-300">URL Cloudflare Worker (прокси)</label>
-                    <input 
-                        type="text" 
-                        id="proxy-input"
-                        placeholder="https://moysklad-proxy.твой-логин.workers.dev"
-                        class="w-full px-5 py-4 bg-gray-800/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-white placeholder-gray-500"
-                    >
-                    <p class="text-xs text-gray-500 mt-2">
-                        Ссылка на твой Cloudflare Worker (без слэша в конце)
-                    </p>
-                </div>
                 <div>
                     <label class="block text-sm font-medium mb-3 text-gray-300">Токен API МойСклад</label>
                     <input 
@@ -143,7 +128,7 @@
                         class="w-full px-5 py-4 bg-gray-800/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-white placeholder-gray-500"
                     >
                     <p class="text-xs text-gray-500 mt-2">
-                        МойСклад → Настройки → API-ключи → Создать токен (права: Товары, Продажи)
+                        МойСклад -> Настройки -> API-ключи -> Создать токен (права: Товары, Продажи)
                     </p>
                 </div>
                 <div class="flex gap-3">
@@ -159,16 +144,14 @@
                         class="px-6 py-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl text-sm"
                         title="Очистить кэш товаров"
                     >
-                        Очистить кэш
+                        Сброс кэша
                     </button>
                 </div>
                 <div id="connection-status" class="hidden"></div>
             </div>
         </div>
 
-        <!-- Дашборд -->
         <div id="dashboard" class="hidden">
-            <!-- Переключатель периода -->
             <div class="glass rounded-2xl p-6 mb-6 animate-fade-in-up animate-on-load">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
@@ -185,7 +168,6 @@
                 </div>
             </div>
 
-            <!-- Ключевые метрики -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="metric-card glass rounded-2xl p-6 animate-fade-in-up animate-on-load">
                     <div class="text-gray-400 text-sm mb-2 font-medium">Выручка</div>
@@ -209,7 +191,6 @@
                 </div>
             </div>
 
-            <!-- Доп метрики -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="metric-card glass rounded-2xl p-6 animate-fade-in-up delay-100 animate-on-load">
                     <div class="text-gray-400 text-sm mb-2 font-medium">Количество продаж</div>
@@ -227,19 +208,16 @@
                 </div>
             </div>
 
-            <!-- График -->
             <div class="glass rounded-2xl p-8 mb-8 animate-fade-in-up delay-400 animate-on-load">
                 <h2 class="text-2xl font-bold mb-6">Динамика по дням</h2>
                 <canvas id="sales-chart"></canvas>
             </div>
 
-            <!-- Топ товаров -->
             <div class="glass rounded-2xl p-8 mb-8 animate-fade-in-up delay-500 animate-on-load">
                 <h2 class="text-2xl font-bold mb-6">Топ-10 товаров по прибыли</h2>
                 <div id="top-products" class="space-y-3"></div>
             </div>
 
-            <!-- Кнопка обновления -->
             <button 
                 onclick="refreshData()"
                 class="w-full btn-gradient text-white font-semibold py-4 px-6 rounded-xl text-lg animate-fade-in-up delay-500 animate-on-load"
@@ -250,7 +228,9 @@
     </div>
 
     <script>
-        // ================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==================
+        // ================== КОНФИГУРАЦИЯ ==================
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
+
         let allSales = [];
         let productsCount = 0;
         let salesByType = {};
@@ -258,32 +238,18 @@
         let salesChart = null;
 
         // ================== УТИЛИТЫ ==================
-
-        function getProxyUrl() {
-            return document.getElementById('proxy-input').value.trim();
-        }
-
         function proxyFetch(targetUrl, headers) {
-            const proxyUrl = getProxyUrl();
-            if (!proxyUrl) {
-                throw new Error('Не указан URL Cloudflare Worker');
-            }
-            const fullUrl = `${proxyUrl}?url=${encodeURIComponent(targetUrl)}`;
+            const fullUrl = `${PROXY_URL}?url=${encodeURIComponent(targetUrl)}`;
             return fetch(fullUrl, { headers });
         }
 
         function prepareAuthHeaders(token) {
             token = token.trim();
-            if (token.startsWith("Basic ") || token.startsWith("Bearer ")) {
-                return { "Authorization": token };
-            }
+            if (token.startsWith("Basic ") || token.startsWith("Bearer ")) return { "Authorization": token };
             if (token.includes("@") && token.includes(":")) {
-                const encoded = btoa(token);
-                return { "Authorization": `Basic ${encoded}` };
+                return { "Authorization": `Basic ${btoa(token)}` };
             }
-            if (token.startsWith("eyJ")) {
-                return { "Authorization": `Bearer ${token}` };
-            }
+            if (token.startsWith("eyJ")) return { "Authorization": `Bearer ${token}` };
             return { "Authorization": `Bearer ${token}` };
         }
 
@@ -292,11 +258,7 @@
         }
 
         function formatMoney(amount) {
-            return new Intl.NumberFormat('ru-RU', {
-                style: 'currency',
-                currency: 'RUB',
-                maximumFractionDigits: 0
-            }).format(amount);
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount);
         }
 
         function animateCountUp(element, target, duration = 1200, suffix = '') {
@@ -305,25 +267,16 @@
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1);
                 const easeOut = 1 - Math.pow(1 - progress, 3);
-                const current = target * easeOut;
-                element.textContent = formatNumber(current) + suffix;
+                element.textContent = formatNumber(target * easeOut) + suffix;
                 if (progress < 1) requestAnimationFrame(update);
             }
             requestAnimationFrame(update);
         }
 
-        // ================== КЭШ ТОВАРОВ ==================
-
+        // ================== КЭШ ==================
         function loadProductsFromCache() {
             const cached = localStorage.getItem('products_cache');
-            if (cached) {
-                try {
-                    return JSON.parse(cached);
-                } catch (e) {
-                    return null;
-                }
-            }
-            return null;
+            return cached ? JSON.parse(cached) : null;
         }
 
         function saveProductsToCache(products) {
@@ -331,14 +284,13 @@
         }
 
         function clearCache() {
-            if (confirm('Очистить кэш товаров? При следующей загрузке товары будут скачаны заново.')) {
+            if (confirm('Очистить кэш товаров? Следующая загрузка займет больше времени.')) {
                 localStorage.removeItem('products_cache');
                 alert('Кэш очищен');
             }
         }
 
         // ================== ЗАГРУЗКА ДАННЫХ ==================
-
         async function fetchAllPages(baseEndpoint, headers, filterStr = '') {
             const allRows = [];
             let offset = 0;
@@ -357,13 +309,12 @@
                 try {
                     response = await proxyFetch(targetMsUrl, headers);
                 } catch (e) {
-                    console.error('Ошибка запроса:', e);
+                    console.error('Ошибка сети:', e);
                     break;
                 }
 
                 if (response.status !== 200) {
-                    const errorText = await response.text();
-                    console.error(`Ошибка ${response.status}:`, errorText);
+                    console.error(`Ошибка API ${response.status}:`, await response.text());
                     break;
                 }
 
@@ -371,83 +322,65 @@
                 const rows = data.rows || [];
                 allRows.push(...rows);
 
-                console.log(`  Загружено ${rows.length} записей (всего: ${allRows.length})`);
-
                 if (rows.length < limit) break;
                 offset += limit;
-                if (offset > 15000) {
-                    console.warn('Достигнут лимит загрузки (15000)');
-                    break;
-                }
+                if (offset > 15000) break;
             }
-
             return allRows;
         }
 
         async function loadProducts(headers) {
             const cached = loadProductsFromCache();
             if (cached) {
-                console.log(`Загружено ${Object.keys(cached).length} товаров из кэша`);
+                console.log(`Товары загружены из кэша: ${Object.keys(cached).length} шт.`);
                 return cached;
             }
 
-            console.log('Загружаем товары из МойСклад...');
+            console.log('Загрузка справочника товаров...');
             const rows = await fetchAllPages('product', headers);
-
             const products = {};
-            let withoutPrice = 0;
+            
             for (const row of rows) {
-                const productId = row.id;
                 const purchasePrice = row.buyPrice?.value ? row.buyPrice.value / 100 : 0;
-                if (purchasePrice === 0) withoutPrice++;
-                
                 let salePrice = 0;
                 if (row.salePrices) {
                     for (const sp of row.salePrices) {
-                        if (sp.value) {
-                            salePrice = sp.value / 100;
-                            break;
-                        }
+                        if (sp.value) { salePrice = sp.value / 100; break; }
                     }
                 }
-
-                products[productId] = {
+                products[row.id] = {
                     name: row.name || 'Без названия',
                     purchase_price: purchasePrice,
                     sale_price: salePrice
                 };
             }
-
             saveProductsToCache(products);
-            console.log(`Загружено и закэшировано ${Object.keys(products).length} товаров (без цены закупки: ${withoutPrice})`);
+            console.log(`Товары загружены и закэшированы: ${Object.keys(products).length} шт.`);
             return products;
         }
 
         async function fetchPositions(url, headers, products) {
             try {
                 const response = await proxyFetch(url, headers);
-                if (response.status !== 200) {
-                    console.warn('Ошибка загрузки позиций:', response.status);
-                    return [];
-                }
+                if (response.status !== 200) return [];
 
                 const data = await response.json();
-                const posRows = data.rows || [];
                 const positions = [];
 
-                for (const pos of posRows) {
+                for (const pos of (data.rows || [])) {
                     const assortment = pos.assortment || {};
                     let productId = assortment.id;
-
+                    
+                    // Критически важное исправление: извлекаем ID из ссылки, если его нет напрямую
                     if (!productId && assortment.meta?.href) {
                         productId = assortment.meta.href.split('/').pop();
                     }
 
-                    const quantity = pos.quantity || 0;
-                    const price = (pos.price || 0) / 100;
-
                     if (productId && products[productId]) {
                         const product = products[productId];
+                        const quantity = pos.quantity || 0;
+                        const price = (pos.price || 0) / 100;
+                        
                         positions.push({
                             product_id: productId,
                             name: product.name,
@@ -460,7 +393,6 @@
                         });
                     }
                 }
-
                 return positions;
             } catch (e) {
                 console.warn('Ошибка загрузки позиций:', e);
@@ -468,67 +400,59 @@
             }
         }
 
-        // ================== ПОДКЛЮЧЕНИЕ ==================
-
+        // ================== ЛОГИКА ПРИЛОЖЕНИЯ ==================
         async function connectToMoySklad() {
             const token = document.getElementById('token-input').value.trim();
-            const proxyUrl = getProxyUrl();
             const statusDiv = document.getElementById('connection-status');
             const btn = document.getElementById('connect-btn');
 
-            if (!proxyUrl) {
-                showStatus(statusDiv, 'Укажите URL Cloudflare Worker', 'error');
-                return;
-            }
             if (!token) {
-                showStatus(statusDiv, 'Введите токен', 'error');
+                statusDiv.className = 'mt-6 p-4 rounded-xl border bg-red-900/30 border-red-500 text-red-400 animate-fade-in';
+                statusDiv.textContent = 'Введите токен';
+                statusDiv.classList.remove('hidden');
                 return;
             }
 
             btn.disabled = true;
             btn.textContent = 'Подключение...';
-            showStatus(statusDiv, 'Проверяем подключение...', 'loading');
+            statusDiv.className = 'mt-6 p-4 rounded-xl border bg-blue-900/30 border-blue-500 text-blue-400 animate-fade-in';
+            statusDiv.textContent = 'Проверка подключения...';
+            statusDiv.classList.remove('hidden');
 
             try {
                 const headers = prepareAuthHeaders(token);
-
-                // Проверка подключения
                 const targetUrl = 'https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1';
                 const connectResponse = await proxyFetch(targetUrl, headers);
 
                 if (!connectResponse.ok) {
-                    const errorText = await connectResponse.text();
-                    console.error('Ошибка подключения:', errorText);
-                    throw new Error(`Ошибка ${connectResponse.status}: ${errorText}`);
+                    throw new Error(`Ошибка ${connectResponse.status}: ${await connectResponse.text()}`);
                 }
 
-                showStatus(statusDiv, 'Подключение успешно. Загружаем данные...', 'success');
-                showLoading('Загружаем данные из МойСклад...', 'Это может занять 10-30 секунд');
+                statusDiv.textContent = 'Подключено. Загрузка данных...';
+                document.getElementById('loading-overlay').classList.remove('hidden');
 
-                // Загрузка всех данных
                 const data = await syncAllData(token);
-
                 allSales = data.sales || [];
                 productsCount = data.products_count || 0;
                 salesByType = data.sales_by_type || {};
-
                 localStorage.setItem('moysklad_token', token);
-                localStorage.setItem('moysklad_proxy', proxyUrl);
 
-                hideLoading();
+                document.getElementById('loading-overlay').classList.add('hidden');
 
                 if (allSales.length === 0) {
-                    alert('В МойСклад не найдено ни одной продажи за выбранный период!\n\nПопробуйте увеличить период или проверить наличие продаж в МойСклад.');
+                    alert('Продажи за выбранный период не найдены. Попробуйте увеличить период.');
                     btn.disabled = false;
                     btn.textContent = 'Подключить и загрузить данные';
                     return;
                 }
 
+                document.getElementById('connection-form').classList.add('hidden');
                 displayDashboard();
 
             } catch (error) {
-                hideLoading();
-                showStatus(statusDiv, `Ошибка: ${error.message}`, 'error');
+                document.getElementById('loading-overlay').classList.add('hidden');
+                statusDiv.className = 'mt-6 p-4 rounded-xl border bg-red-900/30 border-red-500 text-red-400 animate-fade-in';
+                statusDiv.textContent = `Ошибка: ${error.message}`;
                 btn.disabled = false;
                 btn.textContent = 'Подключить и загрузить данные';
             }
@@ -536,264 +460,134 @@
 
         async function syncAllData(token) {
             const headers = prepareAuthHeaders(token);
-            const period = currentPeriod;
-
-            console.log('=== НАЧАЛО СИНХРОНИЗАЦИИ ===');
-            console.log('Период:', period, 'дней');
-
-            // Загрузка товаров
-            console.log('1. Загружаем товары...');
-            const products = await loadProducts(headers);
-            console.log('   Товаров загружено:', Object.keys(products).length);
-
-            // Даты
-            const endDate = new Date();
             const startDate = new Date();
-            startDate.setDate(startDate.getDate() - period);
+            startDate.setDate(startDate.getDate() - currentPeriod);
             const dateFrom = startDate.toISOString().split('T')[0] + ' 00:00:00';
-            console.log('2. Период с:', dateFrom);
 
-            // Загрузка розничных продаж
-            console.log('3. Загружаем retaildemand...');
-            const retailDocs = await fetchAllPages(
-                'retaildemand',
-                headers,
-                `moment>=${dateFrom}`
-            );
-            console.log('   Найдено retaildemand:', retailDocs.length);
-
-            // Если retaildemand нет, пробуем demand
-            let allDocs = retailDocs;
+            const products = await loadProducts(headers);
+            
+            console.log('Поиск retaildemand...');
+            let allDocs = await fetchAllPages('retaildemand', headers, `moment>=${dateFrom}`);
             let docType = 'retaildemand';
-            if (retailDocs.length === 0) {
-                console.log('4. retaildemand не найдено, пробуем demand...');
-                const demandDocs = await fetchAllPages(
-                    'demand',
-                    headers,
-                    `moment>=${dateFrom}`
-                );
-                console.log('   Найдено demand:', demandDocs.length);
-                if (demandDocs.length > 0) {
-                    allDocs = demandDocs;
-                    docType = 'demand';
-                }
-            }
-
-            // Если и demand нет, пробуем customerorder
-            if (allDocs.length === 0) {
-                console.log('5. demand не найдено, пробуем customerorder...');
-                const orderDocs = await fetchAllPages(
-                    'customerorder',
-                    headers,
-                    `moment>=${dateFrom}`
-                );
-                console.log('   Найдено customerorder:', orderDocs.length);
-                if (orderDocs.length > 0) {
-                    allDocs = orderDocs;
-                    docType = 'customerorder';
-                }
-            }
-
-            console.log('6. Всего документов:', allDocs.length, 'тип:', docType);
 
             if (allDocs.length === 0) {
-                console.warn('ВНИМАНИЕ: Документы не найдены за период!');
-                console.warn('Попробуйте увеличить период или проверить наличие продаж в МойСклад');
+                console.log('Поиск demand...');
+                allDocs = await fetchAllPages('demand', headers, `moment>=${dateFrom}`);
+                docType = 'demand';
             }
 
-            // Обработка документов
+            if (allDocs.length === 0) {
+                console.log('Поиск customerorder...');
+                allDocs = await fetchAllPages('customerorder', headers, `moment>=${dateFrom}`);
+                docType = 'customerorder';
+            }
+
+            console.log(`Найдено документов: ${allDocs.length}`);
+
             const finalSales = [];
             const productStats = {};
             let totalRevenue = 0;
             let totalCogs = 0;
 
-            // Загружаем позиции для первых 200 документов
-            const docsToFetch = allDocs.slice(0, 200);
-            console.log('7. Загружаем позиции для', docsToFetch.length, 'документов...');
-
+            const docsToFetchSet = new Set(allDocs.slice(0, 200).map(d => d.id));
             const positionPromises = [];
-            const docsToFetchSet = new Set(docsToFetch.map(d => d.id));
 
             for (const doc of allDocs) {
-                const docSum = doc.sum || 0;
-                const docMoment = doc.moment || '';
+                if (!doc.sum || !doc.moment) continue;
 
-                if (docSum === 0 || !docMoment) continue;
-
-                const dateIso = docMoment.split('T')[0] || docMoment.split(' ')[0];
-                const revenue = docSum / 100;
+                const dateIso = doc.moment.split('T')[0] || doc.moment.split(' ')[0];
+                const revenue = doc.sum / 100;
                 totalRevenue += revenue;
 
                 const saleRecord = {
-                    id: doc.id,
-                    name: doc.name || '',
-                    type: docType,
-                    date: dateIso,
-                    moment: docMoment,
-                    revenue,
-                    positions: []
+                    id: doc.id, name: doc.name || '', type: docType, date: dateIso,
+                    moment: doc.moment, revenue, positions: []
                 };
                 finalSales.push(saleRecord);
 
-                if (docsToFetchSet.has(doc.id)) {
-                    const positionsUrl = doc.positions?.meta?.href;
-                    if (positionsUrl) {
-                        positionPromises.push(
-                            fetchPositions(positionsUrl, headers, products).then(positions => {
-                                saleRecord.positions = positions;
-                                console.log('   Позиций для', doc.name || doc.id, ':', positions.length);
-                                return positions;
-                            })
-                        );
-                    } else {
-                        console.warn('   У документа', doc.name || doc.id, 'нет URL позиций');
-                    }
+                if (docsToFetchSet.has(doc.id) && doc.positions?.meta?.href) {
+                    positionPromises.push(
+                        fetchPositions(doc.positions.meta.href, headers, products).then(positions => {
+                            saleRecord.positions = positions;
+                            return positions;
+                        })
+                    );
                 }
             }
 
-            // Ждём загрузки всех позиций
-            console.log('8. Ожидаем загрузку позиций...');
             await Promise.all(positionPromises);
 
-            // Агрегируем данные
-            console.log('9. Агрегируем данные...');
             for (const sale of finalSales) {
                 for (const pos of sale.positions) {
                     totalCogs += pos.cogs;
-                    const pid = pos.product_id;
-                    if (!productStats[pid]) {
-                        productStats[pid] = { name: pos.name, quantity: 0, revenue: 0, profit: 0 };
+                    if (!productStats[pos.product_id]) {
+                        productStats[pos.product_id] = { name: pos.name, quantity: 0, revenue: 0, profit: 0 };
                     }
-                    productStats[pid].quantity += pos.quantity;
-                    productStats[pid].revenue += pos.revenue;
-                    productStats[pid].profit += pos.profit;
+                    productStats[pos.product_id].quantity += pos.quantity;
+                    productStats[pos.product_id].revenue += pos.revenue;
+                    productStats[pos.product_id].profit += pos.profit;
                 }
             }
 
             finalSales.sort((a, b) => b.moment.localeCompare(a.moment));
-
             const profit = totalRevenue - totalCogs;
-            const margin = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0;
-
-            console.log('=== ИТОГИ ===');
-            console.log('Выручка:', totalRevenue);
-            console.log('Себестоимость:', totalCogs);
-            console.log('Прибыль:', profit);
-            console.log('Маржа:', margin, '%');
-            console.log('Продаж:', finalSales.length);
-            console.log('Топ товаров:', Object.keys(productStats).length);
-
-            const salesByTypeResult = {};
-            salesByTypeResult[docType] = finalSales.length;
 
             return {
                 sales: finalSales,
                 products_count: Object.keys(products).length,
-                sales_by_type: salesByTypeResult
+                sales_by_type: { [docType]: finalSales.length }
             };
         }
-
-        function showStatus(div, message, type) {
-            div.classList.remove('hidden');
-            const colors = {
-                success: 'bg-green-900/30 border-green-500 text-green-400',
-                error: 'bg-red-900/30 border-red-500 text-red-400',
-                loading: 'bg-blue-900/30 border-blue-500 text-blue-400'
-            };
-            div.className = `mt-6 p-4 rounded-xl border ${colors[type]} animate-fade-in`;
-            div.textContent = message;
-        }
-
-        function showLoading(text, details = '') {
-            document.getElementById('loading-text').textContent = text;
-            document.getElementById('loading-details').textContent = details;
-            document.getElementById('loading-overlay').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loading-overlay').classList.add('hidden');
-        }
-
-        // ================== ПЕРИОД ==================
 
         function setPeriod(days) {
             currentPeriod = days;
             document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (parseInt(btn.dataset.period) === days) {
-                    btn.classList.add('active');
-                }
+                btn.classList.toggle('active', parseInt(btn.dataset.period) === days);
             });
             displayDashboard();
         }
 
-        function getFilteredSales() {
-            if (currentPeriod === 0) return allSales;
-
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - currentPeriod);
-            const cutoffStr = cutoffDate.toISOString().split('T')[0];
-
-            return allSales.filter(sale => sale.date >= cutoffStr);
-        }
-
-        // ================== ОТОБРАЖЕНИЕ ==================
-
         function displayDashboard() {
-            document.getElementById('connection-form').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
+            document.querySelectorAll('.animate-on-load').forEach(el => el.classList.remove('animate-on-load'));
 
-            document.querySelectorAll('.animate-on-load').forEach(el => {
-                el.classList.remove('animate-on-load');
-            });
+            const cutoffStr = currentPeriod === 0 ? '' : new Date(Date.now() - currentPeriod * 86400000).toISOString().split('T')[0];
+            const filteredSales = currentPeriod === 0 ? allSales : allSales.filter(s => s.date >= cutoffStr);
 
-            const filteredSales = getFilteredSales();
-
-            let totalRevenue = 0;
-            let totalCogs = 0;
+            let totalRevenue = 0, totalCogs = 0;
             const productStats = {};
 
             for (const sale of filteredSales) {
                 totalRevenue += sale.revenue;
                 for (const pos of sale.positions) {
                     totalCogs += pos.cogs;
-                    if (pos.product_id) {
-                        if (!productStats[pos.product_id]) {
-                            productStats[pos.product_id] = { name: pos.name, quantity: 0, revenue: 0, profit: 0 };
-                        }
-                        productStats[pos.product_id].quantity += pos.quantity;
-                        productStats[pos.product_id].revenue += pos.revenue;
-                        productStats[pos.product_id].profit += pos.profit;
+                    if (!productStats[pos.product_id]) {
+                        productStats[pos.product_id] = { name: pos.name, quantity: 0, revenue: 0, profit: 0 };
                     }
+                    productStats[pos.product_id].quantity += pos.quantity;
+                    productStats[pos.product_id].revenue += pos.revenue;
+                    productStats[pos.product_id].profit += pos.profit;
                 }
             }
 
             const profit = totalRevenue - totalCogs;
-            const marginPercent = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0;
+            const margin = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0;
             const avgCheck = filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0;
 
             animateCountUp(document.getElementById('metric-revenue'), totalRevenue);
             animateCountUp(document.getElementById('metric-cogs'), totalCogs);
             animateCountUp(document.getElementById('metric-profit'), profit);
-            animateCountUp(document.getElementById('metric-margin'), marginPercent, 1200, '%');
+            animateCountUp(document.getElementById('metric-margin'), margin, 1200, '%');
             animateCountUp(document.getElementById('metric-sales-count'), filteredSales.length);
             animateCountUp(document.getElementById('metric-avg-check'), avgCheck);
 
-            const periodInfo = document.getElementById('period-info');
-            if (currentPeriod === 0) {
-                periodInfo.textContent = `Все время · Всего продаж: ${allSales.length} · Товаров: ${productsCount}`;
-            } else {
-                periodInfo.textContent = `Последние ${currentPeriod} дней · Продаж в периоде: ${filteredSales.length} из ${allSales.length}`;
-            }
+            document.getElementById('period-info').textContent = 
+                currentPeriod === 0 ? `Все время: ${allSales.length} продаж` : `Последние ${currentPeriod} дней: ${filteredSales.length} продаж`;
 
-            const typesDiv = document.getElementById('metric-sales-types');
             const typeNames = { retaildemand: 'Розничные', customerorder: 'Заказы', demand: 'Отгрузки' };
-            typesDiv.innerHTML = Object.entries(salesByType).map(([type, count]) => `
-                <div class="flex justify-between">
-                    <span class="text-gray-400">${typeNames[type] || type}:</span>
-                    <span class="font-bold">${count}</span>
-                </div>
-            `).join('');
+            document.getElementById('metric-sales-types').innerHTML = Object.entries(salesByType).map(([type, count]) => 
+                `<div class="flex justify-between"><span class="text-gray-400">${typeNames[type] || type}:</span><span class="font-bold">${count}</span></div>`
+            ).join('');
 
             renderChart(filteredSales);
             renderTopProducts(productStats);
@@ -802,154 +596,86 @@
         function renderChart(sales) {
             const byDate = {};
             for (const sale of sales) {
-                if (!byDate[sale.date]) {
-                    byDate[sale.date] = { revenue: 0, cogs: 0, profit: 0 };
-                }
+                if (!byDate[sale.date]) byDate[sale.date] = { revenue: 0, cogs: 0, profit: 0 };
                 byDate[sale.date].revenue += sale.revenue;
-                for (const pos of sale.positions) {
-                    byDate[sale.date].cogs += pos.cogs;
-                }
+                for (const pos of sale.positions) byDate[sale.date].cogs += pos.cogs;
                 byDate[sale.date].profit = byDate[sale.date].revenue - byDate[sale.date].cogs;
             }
 
             const sortedDates = Object.keys(byDate).sort();
             const displayDates = sortedDates.length > 30 ? sortedDates.slice(-30) : sortedDates;
-
-            const labels = displayDates.map(d => {
-                const date = new Date(d);
-                return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-            });
+            const labels = displayDates.map(d => new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
 
             if (salesChart) salesChart.destroy();
-
-            const ctx = document.getElementById('sales-chart').getContext('2d');
-            salesChart = new Chart(ctx, {
+            salesChart = new Chart(document.getElementById('sales-chart').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels,
                     datasets: [
-                        {
-                            label: 'Выручка',
-                            data: displayDates.map(d => byDate[d].revenue),
-                            borderColor: 'rgba(74, 222, 128, 1)',
-                            backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            borderWidth: 2
-                        },
-                        {
-                            label: 'Прибыль',
-                            data: displayDates.map(d => byDate[d].profit),
-                            borderColor: 'rgba(96, 165, 250, 1)',
-                            backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            borderWidth: 2
-                        }
+                        { label: 'Выручка', data: displayDates.map(d => byDate[d].revenue), borderColor: 'rgba(74, 222, 128, 1)', backgroundColor: 'rgba(74, 222, 128, 0.1)', fill: true, tension: 0.4, borderWidth: 2 },
+                        { label: 'Прибыль', data: displayDates.map(d => byDate[d].profit), borderColor: 'rgba(96, 165, 250, 1)', backgroundColor: 'rgba(96, 165, 250, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }
                     ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
-                    animation: { duration: 1000, easing: 'easeOutQuart' },
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
-                        legend: { labels: { color: '#9ca3af', font: { size: 12 } } },
-                        tooltip: {
-                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                            borderColor: 'rgba(59, 130, 246, 0.5)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            padding: 12,
-                            callbacks: {
-                                label: ctx => `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}`
-                            }
-                        }
+                        legend: { labels: { color: '#9ca3af' } },
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}` } }
                     },
                     scales: {
-                        y: {
-                            ticks: { callback: v => formatMoney(v), color: '#9ca3af' },
-                            grid: { color: 'rgba(55, 65, 81, 0.5)' }
-                        },
-                        x: {
-                            ticks: { color: '#9ca3af', maxRotation: 45 },
-                            grid: { display: false }
-                        }
+                        y: { ticks: { callback: v => formatMoney(v), color: '#9ca3af' }, grid: { color: 'rgba(55, 65, 81, 0.5)' } },
+                        x: { ticks: { color: '#9ca3af', maxRotation: 45 }, grid: { display: false } }
                     }
                 }
             });
         }
 
         function renderTopProducts(productStats) {
-            const topProducts = Object.values(productStats)
-                .sort((a, b) => b.profit - a.profit)
-                .slice(0, 10);
-
+            const topProducts = Object.values(productStats).sort((a, b) => b.profit - a.profit).slice(0, 10);
             const topDiv = document.getElementById('top-products');
 
             if (topProducts.length === 0) {
-                topDiv.innerHTML = `<div class="text-center py-12 text-gray-500">Нет данных о товарах за выбранный период</div>`;
+                topDiv.innerHTML = '<div class="text-center py-12 text-gray-500">Нет данных о товарах</div>';
                 return;
             }
 
-            topDiv.innerHTML = topProducts.map((product, index) => `
-                <div class="product-item glass rounded-xl p-5 flex items-center justify-between animate-slide-in-right" style="animation-delay: ${index * 0.05}s">
+            topDiv.innerHTML = topProducts.map((p, i) => `
+                <div class="product-item glass rounded-xl p-5 flex items-center justify-between animate-slide-in-right" style="animation-delay: ${i * 0.05}s">
                     <div class="flex items-center gap-5 flex-1 min-w-0">
-                        <div class="text-3xl font-bold text-gray-600 w-12 flex-shrink-0">#${index + 1}</div>
+                        <div class="text-3xl font-bold text-gray-600 w-12 flex-shrink-0">#${i + 1}</div>
                         <div class="min-w-0 flex-1">
-                            <div class="font-semibold text-lg truncate">${product.name}</div>
-                            <div class="text-sm text-gray-400 mt-1">
-                                Продано: ${formatNumber(product.quantity)} шт · Выручка: ${formatMoney(product.revenue)}
-                            </div>
+                            <div class="font-semibold text-lg truncate">${p.name}</div>
+                            <div class="text-sm text-gray-400 mt-1">Продано: ${formatNumber(p.quantity)} шт · Выручка: ${formatMoney(p.revenue)}</div>
                         </div>
                     </div>
                     <div class="text-right flex-shrink-0 ml-4">
-                        <div class="text-2xl font-bold text-green-400">${formatMoney(product.profit)}</div>
+                        <div class="text-2xl font-bold text-green-400">${formatMoney(p.profit)}</div>
                         <div class="text-xs text-gray-500 mt-1">прибыль</div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // ================== ОБНОВЛЕНИЕ ==================
-
         async function refreshData() {
             const token = localStorage.getItem('moysklad_token');
-            const proxyUrl = localStorage.getItem('moysklad_proxy');
-            if (!token || !proxyUrl) {
-                alert('Токен или URL прокси не найден.');
-                location.reload();
-                return;
-            }
-
+            if (!token) { location.reload(); return; }
             document.getElementById('token-input').value = token;
-            document.getElementById('proxy-input').value = proxyUrl;
-
+            document.getElementById('loading-overlay').classList.remove('hidden');
             try {
-                showLoading('Обновляем данные...', '');
                 const data = await syncAllData(token);
-                allSales = data.sales || [];
-                productsCount = data.products_count || 0;
-                salesByType = data.sales_by_type || {};
-                hideLoading();
+                allSales = data.sales; productsCount = data.products_count; salesByType = data.sales_by_type;
+                document.getElementById('loading-overlay').classList.add('hidden');
                 displayDashboard();
-            } catch (error) {
-                hideLoading();
-                alert('Ошибка обновления: ' + error.message);
+            } catch (e) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                alert('Ошибка: ' + e.message);
             }
         }
 
-        // ================== АВТОЗАГРУЗКА ==================
-
         window.addEventListener('load', () => {
             const savedToken = localStorage.getItem('moysklad_token');
-            const savedProxy = localStorage.getItem('moysklad_proxy');
-            if (savedToken) {
-                document.getElementById('token-input').value = savedToken;
-            }
-            if (savedProxy) {
-                document.getElementById('proxy-input').value = savedProxy;
-            }
+            if (savedToken) document.getElementById('token-input').value = savedToken;
         });
     </script>
 </body>
