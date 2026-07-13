@@ -496,72 +496,156 @@
             }
         }
 
-        async function syncAllData(token) {
-            const headers = prepareAuthHeaders(token);
-            const period = currentPeriod;
+    async function syncAllData(token) {
+    const headers = prepareAuthHeaders(token);
+    const period = currentPeriod;
 
-            // Загрузка товаров
-            const products = await loadProducts(headers);
+    console.log('=== НАЧАЛО СИНХРОНИЗАЦИИ ===');
+    console.log('Период:', period, 'дней');
 
-            // Даты
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - period);
-            const dateFrom = startDate.toISOString().split('T')[0] + ' 00:00:00';
+    // Загрузка товаров
+    console.log('1. Загружаем товары...');
+    const products = await loadProducts(headers);
+    console.log('   Товаров загружено:', Object.keys(products).length);
 
-            // Загрузка розничных продаж
-            console.log(`Загружаем розничные продажи с ${dateFrom}...`);
-            const retailDocs = await fetchAllPages(
-                'https://api.moysklad.ru/api/remap/1.2/entity/retaildemand',
-                headers,
-                `moment>=${dateFrom}`
-            );
+    // Даты
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - period);
+    const dateFrom = startDate.toISOString().split('T')[0] + ' 00:00:00';
+    console.log('2. Период с:', dateFrom);
 
-            console.log(`Найдено документов: ${retailDocs.length}`);
+    // Загрузка розничных продаж
+    console.log('3. Загружаем retaildemand...');
+    const retailDocs = await fetchAllPages(
+        'retaildemand',
+        headers,
+        `moment>=${dateFrom}`
+    );
+    console.log('   Найдено retaildemand:', retailDocs.length);
 
-            // Обработка документов
-            const finalSales = [];
-            const productStats = {};
-            let totalRevenue = 0;
-            let totalCogs = 0;
+    // Если retaildemand нет, пробуем demand
+    let allDocs = retailDocs;
+    if (retailDocs.length === 0) {
+        console.log('4. retaildemand не найдено, пробуем demand...');
+        const demandDocs = await fetchAllPages(
+            'demand',
+            headers,
+            `moment>=${dateFrom}`
+        );
+        console.log('   Найдено demand:', demandDocs.length);
+        allDocs = demandDocs;
+    }
 
-            // Загружаем позиции только для первых 200 документов
-            const docsToFetch = retailDocs.slice(0, 200);
-            const positionPromises = [];
+    // Если и demand нет, пробуем customerorder
+    if (allDocs.length === 0) {
+        console.log('5. demand не найдено, пробуем customerorder...');
+        const orderDocs = await fetchAllPages(
+            'customerorder',
+            headers,
+            `moment>=${dateFrom}`
+        );
+        console.log('   Найдено customerorder:', orderDocs.length);
+        allDocs = orderDocs;
+    }
 
-            for (const doc of retailDocs) {
-                const docSum = doc.sum || 0;
-                const docMoment = doc.moment || '';
+    console.log('6. Всего документов:', allDocs.length);
 
-                if (docSum === 0 || !docMoment) continue;
+    if (allDocs.length === 0) {
+        console.warn('ВНИМАНИЕ: Документы не найдены за период!');
+        console.warn('Попробуйте увеличить период или проверить наличие продаж в МойСклад');
+    }
 
-                const dateIso = docMoment.split('T')[0] || docMoment.split(' ')[0];
-                const revenue = docSum / 100;
-                totalRevenue += revenue;
+    // Обработка документов
+    const finalSales = [];
+    const productStats = {};
+    let totalRevenue = 0;
+    let totalCogs = 0;
 
-                const saleRecord = {
-                    id: doc.id,
-                    name: doc.name || '',
-                    type: 'retaildemand',
-                    date: dateIso,
-                    moment: docMoment,
-                    revenue,
-                    positions: []
-                };
-                finalSales.push(saleRecord);
+    // Загружаем позиции для первых 200 документов
+    const docsToFetch = allDocs.slice(0, 200);
+    console.log('7. Загружаем позиции для', docsToFetch.length, 'документов...');
 
-                if (docsToFetch.includes(doc)) {
-                    const positionsUrl = doc.positions?.meta?.href;
-                    if (positionsUrl) {
-                        positionPromises.push(
-                            fetchPositions(positionsUrl, headers, products).then(positions => {
-                                saleRecord.positions = positions;
-                                return positions;
-                            })
-                        );
-                    }
-                }
+    const positionPromises = [];
+
+    for (const doc of allDocs) {
+        const docSum = doc.sum || 0;
+        const docMoment = doc.moment || '';
+
+        if (docSum === 0 || !docMoment) continue;
+
+        const dateIso = docMoment.split('T')[0] || docMoment.split(' ')[0];
+        const revenue = docSum / 100;
+        totalRevenue += revenue;
+
+        const saleRecord = {
+            id: doc.id,
+            name: doc.name || '',
+            type: doc.type || 'unknown',
+            date: dateIso,
+            moment: docMoment,
+            revenue,
+            positions: []
+        };
+        finalSales.push(saleRecord);
+
+        if (docsToFetch.includes(doc)) {
+            const positionsUrl = doc.positions?.meta?.href;
+            if (positionsUrl) {
+                positionPromises.push(
+                    fetchPositions(positionsUrl, headers, products).then(positions => {
+                        saleRecord.positions = positions;
+                        console.log('   Позиций для', doc.name || doc.id, ':', positions.length);
+                        return positions;
+                    })
+                );
+            } else {
+                console.warn('   У документа', doc.name || doc.id, 'нет URL позиций');
             }
+        }
+    }
+
+    // Ждём загрузки всех позиций
+    console.log('8. Ожидаем загрузку позиций...');
+    await Promise.all(positionPromises);
+
+    // Агрегируем данные
+    console.log('9. Агрегируем данные...');
+    for (const sale of finalSales) {
+        for (const pos of sale.positions) {
+            totalCogs += pos.cogs;
+            const pid = pos.product_id;
+            if (!productStats[pid]) {
+                productStats[pid] = { name: pos.name, quantity: 0, revenue: 0, profit: 0 };
+            }
+            productStats[pid].quantity += pos.quantity;
+            productStats[pid].revenue += pos.revenue;
+            productStats[pid].profit += pos.profit;
+        }
+    }
+
+    finalSales.sort((a, b) => b.moment.localeCompare(a.moment));
+
+    const profit = totalRevenue - totalCogs;
+    const margin = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0;
+
+    console.log('=== ИТОГИ ===');
+    console.log('Выручка:', totalRevenue);
+    console.log('Себестоимость:', totalCogs);
+    console.log('Прибыль:', profit);
+    console.log('Маржа:', margin, '%');
+    console.log('Продаж:', finalSales.length);
+    console.log('Топ товаров:', Object.keys(productStats).length);
+
+    return {
+        sales: finalSales,
+        products_count: Object.keys(products).length,
+        sales_by_type: { 
+            retaildemand: retailDocs.length,
+            demand: allDocs === retailDocs ? 0 : allDocs.length
+        }
+    };
+}
 
             // Ждём загрузки всех позиций
             console.log(`Загружаем детализацию для ${positionPromises.length} чеков...`);
