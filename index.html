@@ -19,9 +19,9 @@
         .nav-item-mobile.active { color: #60a5fa; }
         .nav-item-mobile.active svg { stroke: #60a5fa; }
 
-        .btn-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s; }
-        .btn-gradient:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); }
-        .btn-gradient:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
@@ -39,26 +39,29 @@
         .data-table td { padding: 12px; border-bottom: 1px solid #1e293b; font-size: 0.875rem; }
         .data-table tr:hover td { background: rgba(59, 130, 246, 0.05); }
 
-        /* Дерево категорий */
+        .period-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+        .period-btn { padding: 8px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #94a3b8; font-size: 0.875rem; transition: all 0.2s; }
+        .period-btn:hover { background: #334155; color: #f8fafc; }
+        .period-btn.active { background: #3b82f6; border-color: #3b82f6; color: white; }
+        
+        .metric-card { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 20px; transition: all 0.3s; }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+
         .tree-node { margin-left: 0; }
         .tree-node .tree-children { margin-left: 20px; border-left: 2px solid #334155; padding-left: 12px; }
         .tree-node .tree-children.expanded { display: block; }
         .tree-node .tree-children:not(.expanded) { display: none; }
-        
         .tree-header { cursor: pointer; user-select: none; transition: all 0.2s; }
         .tree-header:hover { background: rgba(59, 130, 246, 0.1); }
         .tree-icon { transition: transform 0.2s; }
         .tree-icon.rotated { transform: rotate(90deg); }
-        
-        .product-row { background: rgba(15, 23, 42, 0.3); }
-        .product-row:hover { background: rgba(59, 130, 246, 0.1); }
     </style>
 </head>
 <body class="gradient-bg text-white h-screen flex overflow-hidden">
 
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="spinner mb-4"></div>
-        <div id="loading-text" class="text-lg text-gray-300 font-medium">Загрузка данных...</div>
+        <div id="loading-text" class="text-lg text-gray-300 font-medium">Загрузка...</div>
         <div id="loading-details" class="text-sm text-gray-500 mt-2"></div>
     </div>
 
@@ -66,30 +69,42 @@
     <aside class="hidden md:flex flex-col w-64 border-r border-gray-800 bg-slate-900/50">
         <div class="p-6 border-b border-gray-800">
             <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Profit Analyzer</h1>
-            <p class="text-xs text-gray-500 mt-1">Pro версия</p>
+            <p class="text-xs text-gray-500 mt-1">Аналитика для ИП</p>
         </div>
         <nav class="flex-1 py-4 space-y-1">
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                Главная
+            <button onclick="switchView('overview')" id="nav-overview" class="nav-item active w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Обзор бизнеса
+            </button>
+            <button onclick="switchView('top-products')" id="nav-top-products" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                Топ товаров
             </button>
             <button onclick="switchView('categories')" id="nav-categories" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                Дерево категорий
+                Категории
             </button>
-            <button onclick="switchView('products')" id="nav-products" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                Все товары (ABC)
+            <button onclick="switchView('dynamics')" id="nav-dynamics" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                Динамика продаж
             </button>
-            <button onclick="switchView('sales')" id="nav-sales" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
+            <button onclick="switchView('margins')" id="nav-margins" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                Маржинальность
+            </button>
+            <button onclick="switchView('comparison')" id="nav-comparison" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Сравнение периодов
+            </button>
+            <button onclick="switchView('sales-log')" id="nav-sales-log" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                 Журнал продаж
             </button>
         </nav>
         <div class="p-4 border-t border-gray-800">
-            <button onclick="clearCacheAndReload()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-red-400 bg-red-900/20 rounded-lg hover:bg-red-900/40 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                Сбросить кэш
+            <button onclick="showConnectionForm()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-blue-400 bg-blue-900/20 rounded-lg hover:bg-blue-900/40 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Настройки подключения
             </button>
         </div>
     </aside>
@@ -97,14 +112,15 @@
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         <div class="md:hidden flex items-center justify-between p-4 border-b border-gray-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
             <h1 class="text-lg font-bold text-blue-400">Profit Analyzer</h1>
-            <button onclick="clearCacheAndReload()" class="p-2 text-gray-400 hover:text-red-400">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <button onclick="showConnectionForm()" class="p-2 text-gray-400 hover:text-blue-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </button>
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8" id="main-content">
             
-            <div id="view-login" class="view-section active max-w-md mx-auto mt-10">
+            <!-- Форма подключения -->
+            <div id="view-connection" class="view-section active max-w-md mx-auto mt-10">
                 <div class="glass rounded-2xl p-8 animate-fade-in">
                     <h2 class="text-2xl font-bold mb-6 text-center">Подключение к МойСклад</h2>
                     <div class="space-y-4">
@@ -112,96 +128,201 @@
                             <label class="block text-sm font-medium mb-2 text-gray-300">Токен API</label>
                             <input type="text" id="token-input" placeholder="Вставьте токен" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2 text-gray-300">Период по умолчанию</label>
-                            <select id="period-select" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
-                                <option value="30">30 дней</option>
-                                <option value="90" selected>90 дней</option>
-                                <option value="365">1 год</option>
-                                <option value="0">Все время</option>
-                            </select>
-                        </div>
-                        <button id="connect-btn" onclick="connectToMoySklad()" class="w-full btn-gradient text-white font-semibold py-3 px-6 rounded-xl mt-4">
-                            Подключить и загрузить
+                        <button id="connect-btn" onclick="connectToMoySklad()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl">
+                            Подключить
                         </button>
                         <div id="connection-status" class="hidden text-center text-sm mt-2"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 1. ГЛАВНАЯ -->
-            <div id="view-dashboard" class="view-section space-y-6">
-                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <!-- 1. ОБЗОР БИЗНЕСА -->
+            <div id="view-overview" class="view-section space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h2 class="text-2xl font-bold">Обзор бизнеса</h2>
-                    <div class="flex gap-2">
-                        <button onclick="setPeriod(30)" class="period-btn px-3 py-1.5 bg-slate-800 rounded-lg text-xs font-medium border border-slate-700" data-period="30">30 дн.</button>
-                        <button onclick="setPeriod(90)" class="period-btn px-3 py-1.5 bg-slate-800 rounded-lg text-xs font-medium border border-slate-700 active" data-period="90">90 дн.</button>
-                        <button onclick="setPeriod(365)" class="period-btn px-3 py-1.5 bg-slate-800 rounded-lg text-xs font-medium border border-slate-700" data-period="365">Год</button>
-                    </div>
+                    <div class="period-selector" id="period-overview"></div>
                 </div>
 
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-gray-400 text-xs font-medium uppercase mb-1">Выручка</div>
-                        <div id="metric-revenue" class="text-2xl lg:text-3xl font-bold text-green-400">0</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-gray-400 text-xs font-medium uppercase mb-1">Прибыль</div>
-                        <div id="metric-profit" class="text-2xl lg:text-3xl font-bold text-blue-400">0</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-gray-400 text-xs font-medium uppercase mb-1">Маржа</div>
-                        <div id="metric-margin" class="text-2xl lg:text-3xl font-bold text-yellow-400">0%</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-gray-400 text-xs font-medium uppercase mb-1">Средний чек</div>
-                        <div id="metric-avg-check" class="text-2xl lg:text-3xl font-bold text-purple-400">0</div>
-                    </div>
-                </div>
+                <button onclick="calculateOverview()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
+                    Рассчитать показатели
+                </button>
 
-                <div class="glass rounded-xl p-6">
-                    <h3 class="text-lg font-bold mb-4">Динамика выручки и прибыли</h3>
-                    <canvas id="main-chart" height="100"></canvas>
+                <div id="overview-results" class="hidden space-y-6">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="metric-card">
+                            <div class="text-gray-400 text-xs font-medium uppercase mb-2">Выручка</div>
+                            <div id="metric-revenue" class="text-2xl lg:text-3xl font-bold text-green-400">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="text-gray-400 text-xs font-medium uppercase mb-2">Прибыль</div>
+                            <div id="metric-profit" class="text-2xl lg:text-3xl font-bold text-blue-400">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="text-gray-400 text-xs font-medium uppercase mb-2">Маржа</div>
+                            <div id="metric-margin" class="text-2xl lg:text-3xl font-bold text-yellow-400">0%</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="text-gray-400 text-xs font-medium uppercase mb-2">Средний чек</div>
+                            <div id="metric-avg-check" class="text-2xl lg:text-3xl font-bold text-purple-400">0</div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Динамика по дням</h3>
+                        <canvas id="overview-chart" height="100"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- 2. ДЕРЕВО КАТЕГОРИЙ С ТОВАРАМИ -->
-            <div id="view-categories" class="view-section space-y-6">
+            <!-- 2. ТОП ТОВАРОВ -->
+            <div id="view-top-products" class="view-section space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h2 class="text-2xl font-bold">Дерево категорий и товаров</h2>
-                    <button onclick="expandAllCategories()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition">
-                        Развернуть всё
-                    </button>
+                    <h2 class="text-2xl font-bold">Топ товаров</h2>
+                    <div class="period-selector" id="period-top-products"></div>
                 </div>
-                <div class="glass rounded-xl p-6">
-                    <div id="category-tree"></div>
-                </div>
-            </div>
 
-            <!-- 3. ТОВАРЫ (ABC) -->
-            <div id="view-products" class="view-section space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h2 class="text-2xl font-bold">Детализация по товарам</h2>
-                    <input type="text" id="product-search" placeholder="Поиск товара..." oninput="renderProductTable()" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64">
+                <div class="flex gap-2 mb-4">
+                    <button onclick="setTopMetric('profit')" id="top-metric-profit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">По прибыли</button>
+                    <button onclick="setTopMetric('revenue')" id="top-metric-revenue" class="px-4 py-2 bg-slate-800 text-gray-400 rounded-lg text-sm font-medium">По выручке</button>
+                    <button onclick="setTopMetric('quantity')" id="top-metric-quantity" class="px-4 py-2 bg-slate-800 text-gray-400 rounded-lg text-sm font-medium">По количеству</button>
                 </div>
-                <div class="glass rounded-xl overflow-x-auto">
-                    <table class="data-table min-w-[800px]">
-                        <thead><tr><th>ABC</th><th>Товар</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Маржа %</th></tr></thead>
-                        <tbody id="product-table-body"></tbody>
+
+                <button onclick="calculateTopProducts()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
+                    Рассчитать топ
+                </button>
+
+                <div id="top-products-results" class="hidden glass rounded-xl overflow-x-auto">
+                    <table class="data-table min-w-[600px]">
+                        <thead><tr><th>#</th><th>Товар</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Маржа</th></tr></thead>
+                        <tbody id="top-products-table"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- 4. ЖУРНАЛ ПРОДАЖ -->
-            <div id="view-sales" class="view-section space-y-6">
+            <!-- 3. КАТЕГОРИИ -->
+            <div id="view-categories" class="view-section space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h2 class="text-2xl font-bold">Журнал операций</h2>
-                    <input type="text" id="sales-search" placeholder="Поиск по номеру или сумме..." oninput="renderSalesLog()" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64">
+                    <h2 class="text-2xl font-bold">Анализ по категориям</h2>
+                    <div class="period-selector" id="period-categories"></div>
                 </div>
-                <div class="glass rounded-xl overflow-x-auto">
+
+                <button onclick="calculateCategories()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
+                    Рассчитать по категориям
+                </button>
+
+                <div id="categories-results" class="hidden glass rounded-xl p-6">
+                    <div id="category-tree"></div>
+                </div>
+            </div>
+
+            <!-- 4. ДИНАМИКА ПРОДАЖ -->
+            <div id="view-dynamics" class="view-section space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Динамика продаж</h2>
+                    <div class="period-selector" id="period-dynamics"></div>
+                </div>
+
+                <button onclick="calculateDynamics()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
+                    Построить график
+                </button>
+
+                <div id="dynamics-results" class="hidden space-y-6">
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Выручка и прибыль по дням</h3>
+                        <canvas id="dynamics-chart" height="100"></canvas>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="metric-card">
+                            <div class="text-gray-400 text-xs font-medium uppercase mb-2">Лучший день</div>
+                            <div id="best-day" class="text-lg font-bold text-green-400">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="text-gray-400 text-xs font-medium uppercase mb-2">Худший день</div>
+                            <div id="worst-day" class="text-lg font-bold text-red-400">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="text-gray-400 text-xs font-medium uppercase mb-2">Среднее в день</div>
+                            <div id="avg-day" class="text-lg font-bold text-blue-400">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. МАРЖИНАЛЬНОСТЬ -->
+            <div id="view-margins" class="view-section space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Анализ маржинальности</h2>
+                    <div class="period-selector" id="period-margins"></div>
+                </div>
+
+                <button onclick="calculateMargins()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
+                    Рассчитать маржу
+                </button>
+
+                <div id="margins-results" class="hidden space-y-6">
+                    <div class="glass rounded-xl overflow-x-auto">
+                        <h3 class="text-lg font-bold p-6 pb-0">Товары с самой высокой маржой</h3>
+                        <table class="data-table min-w-[600px]">
+                            <thead><tr><th>Товар</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Маржа %</th></tr></thead>
+                            <tbody id="high-margin-table"></tbody>
+                        </table>
+                    </div>
+                    <div class="glass rounded-xl overflow-x-auto">
+                        <h3 class="text-lg font-bold p-6 pb-0 text-red-400">Товары с низкой/отрицательной маржой</h3>
+                        <table class="data-table min-w-[600px]">
+                            <thead><tr><th>Товар</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Маржа %</th></tr></thead>
+                            <tbody id="low-margin-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. СРАВНЕНИЕ ПЕРИОДОВ -->
+            <div id="view-comparison" class="view-section space-y-6">
+                <h2 class="text-2xl font-bold mb-6">Сравнение периодов</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Период 1</h3>
+                        <div class="space-y-3">
+                            <select id="compare-period-1" class="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white">
+                                <option value="7">Последние 7 дней</option>
+                                <option value="30" selected>Последние 30 дней</option>
+                                <option value="90">Последние 90 дней</option>
+                            </select>
+                            <button onclick="calculateComparison()" class="w-full btn-primary text-white font-semibold py-2 px-4 rounded-lg">
+                                Сравнить
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Период 2</h3>
+                        <div id="compare-period-2-info" class="text-gray-400">
+                            Выберите период 1 и нажмите "Сравнить"
+                        </div>
+                    </div>
+                </div>
+
+                <div id="comparison-results" class="hidden glass rounded-xl p-6">
+                    <div id="comparison-content"></div>
+                </div>
+            </div>
+
+            <!-- 7. ЖУРНАЛ ПРОДАЖ -->
+            <div id="view-sales-log" class="view-section space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Журнал продаж</h2>
+                    <div class="period-selector" id="period-sales-log"></div>
+                </div>
+
+                <button onclick="calculateSalesLog()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
+                    Загрузить журнал
+                </button>
+
+                <div id="sales-log-results" class="hidden glass rounded-xl overflow-x-auto">
                     <table class="data-table min-w-[600px]">
-                        <thead><tr><th>Дата</th><th>Документ</th><th class="text-right">Сумма</th></tr></thead>
-                        <tbody id="sales-table-body"></tbody>
+                        <thead><tr><th>Дата</th><th>Документ</th><th class="text-right">Позиций</th><th class="text-right">Сумма</th></tr></thead>
+                        <tbody id="sales-log-table"></tbody>
                     </table>
                 </div>
             </div>
@@ -209,36 +330,37 @@
         </div>
 
         <!-- Нижняя навигация (Мобильная) -->
-        <nav class="md:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur-md border-t border-gray-800 flex justify-around p-2 z-30">
-            <button onclick="switchView('dashboard')" id="mob-nav-dashboard" class="nav-item-mobile active flex flex-col items-center p-2 text-gray-500 text-xs w-1/4">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                Главная
+        <nav class="md:hidden fixed bottom-0 w-full bg-slate-900/95 backdrop-blur-md border-t border-gray-800 flex justify-around p-2 z-30 overflow-x-auto">
+            <button onclick="switchView('overview')" id="mob-nav-overview" class="nav-item-mobile active flex flex-col items-center p-2 text-gray-500 text-xs min-w-[60px]">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Обзор
             </button>
-            <button onclick="switchView('categories')" id="mob-nav-categories" class="nav-item-mobile flex flex-col items-center p-2 text-gray-500 text-xs w-1/4">
+            <button onclick="switchView('top-products')" id="mob-nav-top-products" class="nav-item-mobile flex flex-col items-center p-2 text-gray-500 text-xs min-w-[60px]">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                Топ
+            </button>
+            <button onclick="switchView('categories')" id="mob-nav-categories" class="nav-item-mobile flex flex-col items-center p-2 text-gray-500 text-xs min-w-[60px]">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
                 Категории
             </button>
-            <button onclick="switchView('products')" id="mob-nav-products" class="nav-item-mobile flex flex-col items-center p-2 text-gray-500 text-xs w-1/4">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                Товары
+            <button onclick="switchView('dynamics')" id="mob-nav-dynamics" class="nav-item-mobile flex flex-col items-center p-2 text-gray-500 text-xs min-w-[60px]">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                Динамика
             </button>
-            <button onclick="switchView('sales')" id="mob-nav-sales" class="nav-item-mobile flex flex-col items-center p-2 text-gray-500 text-xs w-1/4">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                Продажи
+            <button onclick="switchView('margins')" id="mob-nav-margins" class="nav-item-mobile flex flex-col items-center p-2 text-gray-500 text-xs min-w-[60px]">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                Маржа
             </button>
         </nav>
     </main>
 
     <script>
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-        let allSales = [];
-        let productsCount = 0;
-        let currentPeriod = 90;
-        let mainChart = null;
-        
-        let globalProductStats = {};
-        let categoryTreeData = {};
+        let authToken = null;
         let productsData = {};
+        let foldersData = {};
+        let allSalesData = [];
+        let currentTopMetric = 'profit';
 
         async function proxyFetch(targetUrl, headers) {
             return await fetch(PROXY_URL, {
@@ -248,8 +370,8 @@
             });
         }
 
-        function prepareAuthHeaders(token) {
-            token = token.trim();
+        function prepareAuthHeaders() {
+            const token = authToken.trim();
             if (token.startsWith("Basic ") || token.startsWith("Bearer ")) return { "Authorization": token };
             if (token.includes("@") && token.includes(":")) return { "Authorization": `Basic ${btoa(token)}` };
             return { "Authorization": `Bearer ${token}` };
@@ -284,21 +406,41 @@
             document.querySelectorAll('.nav-item-mobile').forEach(el => el.classList.remove('active'));
             const mobNavEl = document.getElementById(`mob-nav-${viewName}`);
             if (mobNavEl) mobNavEl.classList.add('active');
-
-            if (viewName === 'categories') renderCategoryTree();
-            if (viewName === 'products') renderProductTable();
-            if (viewName === 'sales') renderSalesLog();
         }
 
-        function setPeriod(days) {
-            currentPeriod = days;
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.toggle('active', parseInt(btn.dataset.period) === days);
-                btn.classList.toggle('bg-blue-600', parseInt(btn.dataset.period) === days);
-                btn.classList.toggle('text-white', parseInt(btn.dataset.period) === days);
-                btn.classList.toggle('border-blue-500', parseInt(btn.dataset.period) === days);
+        function showConnectionForm() {
+            switchView('connection');
+        }
+
+        function createPeriodSelector(containerId, defaultPeriod = 90) {
+            const container = document.getElementById(containerId);
+            const periods = [
+                { days: 7, label: '7 дней' },
+                { days: 30, label: '30 дней' },
+                { days: 90, label: '90 дней' },
+                { days: 365, label: 'Год' }
+            ];
+            
+            container.innerHTML = periods.map(p => `
+                <button onclick="selectPeriod('${containerId}', ${p.days})" 
+                        class="period-btn ${p.days === defaultPeriod ? 'active' : ''}" 
+                        data-days="${p.days}">
+                    ${p.label}
+                </button>
+            `).join('');
+        }
+
+        function selectPeriod(containerId, days) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.days) === days);
             });
-            recalculateDashboard();
+        }
+
+        function getSelectedPeriod(containerId) {
+            const container = document.getElementById(containerId);
+            const activeBtn = container.querySelector('.period-btn.active');
+            return activeBtn ? parseInt(activeBtn.dataset.days) : 90;
         }
 
         async function fetchAllPages(baseEndpoint, headers, filterStr = '') {
@@ -405,27 +547,23 @@
             document.getElementById('loading-text').textContent = 'Подключение к МойСклад...';
 
             try {
-                const headers = prepareAuthHeaders(token);
+                authToken = token;
+                const headers = prepareAuthHeaders();
                 const res = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', headers);
                 if (!res.ok) throw new Error(`Ошибка ${res.status}: ${await res.text()}`);
 
                 document.getElementById('loading-text').textContent = 'Загрузка товаров и категорий...';
-                const products = await loadProducts(headers);
-                productsData = products;
-                productsCount = Object.keys(products).length;
-                
-                const folders = await loadFolders(headers);
-
-                document.getElementById('loading-text').textContent = 'Анализ продаж...';
-                currentPeriod = parseInt(document.getElementById('period-select').value);
-                await syncAllData(token, headers, products, folders);
+                productsData = await loadProducts(headers);
+                foldersData = await loadFolders(headers);
 
                 localStorage.setItem('moysklad_token', token);
                 document.getElementById('loading-overlay').classList.add('hidden');
                 
-                document.getElementById('view-login').classList.remove('active');
-                switchView('dashboard');
-                recalculateDashboard();
+                statusDiv.textContent = 'Подключено успешно!';
+                statusDiv.className = 'text-green-400 mt-2';
+                statusDiv.classList.remove('hidden');
+                
+                setTimeout(() => switchView('overview'), 1000);
 
             } catch (error) {
                 document.getElementById('loading-overlay').classList.add('hidden');
@@ -433,28 +571,26 @@
                 statusDiv.className = 'text-red-400 mt-2';
                 statusDiv.classList.remove('hidden');
                 btn.disabled = false;
-                btn.textContent = 'Подключить и загрузить';
+                btn.textContent = 'Подключить';
             }
         }
 
-        async function syncAllData(token, headers, products, folders) {
+        async function loadSalesForPeriod(periodDays) {
+            const headers = prepareAuthHeaders();
             const startDate = new Date();
-            startDate.setDate(startDate.getDate() - currentPeriod);
-            const dateFrom = currentPeriod === 0 ? '' : startDate.toISOString().split('T')[0];
-            const filterStr = currentPeriod === 0 ? '' : `moment>=${dateFrom}`;
+            startDate.setDate(startDate.getDate() - periodDays);
+            const dateFrom = startDate.toISOString().split('T')[0];
+            const filterStr = `moment>=${dateFrom}`;
 
             let allDocs = await fetchAllPages('retaildemand', headers, filterStr);
-            if (allDocs.length === 0 && currentPeriod !== 0) {
+            if (allDocs.length === 0) {
                 allDocs = await fetchAllPages('demand', headers, filterStr);
             }
-            if (allDocs.length === 0 && currentPeriod !== 0) {
+            if (allDocs.length === 0) {
                 allDocs = await fetchAllPages('customerorder', headers, filterStr);
             }
 
-            globalProductStats = {};
-            allSales = [];
-            
-            const docsToFetch = new Set(allDocs.map(d => d.id));
+            const sales = [];
             const promises = [];
 
             for (const doc of allDocs) {
@@ -463,287 +599,427 @@
                     id: doc.id, name: doc.name || 'Б/Н', date: doc.moment.split('T')[0],
                     moment: doc.moment, revenue: doc.sum / 100, positions: []
                 };
-                allSales.push(sale);
+                sales.push(sale);
 
-                if (docsToFetch.has(doc.id) && doc.positions?.meta?.href) {
-                    promises.push(fetchPositions(doc.positions.meta.href, headers, products).then(pos => {
+                if (doc.positions?.meta?.href) {
+                    promises.push(fetchPositions(doc.positions.meta.href, headers, productsData).then(pos => {
                         sale.positions = pos;
                     }));
                 }
             }
 
             await Promise.all(promises);
-
-            for (const sale of allSales) {
-                for (const pos of sale.positions) {
-                    if (!globalProductStats[pos.product_id]) {
-                        globalProductStats[pos.product_id] = {
-                            name: pos.name,
-                            parentFolderId: pos.parentFolderId,
-                            quantity: 0, revenue: 0, cogs: 0, profit: 0
-                        };
-                    }
-                    globalProductStats[pos.product_id].quantity += pos.quantity;
-                    globalProductStats[pos.product_id].revenue += pos.revenue;
-                    globalProductStats[pos.product_id].cogs += pos.cogs;
-                    globalProductStats[pos.product_id].profit += pos.profit;
-                }
-            }
-            
-            allSales.sort((a, b) => b.moment.localeCompare(a.moment));
-            
-            buildCategoryTree(folders);
+            return sales.sort((a, b) => b.moment.localeCompare(a.moment));
         }
 
-        function buildCategoryTree(folders) {
-            categoryTreeData = {};
-            
-            // Создаём узлы для всех папок
-            for (const folderId in folders) {
-                const folder = folders[folderId];
-                categoryTreeData[folderId] = {
-                    id: folderId,
-                    name: folder.name,
-                    parentId: folder.parentId,
-                    children: [],
-                    products: [],
-                    quantity: 0, revenue: 0, cogs: 0, profit: 0
-                };
-            }
+        // ================== РАСЧЁТЫ ==================
 
-            // Добавляем товары в их папки
-            for (const productId in globalProductStats) {
-                const product = globalProductStats[productId];
-                const folderId = product.parentFolderId;
+        async function calculateOverview() {
+            const period = getSelectedPeriod('period-overview');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = `Расчёт за ${period} дней...`;
+
+            try {
+                const sales = await loadSalesForPeriod(period);
                 
-                if (folderId && categoryTreeData[folderId]) {
-                    categoryTreeData[folderId].products.push({
-                        id: productId,
-                        name: product.name,
-                        quantity: product.quantity,
-                        revenue: product.revenue,
-                        cogs: product.cogs,
-                        profit: product.profit
-                    });
+                let rev = 0, cogs = 0;
+                const byDate = {};
+                
+                for (const s of sales) {
+                    rev += s.revenue;
+                    if (!byDate[s.date]) byDate[s.date] = { rev: 0, profit: 0 };
+                    byDate[s.date].rev += s.revenue;
                     
-                    // Агрегируем статистику папки
-                    const cat = categoryTreeData[folderId];
-                    cat.quantity += product.quantity;
-                    cat.revenue += product.revenue;
-                    cat.cogs += product.cogs;
-                    cat.profit += product.profit;
-                }
-            }
-
-            // Строим иерархию: добавляем дочерние папки к родительским
-            for (const folderId in categoryTreeData) {
-                const folder = categoryTreeData[folderId];
-                if (folder.parentId && categoryTreeData[folder.parentId]) {
-                    categoryTreeData[folder.parentId].children.push(folder);
-                }
-            }
-        }
-
-        function recalculateDashboard() {
-            const cutoff = currentPeriod === 0 ? '' : new Date(Date.now() - currentPeriod * 86400000).toISOString().split('T')[0];
-            const filtered = currentPeriod === 0 ? allSales : allSales.filter(s => s.date >= cutoff);
-
-            let rev = 0, cogs = 0;
-            for (const s of filtered) {
-                rev += s.revenue;
-                for (const p of s.positions) cogs += p.cogs;
-            }
-            const profit = rev - cogs;
-            const margin = rev > 0 ? (profit / rev * 100) : 0;
-            const avg = filtered.length > 0 ? rev / filtered.length : 0;
-
-            animateCountUp(document.getElementById('metric-revenue'), rev);
-            animateCountUp(document.getElementById('metric-profit'), profit);
-            animateCountUp(document.getElementById('metric-margin'), margin, 1000, '%');
-            animateCountUp(document.getElementById('metric-avg-check'), avg);
-
-            renderMainChart(filtered);
-        }
-
-        function renderMainChart(sales) {
-            const byDate = {};
-            for (const s of sales) {
-                if (!byDate[s.date]) byDate[s.date] = { rev: 0, profit: 0 };
-                byDate[s.date].rev += s.revenue;
-                for (const p of s.positions) byDate[s.date].profit += p.profit;
-            }
-            const dates = Object.keys(byDate).sort().slice(-30);
-            
-            if (mainChart) mainChart.destroy();
-            mainChart = new Chart(document.getElementById('main-chart'), {
-                type: 'line',
-                data: {
-                    labels: dates.map(d => d.slice(5)),
-                    datasets: [
-                        { label: 'Выручка', data: dates.map(d => byDate[d].rev), borderColor: '#4ade80', backgroundColor: 'rgba(74, 222, 128, 0.1)', fill: true, tension: 0.4 },
-                        { label: 'Прибыль', data: dates.map(d => byDate[d].profit), borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.1)', fill: true, tension: 0.4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { labels: { color: '#94a3b8' } } },
-                    scales: {
-                        y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
-                        x: { ticks: { color: '#64748b' }, grid: { display: false } }
+                    for (const p of s.positions) {
+                        cogs += p.cogs;
+                        byDate[s.date].profit += p.profit;
                     }
+                }
+                
+                const profit = rev - cogs;
+                const margin = rev > 0 ? (profit / rev * 100) : 0;
+                const avg = sales.length > 0 ? rev / sales.length : 0;
+
+                animateCountUp(document.getElementById('metric-revenue'), rev);
+                animateCountUp(document.getElementById('metric-profit'), profit);
+                animateCountUp(document.getElementById('metric-margin'), margin, 1000, '%');
+                animateCountUp(document.getElementById('metric-avg-check'), avg);
+
+                const dates = Object.keys(byDate).sort().slice(-30);
+                const chart = document.getElementById('overview-chart');
+                if (window.overviewChartInstance) window.overviewChartInstance.destroy();
+                window.overviewChartInstance = new Chart(chart, {
+                    type: 'line',
+                    data: {
+                        labels: dates.map(d => d.slice(5)),
+                        datasets: [
+                            { label: 'Выручка', data: dates.map(d => byDate[d].rev), borderColor: '#4ade80', backgroundColor: 'rgba(74, 222, 128, 0.1)', fill: true, tension: 0.4 },
+                            { label: 'Прибыль', data: dates.map(d => byDate[d].profit), borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.1)', fill: true, tension: 0.4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { labels: { color: '#94a3b8' } } },
+                        scales: {
+                            y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
+                            x: { ticks: { color: '#64748b' }, grid: { display: false } }
+                        }
+                    }
+                });
+
+                document.getElementById('overview-results').classList.remove('hidden');
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        }
+
+        function setTopMetric(metric) {
+            currentTopMetric = metric;
+            ['profit', 'revenue', 'quantity'].forEach(m => {
+                const btn = document.getElementById(`top-metric-${m}`);
+                if (m === metric) {
+                    btn.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium';
+                } else {
+                    btn.className = 'px-4 py-2 bg-slate-800 text-gray-400 rounded-lg text-sm font-medium';
                 }
             });
         }
 
-        function renderCategoryTree() {
-            const treeDiv = document.getElementById('category-tree');
-            
-            const rootFolders = Object.values(categoryTreeData).filter(f => !f.parentId);
-            
-            if (rootFolders.length === 0) {
-                treeDiv.innerHTML = '<p class="text-gray-500 text-center py-8">Категории не найдены</p>';
-                return;
-            }
+        async function calculateTopProducts() {
+            const period = getSelectedPeriod('period-top-products');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = `Расчёт топ товаров за ${period} дней...`;
 
-            const html = rootFolders
-                .sort((a, b) => b.profit - a.profit)
-                .map(folder => renderFolderNode(folder))
-                .join('');
-            treeDiv.innerHTML = html;
+            try {
+                const sales = await loadSalesForPeriod(period);
+                const productStats = {};
+                
+                for (const s of sales) {
+                    for (const p of s.positions) {
+                        if (!productStats[p.product_id]) {
+                            productStats[p.product_id] = { name: p.name, quantity: 0, revenue: 0, cogs: 0, profit: 0 };
+                        }
+                        productStats[p.product_id].quantity += p.quantity;
+                        productStats[p.product_id].revenue += p.revenue;
+                        productStats[p.product_id].cogs += p.cogs;
+                        productStats[p.product_id].profit += p.profit;
+                    }
+                }
+
+                const products = Object.values(productStats).sort((a, b) => b[currentTopMetric] - a[currentTopMetric]).slice(0, 50);
+                
+                document.getElementById('top-products-table').innerHTML = products.map((p, i) => {
+                    const m = p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : 0;
+                    return `<tr>
+                        <td class="font-bold text-gray-400">${i + 1}</td>
+                        <td class="text-white"><div class="font-medium">${p.name}</div></td>
+                        <td class="text-right text-gray-300">${formatNumber(p.quantity)}</td>
+                        <td class="text-right text-green-400">${formatMoney(p.revenue)}</td>
+                        <td class="text-right text-blue-400 font-medium">${formatMoney(p.profit)}</td>
+                        <td class="text-right text-yellow-400">${m}%</td>
+                    </tr>`;
+                }).join('');
+
+                document.getElementById('top-products-results').classList.remove('hidden');
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
         }
 
-        function renderFolderNode(folder) {
-            const hasChildren = folder.children.length > 0;
-            const hasProducts = folder.products.length > 0;
-            const marginPercent = folder.revenue > 0 ? ((folder.profit / folder.revenue) * 100).toFixed(1) : 0;
-            
-            const childrenHtml = folder.children
-                .sort((a, b) => b.profit - a.profit)
-                .map(child => renderFolderNode(child))
-                .join('');
+        async function calculateCategories() {
+            const period = getSelectedPeriod('period-categories');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = `Расчёт по категориям за ${period} дней...`;
 
-            const productsHtml = folder.products
-                .sort((a, b) => b.profit - a.profit)
-                .map(product => {
-                    const pMargin = product.revenue > 0 ? ((product.profit / product.revenue) * 100).toFixed(1) : 0;
+            try {
+                const sales = await loadSalesForPeriod(period);
+                const categoryStats = {};
+                
+                for (const s of sales) {
+                    for (const p of s.positions) {
+                        const folderId = p.parentFolderId;
+                        if (!folderId || !foldersData[folderId]) continue;
+                        
+                        const folderName = foldersData[folderId].name;
+                        if (!categoryStats[folderName]) {
+                            categoryStats[folderName] = { quantity: 0, revenue: 0, cogs: 0, profit: 0, products: new Set() };
+                        }
+                        categoryStats[folderName].quantity += p.quantity;
+                        categoryStats[folderName].revenue += p.revenue;
+                        categoryStats[folderName].cogs += p.cogs;
+                        categoryStats[folderName].profit += p.profit;
+                        categoryStats[folderName].products.add(p.product_id);
+                    }
+                }
+
+                const categories = Object.entries(categoryStats)
+                    .map(([name, data]) => ({ name, ...data, productCount: data.products.size }))
+                    .sort((a, b) => b.profit - a.profit);
+
+                document.getElementById('category-tree').innerHTML = categories.map(cat => {
+                    const m = cat.revenue > 0 ? ((cat.profit / cat.revenue) * 100).toFixed(1) : 0;
                     return `
-                        <div class="product-row flex items-center justify-between p-3 ml-8 border-l-2 border-slate-700">
-                            <div class="flex items-center gap-3 flex-1 min-w-0">
-                                <svg class="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-sm text-gray-300 truncate">${product.name}</div>
-                                    <div class="text-xs text-gray-600">${formatNumber(product.quantity)} шт</div>
-                                </div>
+                        <div class="flex items-center justify-between p-4 border-b border-slate-800 last:border-b-0">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-white truncate">${cat.name}</div>
+                                <div class="text-xs text-gray-500">${cat.productCount} товаров · ${formatNumber(cat.quantity)} шт</div>
                             </div>
                             <div class="text-right flex-shrink-0 ml-4">
-                                <div class="text-sm font-medium text-green-400">${formatMoney(product.revenue)}</div>
-                                <div class="text-xs text-blue-400">${formatMoney(product.profit)} (${pMargin}%)</div>
+                                <div class="text-sm font-bold text-green-400">${formatMoney(cat.revenue)}</div>
+                                <div class="text-xs text-blue-400">${formatMoney(cat.profit)} (${m}%)</div>
                             </div>
                         </div>
                     `;
-                }).join('');
+                }).join('') || '<p class="text-gray-500 text-center py-8">Нет данных</p>';
 
-            return `
-                <div class="tree-node mb-2">
-                    <div class="tree-header flex items-center justify-between p-3 rounded-lg" onclick="toggleTree(this)">
-                        <div class="flex items-center gap-3 flex-1 min-w-0">
-                            ${hasChildren ? '<svg class="w-4 h-4 text-gray-500 tree-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>' : '<span class="w-4"></span>'}
-                            <div class="flex-1 min-w-0">
-                                <div class="font-medium text-white truncate">${folder.name}</div>
-                                <div class="text-xs text-gray-500">${folder.products.length} товаров · ${formatNumber(folder.quantity)} шт продано</div>
+                document.getElementById('categories-results').classList.remove('hidden');
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        }
+
+        async function calculateDynamics() {
+            const period = getSelectedPeriod('period-dynamics');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = `Построение графика за ${period} дней...`;
+
+            try {
+                const sales = await loadSalesForPeriod(period);
+                const byDate = {};
+                
+                for (const s of sales) {
+                    if (!byDate[s.date]) byDate[s.date] = { rev: 0, profit: 0, count: 0 };
+                    byDate[s.date].rev += s.revenue;
+                    byDate[s.date].count++;
+                    for (const p of s.positions) byDate[s.date].profit += p.profit;
+                }
+
+                const dates = Object.keys(byDate).sort();
+                const chart = document.getElementById('dynamics-chart');
+                if (window.dynamicsChartInstance) window.dynamicsChartInstance.destroy();
+                window.dynamicsChartInstance = new Chart(chart, {
+                    type: 'bar',
+                    data: {
+                        labels: dates.map(d => d.slice(5)),
+                        datasets: [{
+                            label: 'Выручка',
+                            data: dates.map(d => byDate[d].rev),
+                            backgroundColor: 'rgba(74, 222, 128, 0.6)',
+                            borderColor: '#4ade80',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { labels: { color: '#94a3b8' } } },
+                        scales: {
+                            y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
+                            x: { ticks: { color: '#64748b', maxRotation: 45 }, grid: { display: false } }
+                        }
+                    }
+                });
+
+                const bestDay = dates.reduce((max, d) => byDate[d].rev > byDate[max].rev ? d : max, dates[0]);
+                const worstDay = dates.reduce((min, d) => byDate[d].rev < byDate[min].rev ? d : min, dates[0]);
+                const avgRev = dates.reduce((sum, d) => sum + byDate[d].rev, 0) / dates.length;
+
+                document.getElementById('best-day').textContent = `${bestDay.slice(5)}: ${formatMoney(byDate[bestDay].rev)}`;
+                document.getElementById('worst-day').textContent = `${worstDay.slice(5)}: ${formatMoney(byDate[worstDay].rev)}`;
+                document.getElementById('avg-day').textContent = formatMoney(avgRev);
+
+                document.getElementById('dynamics-results').classList.remove('hidden');
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        }
+
+        async function calculateMargins() {
+            const period = getSelectedPeriod('period-margins');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = `Расчёт маржинальности за ${period} дней...`;
+
+            try {
+                const sales = await loadSalesForPeriod(period);
+                const productStats = {};
+                
+                for (const s of sales) {
+                    for (const p of s.positions) {
+                        if (!productStats[p.product_id]) {
+                            productStats[p.product_id] = { name: p.name, revenue: 0, profit: 0 };
+                        }
+                        productStats[p.product_id].revenue += p.revenue;
+                        productStats[p.product_id].profit += p.profit;
+                    }
+                }
+
+                const products = Object.values(productStats).map(p => ({
+                    ...p,
+                    margin: p.revenue > 0 ? (p.profit / p.revenue * 100) : 0
+                }));
+
+                const highMargin = products.filter(p => p.margin >= 30).sort((a, b) => b.margin - a.margin).slice(0, 20);
+                const lowMargin = products.filter(p => p.margin < 20 && p.revenue > 0).sort((a, b) => a.margin - b.margin).slice(0, 20);
+
+                document.getElementById('high-margin-table').innerHTML = highMargin.map(p => `
+                    <tr>
+                        <td class="text-white"><div class="font-medium">${p.name}</div></td>
+                        <td class="text-right text-green-400">${formatMoney(p.revenue)}</td>
+                        <td class="text-right text-blue-400">${formatMoney(p.profit)}</td>
+                        <td class="text-right text-yellow-400 font-bold">${p.margin.toFixed(1)}%</td>
+                    </tr>
+                `).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Нет товаров с маржой ≥30%</td></tr>';
+
+                document.getElementById('low-margin-table').innerHTML = lowMargin.map(p => `
+                    <tr class="${p.margin < 0 ? 'bg-red-900/20' : ''}">
+                        <td class="text-white"><div class="font-medium">${p.name}</div></td>
+                        <td class="text-right text-green-400">${formatMoney(p.revenue)}</td>
+                        <td class="text-right ${p.profit < 0 ? 'text-red-400' : 'text-blue-400'}">${formatMoney(p.profit)}</td>
+                        <td class="text-right ${p.margin < 0 ? 'text-red-400' : 'text-yellow-400'} font-bold">${p.margin.toFixed(1)}%</td>
+                    </tr>
+                `).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Нет товаров с низкой маржой</td></tr>';
+
+                document.getElementById('margins-results').classList.remove('hidden');
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        }
+
+        async function calculateComparison() {
+            const period1 = parseInt(document.getElementById('compare-period-1').value);
+            const period2 = period1 * 2;
+            
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = 'Сравнение периодов...';
+
+            try {
+                const sales1 = await loadSalesForPeriod(period1);
+                const sales2 = await loadSalesForPeriod(period2);
+                
+                const sales2Filtered = sales2.filter(s => {
+                    const cutoff = new Date();
+                    cutoff.setDate(cutoff.getDate() - period1);
+                    return new Date(s.date) < cutoff;
+                });
+
+                const calcStats = (sales) => {
+                    let rev = 0, profit = 0;
+                    for (const s of sales) {
+                        rev += s.revenue;
+                        for (const p of s.positions) profit += p.profit;
+                    }
+                    return { rev, profit, count: sales.length };
+                };
+
+                const stats1 = calcStats(sales1);
+                const stats2 = calcStats(sales2Filtered);
+
+                const revChange = stats2.rev > 0 ? ((stats1.rev - stats2.rev) / stats2.rev * 100) : 0;
+                const profitChange = stats2.profit > 0 ? ((stats1.profit - stats2.profit) / stats2.profit * 100) : 0;
+
+                document.getElementById('compare-period-2-info').innerHTML = `
+                    <div class="space-y-2">
+                        <div class="text-sm text-gray-400">Предыдущие ${period1} дней</div>
+                        <div class="text-lg font-bold text-green-400">${formatMoney(stats2.rev)}</div>
+                        <div class="text-sm text-blue-400">Прибыль: ${formatMoney(stats2.profit)}</div>
+                    </div>
+                `;
+
+                document.getElementById('comparison-content').innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-bold mb-4 text-green-400">Последние ${period1} дней</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between"><span class="text-gray-400">Выручка:</span><span class="font-bold">${formatMoney(stats1.rev)}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-400">Прибыль:</span><span class="font-bold text-blue-400">${formatMoney(stats1.profit)}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-400">Продаж:</span><span class="font-bold">${stats1.count}</span></div>
                             </div>
                         </div>
-                        <div class="text-right flex-shrink-0 ml-4">
-                            <div class="text-sm font-bold text-green-400">${formatMoney(folder.revenue)}</div>
-                            <div class="text-xs text-blue-400">Прибыль: ${formatMoney(folder.profit)} (${marginPercent}%)</div>
+                        <div>
+                            <h4 class="text-lg font-bold mb-4 text-gray-400">Предыдущие ${period1} дней</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between"><span class="text-gray-400">Выручка:</span><span class="font-bold">${formatMoney(stats2.rev)}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-400">Прибыль:</span><span class="font-bold text-blue-400">${formatMoney(stats2.profit)}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-400">Продаж:</span><span class="font-bold">${stats2.count}</span></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="tree-children">
-                        ${childrenHtml}
-                        ${productsHtml}
+                    <div class="mt-6 p-4 bg-slate-800 rounded-lg">
+                        <h4 class="font-bold mb-2">Изменения:</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Выручка:</span>
+                                <span class="font-bold ${revChange >= 0 ? 'text-green-400' : 'text-red-400'}">
+                                    ${revChange >= 0 ? '+' : ''}${revChange.toFixed(1)}%
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Прибыль:</span>
+                                <span class="font-bold ${profitChange >= 0 ? 'text-green-400' : 'text-red-400'}">
+                                    ${profitChange >= 0 ? '+' : ''}${profitChange.toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            `;
-        }
+                `;
 
-        function toggleTree(element) {
-            const children = element.nextElementSibling;
-            const icon = element.querySelector('.tree-icon');
-            if (children) {
-                children.classList.toggle('expanded');
-                if (icon) {
-                    icon.classList.toggle('rotated');
-                }
+                document.getElementById('comparison-results').classList.remove('hidden');
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
             }
         }
 
-        function expandAllCategories() {
-            document.querySelectorAll('.tree-children').forEach(el => el.classList.add('expanded'));
-            document.querySelectorAll('.tree-icon').forEach(el => el.classList.add('rotated'));
-        }
+        async function calculateSalesLog() {
+            const period = getSelectedPeriod('period-sales-log');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-text').textContent = `Загрузка журнала за ${period} дней...`;
 
-        function renderProductTable() {
-            const search = document.getElementById('product-search').value.toLowerCase();
-            let prods = Object.values(globalProductStats).filter(p => p.name.toLowerCase().includes(search));
-            
-            prods.sort((a, b) => b.profit - a.profit);
-            
-            const totalProfit = prods.reduce((sum, p) => sum + p.profit, 0);
-            let cumProfit = 0;
-            
-            const html = prods.map(p => {
-                cumProfit += p.profit;
-                const pct = totalProfit > 0 ? (cumProfit / totalProfit) : 0;
-                let abc = 'C';
-                if (pct <= 0.8) abc = 'A';
-                else if (pct <= 0.95) abc = 'B';
+            try {
+                const sales = await loadSalesForPeriod(period);
                 
-                const m = p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : 0;
-                const abcColor = abc === 'A' ? 'text-green-400' : (abc === 'B' ? 'text-yellow-400' : 'text-gray-500');
+                document.getElementById('sales-log-table').innerHTML = sales.slice(0, 200).map(s => {
+                    const date = new Date(s.moment).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    return `<tr>
+                        <td class="text-gray-400 text-xs">${date}</td>
+                        <td class="text-white font-medium">${s.name}</td>
+                        <td class="text-right text-gray-400">${s.positions.length}</td>
+                        <td class="text-right text-green-400 font-medium">${formatMoney(s.revenue)}</td>
+                    </tr>`;
+                }).join('') || '<tr><td colspan="4" class="text-center py-8 text-gray-500">Нет продаж</td></tr>';
 
-                return `<tr>
-                    <td class="font-bold ${abcColor}">${abc}</td>
-                    <td class="text-white"><div class="font-medium">${p.name}</div></td>
-                    <td class="text-right text-gray-300">${formatNumber(p.quantity)}</td>
-                    <td class="text-right text-green-400">${formatMoney(p.revenue)}</td>
-                    <td class="text-right text-red-400">${formatMoney(p.cogs)}</td>
-                    <td class="text-right text-blue-400 font-medium">${formatMoney(p.profit)}</td>
-                    <td class="text-right text-yellow-400">${m}%</td>
-                </tr>`;
-            }).join('');
-            
-            document.getElementById('product-table-body').innerHTML = html || '<tr><td colspan="7" class="text-center py-8 text-gray-500">Ничего не найдено</td></tr>';
-        }
-
-        function renderSalesLog() {
-            const search = document.getElementById('sales-search').value.toLowerCase();
-            const filtered = allSales.filter(s => s.name.toLowerCase().includes(search) || s.revenue.toString().includes(search));
-            
-            document.getElementById('sales-table-body').innerHTML = filtered.slice(0, 100).map(s => {
-                const date = new Date(s.moment).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                return `<tr>
-                    <td class="text-gray-400 text-xs">${date}</td>
-                    <td class="text-white font-medium">${s.name}</td>
-                    <td class="text-right text-green-400 font-medium">${formatMoney(s.revenue)}</td>
-                </tr>`;
-            }).join('') || '<tr><td colspan="3" class="text-center py-8 text-gray-500">Нет продаж</td></tr>';
-        }
-
-        function clearCacheAndReload() {
-            if(confirm('Очистить кэш и перезагрузить страницу?')) {
-                localStorage.removeItem('products_cache');
-                localStorage.removeItem('folders_cache');
-                localStorage.removeItem('moysklad_token');
-                location.reload();
+                document.getElementById('sales-log-results').classList.remove('hidden');
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
             }
         }
 
+        // Инициализация
         window.addEventListener('load', () => {
-            const token = localStorage.getItem('moysklad_token');
-            if (token) {
-                document.getElementById('token-input').value = token;
+            const savedToken = localStorage.getItem('moysklad_token');
+            if (savedToken) {
+                document.getElementById('token-input').value = savedToken;
             }
+            
+            createPeriodSelector('period-overview', 90);
+            createPeriodSelector('period-top-products', 30);
+            createPeriodSelector('period-categories', 90);
+            createPeriodSelector('period-dynamics', 90);
+            createPeriodSelector('period-margins', 90);
+            createPeriodSelector('period-sales-log', 30);
         });
     </script>
 </body>
