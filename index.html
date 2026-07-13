@@ -47,6 +47,10 @@
         .metric-card { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 20px; transition: all 0.3s; }
         .metric-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
 
+        .category-checkbox { cursor: pointer; }
+        .category-checkbox:hover { background: rgba(59, 130, 246, 0.1); }
+        .category-checkbox input[type="checkbox"] { width: 18px; height: 18px; accent-color: #3b82f6; }
+        
         .tree-node { margin-left: 0; }
         .tree-node .tree-children { margin-left: 20px; border-left: 2px solid #334155; padding-left: 12px; }
         .tree-node .tree-children.expanded { display: block; }
@@ -104,7 +108,7 @@
         <div class="p-4 border-t border-gray-800">
             <button onclick="showConnectionForm()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-blue-400 bg-blue-900/20 rounded-lg hover:bg-blue-900/40 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Настройки подключения
+                Настройки
             </button>
         </div>
     </aside>
@@ -141,6 +145,12 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h2 class="text-2xl font-bold">Обзор бизнеса</h2>
                     <div class="period-selector" id="period-overview"></div>
+                </div>
+
+                <div class="glass rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold mb-4">Выберите категории для анализа</h3>
+                    <div id="category-filter-overview" class="max-h-64 overflow-y-auto space-y-2"></div>
+                    <button onclick="selectAllCategories('overview')" class="mt-4 text-sm text-blue-400 hover:text-blue-300">Выбрать все</button>
                 </div>
 
                 <button onclick="calculateOverview()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
@@ -181,6 +191,12 @@
                     <div class="period-selector" id="period-top-products"></div>
                 </div>
 
+                <div class="glass rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold mb-4">Выберите категории</h3>
+                    <div id="category-filter-top-products" class="max-h-64 overflow-y-auto space-y-2"></div>
+                    <button onclick="selectAllCategories('top-products')" class="mt-4 text-sm text-blue-400 hover:text-blue-300">Выбрать все</button>
+                </div>
+
                 <div class="flex gap-2 mb-4">
                     <button onclick="setTopMetric('profit')" id="top-metric-profit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">По прибыли</button>
                     <button onclick="setTopMetric('revenue')" id="top-metric-revenue" class="px-4 py-2 bg-slate-800 text-gray-400 rounded-lg text-sm font-medium">По выручке</button>
@@ -210,8 +226,11 @@
                     Рассчитать по категориям
                 </button>
 
-                <div id="categories-results" class="hidden glass rounded-xl p-6">
-                    <div id="category-tree"></div>
+                <div id="categories-results" class="hidden space-y-6">
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Дерево категорий</h3>
+                        <div id="category-tree"></div>
+                    </div>
                 </div>
             </div>
 
@@ -220,6 +239,12 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h2 class="text-2xl font-bold">Динамика продаж</h2>
                     <div class="period-selector" id="period-dynamics"></div>
+                </div>
+
+                <div class="glass rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold mb-4">Выберите категории</h3>
+                    <div id="category-filter-dynamics" class="max-h-64 overflow-y-auto space-y-2"></div>
+                    <button onclick="selectAllCategories('dynamics')" class="mt-4 text-sm text-blue-400 hover:text-blue-300">Выбрать все</button>
                 </div>
 
                 <button onclick="calculateDynamics()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
@@ -255,20 +280,26 @@
                     <div class="period-selector" id="period-margins"></div>
                 </div>
 
+                <div class="glass rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold mb-4">Выберите категории</h3>
+                    <div id="category-filter-margins" class="max-h-64 overflow-y-auto space-y-2"></div>
+                    <button onclick="selectAllCategories('margins')" class="mt-4 text-sm text-blue-400 hover:text-blue-300">Выбрать все</button>
+                </div>
+
                 <button onclick="calculateMargins()" class="w-full btn-primary text-white font-semibold py-3 px-6 rounded-xl mb-6">
                     Рассчитать маржу
                 </button>
 
                 <div id="margins-results" class="hidden space-y-6">
                     <div class="glass rounded-xl overflow-x-auto">
-                        <h3 class="text-lg font-bold p-6 pb-0">Товары с самой высокой маржой</h3>
+                        <h3 class="text-lg font-bold p-6 pb-0">Товары с высокой маржой (≥30%)</h3>
                         <table class="data-table min-w-[600px]">
                             <thead><tr><th>Товар</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Маржа %</th></tr></thead>
                             <tbody id="high-margin-table"></tbody>
                         </table>
                     </div>
                     <div class="glass rounded-xl overflow-x-auto">
-                        <h3 class="text-lg font-bold p-6 pb-0 text-red-400">Товары с низкой/отрицательной маржой</h3>
+                        <h3 class="text-lg font-bold p-6 pb-0 text-red-400">Товары с низкой маржой (<20%)</h3>
                         <table class="data-table min-w-[600px]">
                             <thead><tr><th>Товар</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Маржа %</th></tr></thead>
                             <tbody id="low-margin-table"></tbody>
@@ -280,6 +311,12 @@
             <!-- 6. СРАВНЕНИЕ ПЕРИОДОВ -->
             <div id="view-comparison" class="view-section space-y-6">
                 <h2 class="text-2xl font-bold mb-6">Сравнение периодов</h2>
+
+                <div class="glass rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold mb-4">Выберите категории</h3>
+                    <div id="category-filter-comparison" class="max-h-64 overflow-y-auto space-y-2"></div>
+                    <button onclick="selectAllCategories('comparison')" class="mt-4 text-sm text-blue-400 hover:text-blue-300">Выбрать все</button>
+                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div class="glass rounded-xl p-6">
@@ -361,6 +398,7 @@
         let foldersData = {};
         let allSalesData = [];
         let currentTopMetric = 'profit';
+        let selectedCategories = {};
 
         async function proxyFetch(targetUrl, headers) {
             return await fetch(PROXY_URL, {
@@ -441,6 +479,76 @@
             const container = document.getElementById(containerId);
             const activeBtn = container.querySelector('.period-btn.active');
             return activeBtn ? parseInt(activeBtn.dataset.days) : 90;
+        }
+
+        function createCategoryFilter(containerId) {
+            const container = document.getElementById(containerId);
+            selectedCategories[containerId] = new Set();
+            
+            const rootFolders = Object.values(foldersData).filter(f => !f.parentId);
+            
+            if (rootFolders.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">Категории не найдены</p>';
+                return;
+            }
+
+            container.innerHTML = rootFolders.map(folder => renderCategoryCheckbox(folder)).join('');
+        }
+
+        function renderCategoryCheckbox(folder, depth = 0) {
+            const indent = depth * 20;
+            const children = Object.values(foldersData).filter(f => f.parentId === folder.id);
+            const hasChildren = children.length > 0;
+            
+            const childrenHtml = hasChildren ? children.map(child => renderCategoryCheckbox(child, depth + 1)).join('') : '';
+            
+            return `
+                <div class="category-checkbox flex items-center gap-2 p-2 rounded" style="margin-left: ${indent}px">
+                    <input type="checkbox" id="cat-${folder.id}" value="${folder.id}" onchange="toggleCategory('${folder.id}')">
+                    <label for="cat-${folder.id}" class="text-sm text-gray-300 flex-1 cursor-pointer">${folder.name}</label>
+                </div>
+                ${hasChildren ? `<div class="ml-4">${childrenHtml}</div>` : ''}
+            `;
+        }
+
+        function toggleCategory(folderId) {
+            // Находим все контейнеры с фильтрами категорий
+            const containers = ['category-filter-overview', 'category-filter-top-products', 'category-filter-dynamics', 'category-filter-margins', 'category-filter-comparison'];
+            
+            containers.forEach(containerId => {
+                const checkbox = document.getElementById(`cat-${folderId}`);
+                if (checkbox && checkbox.closest(`#${containerId}`)) {
+                    const key = containerId.replace('category-filter-', '');
+                    if (!selectedCategories[key]) selectedCategories[key] = new Set();
+                    
+                    if (checkbox.checked) {
+                        selectedCategories[key].add(folderId);
+                    } else {
+                        selectedCategories[key].delete(folderId);
+                    }
+                }
+            });
+        }
+
+        function selectAllCategories(viewName) {
+            const containerId = `category-filter-${viewName}`;
+            const container = document.getElementById(containerId);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            
+            if (!selectedCategories[viewName]) selectedCategories[viewName] = new Set();
+            
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                selectedCategories[viewName].add(cb.value);
+            });
+        }
+
+        function getSelectedCategoryIds(viewName) {
+            if (!selectedCategories[viewName] || selectedCategories[viewName].size === 0) {
+                // Если ничего не выбрано, берём все категории
+                return Object.keys(foldersData);
+            }
+            return Array.from(selectedCategories[viewName]);
         }
 
         async function fetchAllPages(baseEndpoint, headers, filterStr = '') {
@@ -563,6 +671,13 @@
                 statusDiv.className = 'text-green-400 mt-2';
                 statusDiv.classList.remove('hidden');
                 
+                // Создаём фильтры категорий для всех разделов
+                createCategoryFilter('category-filter-overview');
+                createCategoryFilter('category-filter-top-products');
+                createCategoryFilter('category-filter-dynamics');
+                createCategoryFilter('category-filter-margins');
+                createCategoryFilter('category-filter-comparison');
+                
                 setTimeout(() => switchView('overview'), 1000);
 
             } catch (error) {
@@ -575,7 +690,7 @@
             }
         }
 
-        async function loadSalesForPeriod(periodDays) {
+        async function loadSalesForPeriod(periodDays, categoryIds = null) {
             const headers = prepareAuthHeaders();
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - periodDays);
@@ -609,6 +724,14 @@
             }
 
             await Promise.all(promises);
+
+            // Фильтруем по категориям, если указаны
+            if (categoryIds && categoryIds.length > 0) {
+                sales.forEach(sale => {
+                    sale.positions = sale.positions.filter(p => categoryIds.includes(p.parentFolderId));
+                });
+            }
+
             return sales.sort((a, b) => b.moment.localeCompare(a.moment));
         }
 
@@ -616,11 +739,13 @@
 
         async function calculateOverview() {
             const period = getSelectedPeriod('period-overview');
+            const categoryIds = getSelectedCategoryIds('overview');
+            
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('loading-text').textContent = `Расчёт за ${period} дней...`;
 
             try {
-                const sales = await loadSalesForPeriod(period);
+                const sales = await loadSalesForPeriod(period, categoryIds);
                 
                 let rev = 0, cogs = 0;
                 const byDate = {};
@@ -690,11 +815,13 @@
 
         async function calculateTopProducts() {
             const period = getSelectedPeriod('period-top-products');
+            const categoryIds = getSelectedCategoryIds('top-products');
+            
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('loading-text').textContent = `Расчёт топ товаров за ${period} дней...`;
 
             try {
-                const sales = await loadSalesForPeriod(period);
+                const sales = await loadSalesForPeriod(period, categoryIds);
                 const productStats = {};
                 
                 for (const s of sales) {
@@ -787,11 +914,13 @@
 
         async function calculateDynamics() {
             const period = getSelectedPeriod('period-dynamics');
+            const categoryIds = getSelectedCategoryIds('dynamics');
+            
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('loading-text').textContent = `Построение графика за ${period} дней...`;
 
             try {
-                const sales = await loadSalesForPeriod(period);
+                const sales = await loadSalesForPeriod(period, categoryIds);
                 const byDate = {};
                 
                 for (const s of sales) {
@@ -844,11 +973,13 @@
 
         async function calculateMargins() {
             const period = getSelectedPeriod('period-margins');
+            const categoryIds = getSelectedCategoryIds('margins');
+            
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('loading-text').textContent = `Расчёт маржинальности за ${period} дней...`;
 
             try {
-                const sales = await loadSalesForPeriod(period);
+                const sales = await loadSalesForPeriod(period, categoryIds);
                 const productStats = {};
                 
                 for (const s of sales) {
@@ -897,14 +1028,15 @@
 
         async function calculateComparison() {
             const period1 = parseInt(document.getElementById('compare-period-1').value);
+            const categoryIds = getSelectedCategoryIds('comparison');
             const period2 = period1 * 2;
             
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('loading-text').textContent = 'Сравнение периодов...';
 
             try {
-                const sales1 = await loadSalesForPeriod(period1);
-                const sales2 = await loadSalesForPeriod(period2);
+                const sales1 = await loadSalesForPeriod(period1, categoryIds);
+                const sales2 = await loadSalesForPeriod(period2, categoryIds);
                 
                 const sales2Filtered = sales2.filter(s => {
                     const cutoff = new Date();
