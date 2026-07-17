@@ -8,14 +8,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; min-height: 100vh; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
         .loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 100; display: flex; align-items: center; justify-content: center; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="h-screen flex flex-col items-center justify-center p-4">
+<body class="p-4">
 
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="glass p-8 max-w-md w-full text-center">
@@ -28,40 +28,339 @@
         </div>
     </div>
 
-    <div class="glass p-8 max-w-md w-full">
-        <h1 class="text-2xl font-bold mb-6 text-center text-blue-400">Profit Analyzer</h1>
-        <input type="text" id="token-input" placeholder="Токен API МойСклад" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg mb-4 text-white focus:ring-2 focus:ring-blue-500 outline-none">
-        
-        <div class="flex gap-2 mb-6">
-            <input type="date" id="date-from" class="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white">
-            <input type="date" id="date-to" class="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white">
+    <div class="max-w-4xl mx-auto">
+        <div class="glass p-8 mb-6">
+            <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">Profit Analyzer Pro</h1>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Токен API МойСклад</label>
+                    <input type="text" id="token-input" placeholder="Вставьте токен" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Дата начала</label>
+                        <input type="date" id="date-from" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Дата конца</label>
+                        <input type="date" id="date-to" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm">
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="setPeriod(7)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg text-sm transition">7 дней</button>
+                    <button onclick="setPeriod(30)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg text-sm transition">30 дней</button>
+                    <button onclick="setPeriod(90)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg text-sm transition">90 дней</button>
+                </div>
+
+                <button id="connect-btn" onclick="connectAndCalculate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                    Подключить и рассчитать прибыль
+                </button>
+                
+                <button onclick="clearCache()" class="w-full text-xs text-red-400 hover:text-red-300 mt-2">
+                    Очистить кэш
+                </button>
+            </div>
         </div>
 
-        <button id="connect-btn" onclick="connectToMoySklad()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mb-3 transition">
-            Подключить и обновить данные
-        </button>
-        <button onclick="calculateOverview()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition">
-            Рассчитать прибыль (точно)
-        </button>
-        <button onclick="Utils.clearCache(); location.reload();" class="w-full mt-4 text-xs text-red-400 hover:text-red-300">
-            Очистить кэш и перезагрузить
-        </button>
-    </div>
+        <div id="results" class="hidden space-y-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass p-6 text-center">
+                    <div class="text-gray-400 text-xs mb-2">Выручка</div>
+                    <div id="metric-revenue" class="text-2xl font-bold text-green-400">0</div>
+                </div>
+                <div class="glass p-6 text-center">
+                    <div class="text-gray-400 text-xs mb-2">Прибыль</div>
+                    <div id="metric-profit" class="text-2xl font-bold text-blue-400">0</div>
+                </div>
+                <div class="glass p-6 text-center">
+                    <div class="text-gray-400 text-xs mb-2">Маржа</div>
+                    <div id="metric-margin" class="text-2xl font-bold text-yellow-400">0%</div>
+                </div>
+                <div class="glass p-6 text-center">
+                    <div class="text-gray-400 text-xs mb-2">Себестоимость</div>
+                    <div id="metric-cost" class="text-2xl font-bold text-red-400">0</div>
+                </div>
+            </div>
 
-    <div id="overview-results" class="hidden glass p-6 max-w-4xl w-full mt-6">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="text-center"><div class="text-gray-400 text-xs">Выручка</div><div id="metric-revenue" class="text-2xl font-bold text-green-400">0</div></div>
-            <div class="text-center"><div class="text-gray-400 text-xs">Прибыль</div><div id="metric-profit" class="text-2xl font-bold text-blue-400">0</div></div>
-            <div class="text-center"><div class="text-gray-400 text-xs">Маржа</div><div id="metric-margin" class="text-2xl font-bold text-yellow-400">0%</div></div>
+            <div class="glass p-6">
+                <h3 class="text-lg font-bold mb-4">Динамика по дням</h3>
+                <canvas id="chart" height="100"></canvas>
+            </div>
         </div>
-        <canvas id="overview-chart" height="100"></canvas>
     </div>
 
-    <!-- Подключаем модули в строгом порядке -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/app.js"></script>
+    <script>
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
+        let chartInstance = null;
+
+        // Утилиты
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount);
+        }
+
+        function getDaysAgo(days) {
+            const d = new Date();
+            d.setDate(d.getDate() - days);
+            return d.toISOString().split('T')[0];
+        }
+
+        function setPeriod(days) {
+            document.getElementById('date-to').value = new Date().toISOString().split('T')[0];
+            document.getElementById('date-from').value = getDaysAgo(days);
+        }
+
+        function updateProgress(percent, text, details = '') {
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading-details').textContent = details;
+        }
+
+        function clearCache() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        // API запросы с повторами
+        async function fetchWithRetry(url, options, retries = 3) {
+            try {
+                const separator = url.includes('?') ? '&' : '?';
+                const finalUrl = `${url}${separator}_t=${Date.now()}`;
+                return await fetch(finalUrl, options);
+            } catch (error) {
+                if (retries > 0) {
+                    console.warn(`Сетевой сбой, повтор...`);
+                    updateProgress(null, 'Нестабильная сеть, переподключение...', `Попытка ${4 - retries} из 4`);
+                    await new Promise(r => setTimeout(r, 2000));
+                    return fetchWithRetry(url, options, retries - 1);
+                }
+                throw new Error('Сеть сбрасывает соединение. Включите/выключите авиарежим или смените Wi-Fi на мобильный интернет.');
+            }
+        }
+
+        async function proxyFetch(targetUrl, headers) {
+            const response = await fetchWithRetry(PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
+            });
+            if (response.status === 429) throw new Error('Превышен лимит запросов МойСклад. Подождите минуту.');
+            return response;
+        }
+
+        function getAuthHeaders(token) {
+            token = token.trim();
+            if (token.startsWith("Basic ") || token.startsWith("Bearer ")) return { "Authorization": token };
+            if (token.includes("@") && token.includes(":")) return { "Authorization": `Basic ${btoa(token)}` };
+            return { "Authorization": `Bearer ${token}` };
+        }
+
+        // Загрузка всех страниц
+        async function fetchAllPages(baseEndpoint, headers, filterStr = '') {
+            const allRows = [];
+            let offset = 0;
+            while (true) {
+                const params = new URLSearchParams({ limit: 1000, offset });
+                if (filterStr) {
+                    params.append('filter', filterStr);
+                    params.append('order', 'moment,desc');
+                }
+                
+                const response = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/entity/${baseEndpoint}?${params.toString()}`, headers);
+                if (!response.ok) break;
+                
+                const data = await response.json();
+                const rows = data.rows || [];
+                allRows.push(...rows);
+                if (rows.length < 1000) break;
+                offset += 1000;
+            }
+            return allRows;
+        }
+
+        // Получение отчета о продажах с ТОЧНОЙ себестоимостью (FIFO)
+        async function getProfitReport(headers, dateFrom, dateTo) {
+            updateProgress(50, 'Загрузка отчета о прибыльности', 'МойСклад считает точную себестоимость...');
+            
+            const filter = `date.from=${dateFrom} 00:00:00&date.to=${dateTo} 23:59:59&groupBy=assortment&limit=1000`;
+            const url = `https://api.moysklad.ru/api/remap/1.2/report/sales?${filter}`;
+            
+            console.log('Запрос:', url);
+            
+            const response = await proxyFetch(url, headers);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Ошибка ${response.status}: ${errorText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Строк в отчете:', data.rows?.length || 0);
+            
+            return data.rows || [];
+        }
+
+        // Главная функция
+        async function connectAndCalculate() {
+            const token = document.getElementById('token-input').value.trim();
+            const dateFrom = document.getElementById('date-from').value || getDaysAgo(30);
+            const dateTo = document.getElementById('date-to').value || new Date().toISOString().split('T')[0];
+
+            if (!token) return alert('Введите токен');
+
+            document.getElementById('connect-btn').disabled = true;
+            document.getElementById('loading-overlay').classList.remove('hidden');
+
+            try {
+                const headers = getAuthHeaders(token);
+                
+                // 1. Проверка подключения
+                updateProgress(10, 'Подключение', 'Проверка токена...');
+                const res = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', headers);
+                if (!res.ok) throw new Error(`Ошибка авторизации: ${res.status}`);
+
+                // 2. Получение ТОЧНОГО отчета о прибыльности
+                updateProgress(30, 'Загрузка данных', 'Запрашиваем отчет о продажах...');
+                const profitRows = await getProfitReport(headers, dateFrom, dateTo);
+
+                // 3. Расчет итогов
+                updateProgress(70, 'Расчет показателей', 'Считаем выручку, прибыль, маржу...');
+                
+                let totalRevenue = 0;
+                let totalProfit = 0;
+                let totalCost = 0;
+                const byDate = {};
+
+                for (const row of profitRows) {
+                    const revenue = (row.sum || 0) / 100;
+                    const cost = (row.cost || 0) / 100; // ТОЧНАЯ себестоимость по FIFO
+                    const profit = (row.profit || 0) / 100;
+                    const date = row.moment ? row.moment.split('T')[0] : dateTo;
+
+                    totalRevenue += revenue;
+                    totalCost += cost;
+                    totalProfit += profit;
+
+                    if (!byDate[date]) byDate[date] = { revenue: 0, profit: 0 };
+                    byDate[date].revenue += revenue;
+                    byDate[date].profit += profit;
+                }
+
+                const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+
+                console.log('=== ИТОГИ ===');
+                console.log('Выручка:', totalRevenue);
+                console.log('Себестоимость:', totalCost);
+                console.log('Прибыль:', totalProfit);
+                console.log('Маржа:', margin + '%');
+
+                // 4. Анимация цифр
+                updateProgress(90, 'Отрисовка', 'Показываем результаты...');
+                
+                animateValue('metric-revenue', totalRevenue);
+                animateValue('metric-profit', totalProfit);
+                animateValue('metric-cost', totalCost);
+                animateValue('metric-margin', margin, '%');
+
+                // 5. График
+                const dates = Object.keys(byDate).sort();
+                renderChart(dates.map(d => d.slice(5)), dates.map(d => byDate[d].revenue), dates.map(d => byDate[d].profit));
+
+                updateProgress(100, 'Готово!', 'Все данные загружены');
+                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+
+            } catch (error) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                console.error('Ошибка:', error);
+                alert('Ошибка: ' + error.message);
+                document.getElementById('connect-btn').disabled = false;
+            }
+        }
+
+        function animateValue(elementId, target, suffix = '') {
+            const el = document.getElementById(elementId);
+            const duration = 1000;
+            const startTime = performance.now();
+            
+            const update = (currentTime) => {
+                const progress = Math.min((currentTime - startTime) / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = target * easeOut;
+                
+                if (suffix === '%') {
+                    el.textContent = current.toFixed(1) + suffix;
+                } else {
+                    el.textContent = formatMoney(current);
+                }
+                
+                if (progress < 1) requestAnimationFrame(update);
+            };
+            
+            requestAnimationFrame(update);
+        }
+
+        function renderChart(labels, revenueData, profitData) {
+            const ctx = document.getElementById('chart');
+            if (chartInstance) chartInstance.destroy();
+            
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Выручка', 
+                            data: revenueData, 
+                            borderColor: '#4ade80', 
+                            backgroundColor: 'rgba(74, 222, 128, 0.1)', 
+                            fill: true, 
+                            tension: 0.4 
+                        },
+                        { 
+                            label: 'Прибыль', 
+                            data: profitData, 
+                            borderColor: '#60a5fa', 
+                            backgroundColor: 'rgba(96, 165, 250, 0.1)', 
+                            fill: true, 
+                            tension: 0.4 
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { 
+                        legend: { labels: { color: '#94a3b8' } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${formatMoney(context.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            ticks: { callback: v => formatMoney(v), color: '#64748b' }, 
+                            grid: { color: '#1e293b' } 
+                        },
+                        x: { 
+                            ticks: { color: '#64748b' }, 
+                            grid: { display: false } 
+                        }
+                    }
+                }
+            });
+        }
+
+        // Инициализация
+        window.addEventListener('load', () => {
+            const savedToken = localStorage.getItem('moysklad_token');
+            if (savedToken) document.getElementById('token-input').value = savedToken;
+            
+            setPeriod(30);
+        });
+    </script>
 </body>
 </html>
