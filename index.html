@@ -725,50 +725,64 @@
             const token = document.getElementById('token-input').value.trim();
             const statusDiv = document.getElementById('connection-status');
             const btn = document.getElementById('connect-btn');
-
+        
             if (!token) {
-                statusDiv.textContent = 'Введите токен'; statusDiv.className = 'text-red-400 mt-2'; statusDiv.classList.remove('hidden');
+                statusDiv.textContent = 'Введите токен';
+                statusDiv.className = 'text-red-400 mt-2';
+                statusDiv.classList.remove('hidden');
                 return;
             }
-
-            btn.disabled = true; btn.textContent = 'Проверка...';
+        
+            btn.disabled = true;
+            btn.textContent = 'Проверка...';
             document.getElementById('loading-overlay').classList.remove('hidden');
-            document.getElementById('loading-text').textContent = 'Подключение...';
-
+            
+            updateProgress(5, 'Подключение к МойСклад', 'Проверка токена...');
+        
             try {
                 authToken = token;
                 const headers = prepareAuthHeaders();
                 const res = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', headers);
                 if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-
-                document.getElementById('loading-text').textContent = 'Загрузка товаров и остатков...';
+        
+                updateProgress(15, 'Загрузка товаров', 'Получаем список товаров из МойСклад...');
                 productsData = await loadProducts(headers);
-                await loadStock(headers); // Предзагрузка остатков
                 
-                document.getElementById('loading-text').textContent = 'Построение дерева категорий...';
+                updateProgress(35, 'Загрузка остатков', 'Считаем товары на складе...');
+                await loadStock(headers);
+                
+                updateProgress(50, 'Загрузка категорий', 'Строим дерево папок...');
                 foldersData = await loadFolders(headers);
                 folderTree = buildFolderTree();
-
+        
                 localStorage.setItem('moysklad_token', token);
-                document.getElementById('loading-overlay').classList.add('hidden');
                 
-                statusDiv.textContent = `Готово! Товаров: ${Object.keys(productsData).length}, Категорий: ${Object.keys(foldersData).length}`;
-                statusDiv.className = 'text-green-400 mt-2'; statusDiv.classList.remove('hidden');
-                
+                updateProgress(70, 'Инициализация интерфейса', 'Создаем фильтры и компоненты...');
                 createDateRange('date-range-overview', 30);
                 createDateRange('date-range-top-products', 30);
                 createDateRange('date-range-categories', 30);
                 createDateRange('date-range-margins', 30);
                 
+                updateProgress(90, 'Финальная настройка', 'Подготовка к работе...');
                 createCategoryFilter('category-filter-overview');
                 createCategoryFilter('category-filter-top-products');
                 createCategoryFilter('category-filter-margins');
                 
-                setTimeout(() => switchView('overview'), 1000);
+                updateProgress(100, 'Готово!', 'Переход к основному экрану...');
+                document.getElementById('loading-overlay').classList.add('hidden');
+                
+                statusDiv.textContent = `Готово! Товаров: ${Object.keys(productsData).length}, Категорий: ${Object.keys(foldersData).length}`;
+                statusDiv.className = 'text-green-400 mt-2';
+                statusDiv.classList.remove('hidden');
+                
+                setTimeout(() => switchView('overview'), 500);
             } catch (error) {
                 document.getElementById('loading-overlay').classList.add('hidden');
-                statusDiv.textContent = `Ошибка: ${error.message}`; statusDiv.className = 'text-red-400 mt-2'; statusDiv.classList.remove('hidden');
-                btn.disabled = false; btn.textContent = 'Подключить';
+                statusDiv.textContent = `Ошибка: ${error.message}`;
+                statusDiv.className = 'text-red-400 mt-2';
+                statusDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Подключить';
             }
         }
 
@@ -803,10 +817,15 @@
             const { from, to } = getDateRange('date-range-overview');
             const categoryIds = getSelectedFolderIds('category-filter-overview');
             document.getElementById('loading-overlay').classList.remove('hidden');
-            document.getElementById('loading-text').textContent = 'Расчёт...';
-
+            
+            updateProgress(10, 'Загрузка продаж', `Период: ${formatDateRu(from)} — ${formatDateRu(to)}`);
+        
             try {
+                updateProgress(30, 'Получение данных', 'Загружаем документы из МойСклад...');
                 const sales = await loadSalesForPeriod(from, to, categoryIds);
+                
+                updateProgress(60, 'Обработка данных', `Найдено продаж: ${sales.length}`);
+                
                 let rev = 0, cogs = 0;
                 const byDate = {};
                 for (const s of sales) {
@@ -818,15 +837,20 @@
                         byDate[s.date].profit += p.profit;
                     }
                 }
+                
+                updateProgress(80, 'Расчёт показателей', 'Считаем метрики...');
+                
                 const profit = rev - cogs;
                 const margin = rev > 0 ? (profit / rev * 100) : 0;
                 const avg = sales.length > 0 ? rev / sales.length : 0;
-
+        
                 animateCountUp(document.getElementById('metric-revenue'), rev);
                 animateCountUp(document.getElementById('metric-profit'), profit);
                 animateCountUp(document.getElementById('metric-margin'), margin, 1000, '%');
                 animateCountUp(document.getElementById('metric-avg-check'), avg);
-
+        
+                updateProgress(90, 'Построение графика', 'Визуализация данных...');
+                
                 const dates = Object.keys(byDate).sort();
                 const chart = document.getElementById('overview-chart');
                 if (window.overviewChartInstance) window.overviewChartInstance.destroy();
@@ -841,9 +865,17 @@
                     },
                     options: { responsive: true, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#64748b' }, grid: { display: false } } } }
                 });
+                
+                updateProgress(100, 'Готово!', 'Все данные загружены');
                 document.getElementById('overview-results').classList.remove('hidden');
-            } catch (error) { alert('Ошибка: ' + error.message); }
-            finally { document.getElementById('loading-overlay').classList.add('hidden'); }
+                
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                }, 500);
+            } catch (error) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                alert('Ошибка: ' + error.message);
+            }
         }
 
         function setTopMetric(metric) {
@@ -860,6 +892,7 @@
             const categoryIds = getSelectedFolderIds('category-filter-top-products');
             document.getElementById('loading-overlay').classList.remove('hidden');
             document.getElementById('loading-text').textContent = 'Расчёт топа...';
+            
 
             try {
                 const sales = await loadSalesForPeriod(from, to, categoryIds);
