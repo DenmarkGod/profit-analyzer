@@ -6,16 +6,132 @@
     <title>Profit Analyzer Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; min-height: 100vh; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
         .loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 100; display: flex; align-items: center; justify-content: center; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .api-path { font-family: 'Fira Code', monospace; font-size: 0.85rem; padding: 8px 12px; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; margin: 4px 0; }
+        .api-path:hover { background: rgba(59, 130, 246, 0.1); border-color: #60a5fa; cursor: pointer; }
+        .nav-btn { transition: all 0.2s; }
+        .nav-btn.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-left: 3px solid #60a5fa; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
     </style>
 </head>
-<body class="p-4">
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-slate-900/80 border-r border-slate-800 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-slate-800">
+            <h1 class="text-xl font-bold text-blue-400">Profit Analyzer</h1>
+        </div>
+        <nav class="flex-1 py-4 space-y-1">
+            <button onclick="switchView('main')" id="nav-main" class="nav-btn active w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📊 Главная</button>
+            <button onclick="switchView('debug')" id="nav-debug" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">🔍 Отладка API</button>
+        </nav>
+    </aside>
+
+    <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50">
+        <button onclick="switchView('main')" class="flex flex-col items-center p-2 text-blue-400 text-xs"><span class="text-xl">📊</span>Главная</button>
+        <button onclick="switchView('debug')" class="flex flex-col items-center p-2 text-gray-400 text-xs"><span class="text-xl">🔍</span>Отладка</button>
+    </div>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 pb-20 md:pb-8">
+        
+        <div id="view-main" class="view-section active max-w-4xl mx-auto space-y-6">
+            <div class="glass p-8">
+                <h2 class="text-2xl font-bold mb-6 text-center text-blue-400">Расчет прибыльности</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Токен API МойСклад</label>
+                        <input type="text" id="token-input" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-300">Дата начала</label>
+                            <input type="date" id="date-from" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-300">Дата конца</label>
+                            <input type="date" id="date-to" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm">
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="setPeriod(7)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm">7 дней</button>
+                        <button onclick="setPeriod(30)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm">30 дней</button>
+                        <button onclick="setPeriod(90)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm">90 дней</button>
+                    </div>
+                    <button id="connect-btn" onclick="connectAndCalculate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                        Рассчитать прибыль
+                    </button>
+                    <button onclick="clearCache()" class="w-full text-xs text-red-400 hover:text-red-300 mt-2">Очистить кэш и сбросить</button>
+                </div>
+            </div>
+
+            <div id="results" class="hidden space-y-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="glass p-6 text-center"><div class="text-gray-400 text-xs mb-2">Выручка</div><div id="metric-revenue" class="text-2xl font-bold text-green-400">0</div></div>
+                    <div class="glass p-6 text-center"><div class="text-gray-400 text-xs mb-2">Прибыль</div><div id="metric-profit" class="text-2xl font-bold text-blue-400">0</div></div>
+                    <div class="glass p-6 text-center"><div class="text-gray-400 text-xs mb-2">Маржа</div><div id="metric-margin" class="text-2xl font-bold text-yellow-400">0%</div></div>
+                    <div class="glass p-6 text-center"><div class="text-gray-400 text-xs mb-2">Себестоимость</div><div id="metric-cost" class="text-2xl font-bold text-red-400">0</div></div>
+                </div>
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold mb-4">Динамика по дням</h3>
+                    <canvas id="chart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-debug" class="view-section max-w-5xl mx-auto space-y-6">
+            <div class="glass p-6">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400"> Исследователь API МойСклад</h2>
+                
+                <div class="mb-6">
+                    <button onclick="fetchAllApiPaths()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center gap-2 mb-4">
+                        <span>🗺️</span>
+                        <span>Получить карту всех путей API</span>
+                    </button>
+                    <p class="text-gray-400 text-sm">Нажми кнопку выше, чтобы автоматически получить список всех доступных эндпоинтов МойСклад</p>
+                </div>
+
+                <div id="api-paths-list" class="hidden space-y-4 mb-6">
+                    <h3 class="text-lg font-bold text-green-400">📋 Доступные пути API:</h3>
+                    <div id="api-paths-content" class="space-y-2"></div>
+                </div>
+                
+                <div class="space-y-4 border-t border-slate-700 pt-6">
+                    <h3 class="text-lg font-bold">Ручной запрос:</h3>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Путь к ресурсу</label>
+                        <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+                            <span class="px-3 py-3 text-gray-500 text-sm bg-slate-900 border-r border-slate-700 select-none">.../remap/1.2/</span>
+                            <input type="text" id="debug-endpoint" value="report/profit" class="flex-1 px-4 py-3 bg-transparent text-white outline-none font-mono text-sm">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Параметры</label>
+                        <input type="text" id="debug-params" value="limit=1" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <button onclick="sendDebugRequest()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                         Отправить запрос
+                    </button>
+                </div>
+            </div>
+
+            <div id="debug-results" class="hidden glass p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-green-400">Ответ (Status: <span id="debug-status">200</span>)</h3>
+                    <button onclick="copyDebugResponse()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-gray-300">Копировать JSON</button>
+                </div>
+                <pre id="debug-output" class="font-mono text-sm bg-slate-950 p-4 rounded-lg overflow-x-auto max-h-[600px] border border-slate-800 text-gray-300"></pre>
+            </div>
+        </div>
+
+    </main>
 
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="glass p-8 max-w-md w-full text-center">
@@ -28,113 +144,44 @@
         </div>
     </div>
 
-    <div class="max-w-4xl mx-auto">
-        <div class="glass p-8 mb-6">
-            <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">Profit Analyzer Pro</h1>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2 text-gray-300">Токен API МойСклад</label>
-                    <input type="text" id="token-input" placeholder="Вставьте токен" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2 text-gray-300">Дата начала</label>
-                        <input type="date" id="date-from" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2 text-gray-300">Дата конца</label>
-                        <input type="date" id="date-to" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm">
-                    </div>
-                </div>
-
-                <div class="flex gap-2">
-                    <button onclick="setPeriod(7)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg text-sm transition">7 дней</button>
-                    <button onclick="setPeriod(30)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg text-sm transition">30 дней</button>
-                    <button onclick="setPeriod(90)" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg text-sm transition">90 дней</button>
-                </div>
-
-                <button id="connect-btn" onclick="connectAndCalculate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
-                    Подключить и рассчитать прибыль
-                </button>
-                
-                <button onclick="clearCache()" class="w-full text-xs text-red-400 hover:text-red-300 mt-2">
-                    Очистить кэш
-                </button>
-            </div>
-        </div>
-
-        <div id="results" class="hidden space-y-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass p-6 text-center">
-                    <div class="text-gray-400 text-xs mb-2">Выручка</div>
-                    <div id="metric-revenue" class="text-2xl font-bold text-green-400">0</div>
-                </div>
-                <div class="glass p-6 text-center">
-                    <div class="text-gray-400 text-xs mb-2">Прибыль</div>
-                    <div id="metric-profit" class="text-2xl font-bold text-blue-400">0</div>
-                </div>
-                <div class="glass p-6 text-center">
-                    <div class="text-gray-400 text-xs mb-2">Маржа</div>
-                    <div id="metric-margin" class="text-2xl font-bold text-yellow-400">0%</div>
-                </div>
-                <div class="glass p-6 text-center">
-                    <div class="text-gray-400 text-xs mb-2">Себестоимость</div>
-                    <div id="metric-cost" class="text-2xl font-bold text-red-400">0</div>
-                </div>
-            </div>
-
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">Динамика по дням</h3>
-                <canvas id="chart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-
     <script>
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
         let chartInstance = null;
+        let lastDebugResponse = '';
 
         function formatMoney(amount) {
             return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount);
         }
-
         function getDaysAgo(days) {
             const d = new Date();
             d.setDate(d.getDate() - days);
             return d.toISOString().split('T')[0];
         }
-
         function setPeriod(days) {
             document.getElementById('date-to').value = new Date().toISOString().split('T')[0];
             document.getElementById('date-from').value = getDaysAgo(days);
         }
-
-        function updateProgress(percent, text, details = '') {
-            document.getElementById('progress-bar').style.width = `${percent}%`;
-            document.getElementById('loading-text').textContent = text;
-            document.getElementById('loading-details').textContent = details;
-        }
-
         function clearCache() {
             localStorage.clear();
             location.reload();
+        }
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${view}`).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${view}`)?.classList.add('active');
         }
 
         async function fetchWithRetry(url, options, retries = 3) {
             try {
                 const separator = url.includes('?') ? '&' : '?';
-                const finalUrl = `${url}${separator}_t=${Date.now()}`;
-                return await fetch(finalUrl, options);
+                return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
                 if (retries > 0) {
-                    console.warn(`Сетевой сбой, повтор...`);
-                    updateProgress(null, 'Нестабильная сеть, переподключение...', `Попытка ${4 - retries} из 4`);
                     await new Promise(r => setTimeout(r, 2000));
                     return fetchWithRetry(url, options, retries - 1);
                 }
-                throw new Error('Сеть сбрасывает соединение. Включите/выключите авиарежим или смените сеть.');
+                throw new Error('Сеть сбрасывает соединение.');
             }
         }
 
@@ -144,7 +191,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
-            if (response.status === 429) throw new Error('Превышен лимит запросов МойСклад (429). Подождите минуту.');
+            if (response.status === 429) throw new Error('Лимит запросов (429). Подождите минуту.');
             return response;
         }
 
@@ -155,32 +202,156 @@
             return { "Authorization": `Bearer ${token}` };
         }
 
-        // ИСПРАВЛЕНО: Используем правильный эндпоинт /report/profit
-        async function getProfitReport(headers, dateFrom, dateTo) {
-            updateProgress(50, 'Загрузка отчета о прибыльности', 'МойСклад считает точную себестоимость (FIFO)...');
+        // === НОВАЯ ФУНКЦИЯ: Получить все пути API ===
+        async function fetchAllApiPaths() {
+            const token = document.getElementById('token-input').value.trim() || localStorage.getItem('moysklad_token');
+            if (!token) return alert('Сначала введите токен на главной вкладке!');
+
+            const container = document.getElementById('api-paths-list');
+            const content = document.getElementById('api-paths-content');
             
-            // Используем URLSearchParams для корректного кодирования пробелов и спецсимволов
-            const params = new URLSearchParams({
-                'date.from': `${dateFrom} 00:00:00`,
-                'date.to': `${dateTo} 23:59:59`,
-                'groupBy': 'assortment',
-                'limit': '1000'
-            });
-            
-            const url = `https://api.moysklad.ru/api/remap/1.2/report/profit?${params.toString()}`;
-            console.log('Запрос отчета:', url);
-            
-            const response = await proxyFetch(url, headers);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Ошибка ${response.status}: ${errorText}`);
+            container.classList.remove('hidden');
+            content.innerHTML = '<div class="text-center py-4 text-gray-400">Загрузка...</div>';
+
+            try {
+                const headers = getAuthHeaders(token);
+                const allPaths = [];
+
+                // 1. Получаем список всех сущностей (entity)
+                content.innerHTML += '<div class="text-sm text-gray-400 mb-2">📥 Загрузка списка сущностей...</div>';
+                const entityResponse = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity', headers);
+                if (entityResponse.ok) {
+                    const entityData = await entityResponse.json();
+                    if (entityData.meta && entityData.meta.byType) {
+                        for (const [typeName, typeInfo] of Object.entries(entityData.meta.byType)) {
+                            allPaths.push({
+                                category: 'Сущности',
+                                path: `entity/${typeName}`,
+                                description: typeInfo.metadata?.href ? 'Доступна метаданные' : 'Стандартная сущность'
+                            });
+                        }
+                    }
+                }
+
+                // 2. Получаем список отчетов
+                content.innerHTML += '<div class="text-sm text-gray-400 mb-2">📊 Загрузка списка отчетов...</div>';
+                const reportResponse = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/report', headers);
+                if (reportResponse.ok) {
+                    const reportData = await reportResponse.json();
+                    if (reportData.meta && reportData.meta.byType) {
+                        for (const reportName of Object.keys(reportData.meta.byType)) {
+                            allPaths.push({
+                                category: 'Отчеты',
+                                path: `report/${reportName}`,
+                                description: 'Отчет'
+                            });
+                        }
+                    }
+                }
+
+                // 3. Добавляем известные полезные пути вручную
+                const knownPaths = [
+                    { category: 'Продажи', path: 'retaildemand', description: 'Розничные продажи' },
+                    { category: 'Продажи', path: 'demand', description: 'Отгрузки' },
+                    { category: 'Продажи', path: 'customerorder', description: 'Заказы клиентов' },
+                    { category: 'Склад', path: 'stock', description: 'Остатки' },
+                    { category: 'Склад', path: 'stock/byproduct', description: 'Остатки по товарам' },
+                    { category: 'Товары', path: 'product', description: 'Справочник товаров' },
+                    { category: 'Товары', path: 'productfolder', description: 'Папки товаров' },
+                    { category: 'Контрагенты', path: 'customer', description: 'Покупатели' },
+                    { category: 'Контрагенты', path: 'supplier', description: 'Поставщики' },
+                    { category: 'Сотрудники', path: 'employee', description: 'Сотрудники' },
+                    { category: 'Организации', path: 'organization', description: 'Организации' },
+                    { category: 'Отчеты', path: 'report/profit', description: 'Прибыльность' },
+                    { category: 'Отчеты', path: 'report/sales', description: 'Продажи' },
+                    { category: 'Отчеты', path: 'report/money', description: 'Движение денег' },
+                    { category: 'Отчеты', path: 'report/turnover', description: 'Оборачиваемость' }
+                ];
+
+                // Объединяем и удаляем дубликаты
+                const allUniquePaths = [...allPaths, ...knownPaths].filter((v,i,a) => a.findIndex(t => t.path === v.path) === i);
+                
+                // Сортируем по категориям
+                allUniquePaths.sort((a, b) => a.category.localeCompare(b.category) || a.path.localeCompare(b.path));
+
+                // Отображаем
+                let html = '';
+                let currentCategory = '';
+                
+                for (const item of allUniquePaths) {
+                    if (item.category !== currentCategory) {
+                        if (currentCategory !== '') html += '</div>';
+                        html += `<div class="mt-4"><h4 class="text-sm font-bold text-blue-400 mb-2">${item.category}</h4><div class="space-y-1">`;
+                        currentCategory = item.category;
+                    }
+                    
+                    html += `
+                        <div class="api-path flex items-center justify-between group" onclick="fillDebugPath('${item.path}')">
+                            <div class="flex-1">
+                                <span class="text-blue-300 font-mono text-xs">${item.path}</span>
+                                <span class="text-gray-500 text-xs ml-2">${item.description}</span>
+                            </div>
+                            <button class="text-xs bg-slate-700 group-hover:bg-blue-600 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">
+                                Использовать
+                            </button>
+                        </div>
+                    `;
+                }
+                html += '</div></div>';
+                
+                content.innerHTML = html;
+
+            } catch (error) {
+                content.innerHTML = `<div class="text-red-400 text-sm">Ошибка: ${error.message}</div>`;
             }
+        }
+
+        function fillDebugPath(path) {
+            document.getElementById('debug-endpoint').value = path;
+            document.getElementById('debug-params').value = 'limit=5';
+            document.getElementById('debug-endpoint').focus();
+        }
+
+        async function sendDebugRequest() {
+            const token = document.getElementById('token-input').value.trim() || localStorage.getItem('moysklad_token');
+            if (!token) return alert('Сначала введите токен!');
+
+            const endpoint = document.getElementById('debug-endpoint').value.trim().replace(/^\/+|\/+$/g, '');
+            const params = document.getElementById('debug-params').value.trim();
             
-            const data = await response.json();
-            console.log('Строк в отчете:', data.rows?.length || 0);
-            
-            return data.rows || [];
+            const headers = getAuthHeaders(token);
+            const baseUrl = `https://api.moysklad.ru/api/remap/1.2/${endpoint}`;
+            const finalUrl = params ? `${baseUrl}?${params}` : baseUrl;
+
+            document.getElementById('debug-results').classList.add('hidden');
+            document.getElementById('debug-output').textContent = 'Загрузка...';
+            document.getElementById('debug-results').classList.remove('hidden');
+
+            try {
+                const response = await proxyFetch(finalUrl, headers);
+                const status = response.status;
+                document.getElementById('debug-status').textContent = status;
+                document.getElementById('debug-status').className = status === 200 ? 'text-green-400' : 'text-red-400';
+
+                const text = await response.text();
+                lastDebugResponse = text;
+                
+                try {
+                    const json = JSON.parse(text);
+                    document.getElementById('debug-output').textContent = JSON.stringify(json, null, 2);
+                } catch (e) {
+                    document.getElementById('debug-output').textContent = text;
+                }
+            } catch (error) {
+                document.getElementById('debug-status').textContent = 'Error';
+                document.getElementById('debug-status').className = 'text-red-400';
+                document.getElementById('debug-output').textContent = error.message;
+            }
+        }
+
+        function copyDebugResponse() {
+            navigator.clipboard.writeText(lastDebugResponse);
+            alert('JSON скопирован!');
         }
 
         async function connectAndCalculate() {
@@ -189,6 +360,7 @@
             const dateTo = document.getElementById('date-to').value || new Date().toISOString().split('T')[0];
 
             if (!token) return alert('Введите токен');
+            localStorage.setItem('moysklad_token', token);
 
             document.getElementById('connect-btn').disabled = true;
             document.getElementById('loading-overlay').classList.remove('hidden');
@@ -196,27 +368,38 @@
             try {
                 const headers = getAuthHeaders(token);
                 
-                updateProgress(10, 'Подключение', 'Проверка токена...');
+                document.getElementById('loading-text').textContent = 'Проверка токена...';
                 const res = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', headers);
                 if (!res.ok) throw new Error(`Ошибка авторизации: ${res.status}`);
 
-                updateProgress(30, 'Загрузка данных', 'Запрашиваем отчет о прибыльности...');
-                const profitRows = await getProfitReport(headers, dateFrom, dateTo);
-
-                updateProgress(70, 'Расчет показателей', 'Считаем выручку, прибыль, маржу...');
+                document.getElementById('loading-text').textContent = 'Загрузка отчета о прибыльности...';
+                document.getElementById('progress-bar').style.width = '50%';
                 
-                let totalRevenue = 0;
-                let totalProfit = 0;
-                let totalCost = 0;
+                const params = new URLSearchParams({
+                    'date.from': `${dateFrom} 00:00:00`,
+                    'date.to': `${dateTo} 23:59:59`,
+                    'groupBy': 'assortment',
+                    'limit': '1000'
+                });
+                const url = `https://api.moysklad.ru/api/remap/1.2/report/profit?${params.toString()}`;
+                
+                const response = await proxyFetch(url, headers);
+                if (!response.ok) throw new Error(`Ошибка ${response.status}: ${await response.text()}`);
+                
+                const data = await response.json();
+                const profitRows = data.rows || [];
+
+                document.getElementById('loading-text').textContent = 'Расчет показателей...';
+                document.getElementById('progress-bar').style.width = '80%';
+                
+                let totalRevenue = 0, totalProfit = 0, totalCost = 0;
                 const byDate = {};
 
                 for (const row of profitRows) {
                     const revenue = (row.sum || 0) / 100;
-                    const cost = (row.cost || 0) / 100; // ТОЧНАЯ себестоимость по FIFO из МойСклад
+                    const cost = (row.cost || 0) / 100;
                     const profit = (row.profit || 0) / 100;
-                    
-                    // Дата может быть в моменте продажи или в дате документа
-                    const date = row.moment ? row.moment.split('T')[0] : (row.date || dateTo);
+                    const date = row.moment ? row.moment.split('T')[0] : dateTo;
 
                     totalRevenue += revenue;
                     totalCost += cost;
@@ -229,14 +412,7 @@
 
                 const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
-                console.log('=== ИТОГИ ===');
-                console.log('Выручка:', totalRevenue);
-                console.log('Себестоимость:', totalCost);
-                console.log('Прибыль:', totalProfit);
-                console.log('Маржа:', margin + '%');
-
-                updateProgress(90, 'Отрисовка', 'Показываем результаты...');
-                
+                document.getElementById('progress-bar').style.width = '100%';
                 animateValue('metric-revenue', totalRevenue);
                 animateValue('metric-profit', totalProfit);
                 animateValue('metric-cost', totalCost);
@@ -245,13 +421,14 @@
                 const dates = Object.keys(byDate).sort();
                 renderChart(dates.map(d => d.slice(5)), dates.map(d => byDate[d].revenue), dates.map(d => byDate[d].profit));
 
-                updateProgress(100, 'Готово!', 'Все данные загружены');
-                document.getElementById('loading-overlay').classList.add('hidden');
-                document.getElementById('results').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    document.getElementById('results').classList.remove('hidden');
+                    document.getElementById('connect-btn').disabled = false;
+                }, 500);
 
             } catch (error) {
                 document.getElementById('loading-overlay').classList.add('hidden');
-                console.error('Ошибка:', error);
                 alert('Ошибка: ' + error.message);
                 document.getElementById('connect-btn').disabled = false;
             }
@@ -261,71 +438,35 @@
             const el = document.getElementById(elementId);
             const duration = 1000;
             const startTime = performance.now();
-            
             const update = (currentTime) => {
                 const progress = Math.min((currentTime - startTime) / duration, 1);
                 const easeOut = 1 - Math.pow(1 - progress, 3);
                 const current = target * easeOut;
-                
-                if (suffix === '%') {
-                    el.textContent = current.toFixed(1) + suffix;
-                } else {
-                    el.textContent = formatMoney(current);
-                }
-                
+                el.textContent = (suffix === '%' ? current.toFixed(1) : formatMoney(current)) + suffix;
                 if (progress < 1) requestAnimationFrame(update);
             };
-            
             requestAnimationFrame(update);
         }
 
         function renderChart(labels, revenueData, profitData) {
             const ctx = document.getElementById('chart');
             if (chartInstance) chartInstance.destroy();
-            
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
-                        { 
-                            label: 'Выручка', 
-                            data: revenueData, 
-                            borderColor: '#4ade80', 
-                            backgroundColor: 'rgba(74, 222, 128, 0.1)', 
-                            fill: true, 
-                            tension: 0.4 
-                        },
-                        { 
-                            label: 'Прибыль', 
-                            data: profitData, 
-                            borderColor: '#60a5fa', 
-                            backgroundColor: 'rgba(96, 165, 250, 0.1)', 
-                            fill: true, 
-                            tension: 0.4 
-                        }
+                        { label: 'Выручка', data: revenueData, borderColor: '#4ade80', backgroundColor: 'rgba(74, 222, 128, 0.1)', fill: true, tension: 0.4 },
+                        { label: 'Прибыль', data: profitData, borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.1)', fill: true, tension: 0.4 }
                     ]
                 },
                 options: {
                     responsive: true,
                     interaction: { mode: 'index', intersect: false },
-                    plugins: { 
-                        legend: { labels: { color: '#94a3b8' } },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => `${context.dataset.label}: ${formatMoney(context.parsed.y)}`
-                            }
-                        }
-                    },
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
                     scales: {
-                        y: { 
-                            ticks: { callback: v => formatMoney(v), color: '#64748b' }, 
-                            grid: { color: '#1e293b' } 
-                        },
-                        x: { 
-                            ticks: { color: '#64748b' }, 
-                            grid: { display: false } 
-                        }
+                        y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
+                        x: { ticks: { color: '#64748b' }, grid: { display: false } }
                     }
                 }
             });
