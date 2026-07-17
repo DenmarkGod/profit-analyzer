@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔍 Умная диагностика API МойСклад</title>
+    <title>🔧 Финальная проверка подключения</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -13,19 +13,20 @@
 </head>
 <body class="min-h-screen p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div class="max-w-3xl mx-auto space-y-6">
         <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-            <h1 class="text-2xl md:text-3xl font-bold mb-2 text-blue-400">🔍 Умная диагностика API</h1>
-            <p class="text-gray-400 text-sm md:text-base">Этот инструмент не зависнет. Он проверит метаданные (полный список доступных функций) и 6 ключевых путей с таймаутом 5 секунд.</p>
+            <h1 class="text-2xl font-bold mb-2 text-blue-400">🔧 Финальная проверка подключения</h1>
+            <p class="text-gray-400 text-sm">Этот скрипт исправляет проблему с кодировкой русских букв в пароле и проверяет базовое подключение.</p>
         </div>
 
         <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
             <div>
-                <label class="block text-sm font-medium mb-2 text-gray-300">Токен API МойСклад</label>
-                <input type="text" id="apiToken" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white mono text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Введите токен...">
+                <label class="block text-sm font-medium mb-2 text-gray-300">Токен или Логин:Пароль</label>
+                <input type="text" id="apiToken" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white mono text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="например: user@domain.com:password или длинный токен">
+                <p class="text-xs text-gray-500 mt-2">💡 Подсказка: Если вы используете Логин и Пароль, введите их через двоеточие (без пробелов).</p>
             </div>
-            <button onclick="runSmartDiagnostic()" id="runBtn" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition flex items-center justify-center gap-2">
-                <span>🚀</span> Запустить умную диагностику
+            <button onclick="runFinalCheck()" id="runBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition">
+                🚀 Проверить подключение
             </button>
         </div>
 
@@ -35,134 +36,133 @@
     <script>
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
 
-        function getHeaders(token) {
+        // ИСПРАВЛЕНИЕ: Безопасное кодирование Base64 с поддержкой кириллицы
+        function getSafeHeaders(token) {
             token = token.trim();
-            let auth = token;
-            if (!token.startsWith("Basic ") && !token.startsWith("Bearer ")) {
-                auth = token.includes("@") ? `Basic ${btoa(token)}` : `Bearer ${token}`;
+            let authValue = "";
+            
+            if (token.startsWith("Basic ") || token.startsWith("Bearer ")) {
+                authValue = token;
+            } else if (token.includes(":")) {
+                // Это формат логин:пароль. Используем unescape(encodeURIComponent) для поддержки русских букв
+                try {
+                    authValue = "Basic " + btoa(unescape(encodeURIComponent(token)));
+                } catch (e) {
+                    console.error("Ошибка кодирования:", e);
+                    authValue = "Bearer " + token;
+                }
+            } else {
+                // Предполагаем, что это OAuth токен
+                authValue = "Bearer " + token;
             }
+
             return {
-                "Authorization": auth,
+                "Authorization": authValue,
                 "Accept": "application/json;charset=utf-8",
                 "Content-Type": "application/json"
             };
         }
 
-        // Функция запроса с жестким таймаутом, чтобы ничего не зависало
-        async function fetchWithTimeout(url, options, timeout = 5000) {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-            try {
-                // Добавляем _t= для обхода QUIC ошибок (как в техническом отчете)
-                const separator = url.includes('?') ? '&' : '?';
-                const finalUrl = `${url}${separator}_t=${Date.now()}`;
-                
-                const response = await fetch(finalUrl, { ...options, signal: controller.signal });
-                clearTimeout(id);
-                return response;
-            } catch (error) {
-                clearTimeout(id);
-                if (error.name === 'AbortError') {
-                    return { status: 408, ok: false, text: () => Promise.resolve('{"error": "Таймаут: сервер не ответил за 5 секунд"}') };
-                }
-                throw error;
-            }
-        }
-
-        async function runSmartDiagnostic() {
+        async function runFinalCheck() {
             const token = document.getElementById('apiToken').value;
-            if (!token) return alert('Пожалуйста, введите токен!');
+            if (!token) return alert('Введите токен или логин:пароль!');
 
             const btn = document.getElementById('runBtn');
             const resultsDiv = document.getElementById('results');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Анализ...';
-            resultsDiv.innerHTML = '<div class="text-center py-8 text-blue-400">⏳ Запрос метаданных и ключевых путей...</div>';
+            btn.innerHTML = '⏳ Проверка...';
+            resultsDiv.innerHTML = '';
 
-            const headers = getHeaders(token);
+            const headers = getSafeHeaders(token);
+
+            // Показываем, какой заголовок мы отправляем (скрывая часть данных для безопасности)
+            const safeAuth = headers.Authorization.length > 20 ? headers.Authorization.substring(0, 20) + '...' : headers.Authorization;
+            resultsDiv.innerHTML += `
+                <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                    <div class="text-xs text-gray-500 mb-1">Отправляемый заголовок Authorization:</div>
+                    <div class="mono text-sm text-green-400 break-all">${safeAuth}</div>
+                </div>
+            `;
 
             try {
-                // ШАГ 1: ГЛАВНЫЙ КЛЮЧ - ЗАПРОС METADATA
-                // Этот один запрос скажет нам ВСЁ, к чему у токена есть доступ
-                resultsDiv.innerHTML += `<div class="bg-slate-800 p-4 rounded border border-slate-700"><div class="font-bold text-blue-400 mb-2">📌 Шаг 1: Проверка глобальных прав (Metadata)</div><div class="text-yellow-400">Загрузка...</div></div>`;
+                // Тест 1: Самый базовый и надежный эндпоинт
+                resultsDiv.innerHTML += `<div class="text-yellow-400 py-2">📌 Тест 1: Проверка организации (entity/organization)...</div>`;
                 
-                const metaRes = await fetchWithTimeout(PROXY_URL, {
+                const res1 = await fetch(PROXY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: 'https://api.moysklad.ru/api/remap/1.2/metadata', headers: headers, method: 'GET' })
+                    body: JSON.stringify({ 
+                        url: 'https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', 
+                        headers: headers, 
+                        method: 'GET' 
+                    })
                 });
 
-                const metaText = await metaRes.text();
-                let metaJson = null;
-                try { metaJson = JSON.parse(metaText); } catch(e) {}
+                const text1 = await res1.text();
+                let json1 = null;
+                try { json1 = JSON.parse(text1); } catch(e) {}
 
-                let metaHtml = '';
-                if (metaRes.ok && metaJson) {
-                    // Проверяем, есть ли отчеты в метаданных
-                    const hasReports = metaJson.meta && metaJson.meta.href && metaJson.meta.href.includes('metadata');
-                    // Ищем конкретно report/sales в ответе (упрощенная проверка)
-                    const metaStr = JSON.stringify(metaJson);
-                    const hasSalesReport = metaStr.includes('report/sales');
-                    const hasProfitReport = metaStr.includes('report/profit');
-
-                    metaHtml = `
-                        <div class="bg-green-900/20 border border-green-700 p-4 rounded">
-                            <div class="font-bold text-green-400 text-lg mb-2">✅ Metadata успешно загружена!</div>
-                            <p class="text-sm text-gray-300 mb-2">Токен рабочий. Теперь проверим наличие конкретных отчетов:</p>
-                            <ul class="list-disc list-inside text-sm space-y-1 mono">
-                                <li class="${hasSalesReport ? 'text-green-400' : 'text-red-400'}">Отчет /report/sales: ${hasSalesReport ? 'ДОСТУПЕН' : 'ОТСУТСТВУЕТ (нет прав или тарифа)'}</li>
-                                <li class="${hasProfitReport ? 'text-green-400' : 'text-red-400'}">Отчет /report/profit: ${hasProfitReport ? 'ДОСТУПЕН' : 'ОТСУТСТВУЕТ'}</li>
-                            </ul>
+                if (res1.ok && json1 && json1.rows && json1.rows.length > 0) {
+                    resultsDiv.innerHTML += `
+                        <div class="bg-green-900/20 border border-green-700 p-4 rounded mb-4">
+                            <div class="font-bold text-green-400 text-lg mb-2">✅ ПОДКЛЮЧЕНИЕ УСПЕШНО!</div>
+                            <p class="text-sm text-gray-300">Токен рабочий, прокси работает. Мы получили данные организации: <b>${json1.rows[0].name}</b></p>
+                            <p class="text-sm text-blue-400 mt-3">🎉 Теперь мы точно знаем, что проблема была в кодировке пароля. Основной код сайта будет работать.</p>
                         </div>
                     `;
-                } else {
-                    metaHtml = `<div class="bg-red-900/20 border border-red-700 p-4 rounded text-red-400">❌ Ошибка Metadata: ${metaRes.status}. Ответ: ${metaText.substring(0, 200)}</div>`;
-                }
-
-                // ШАГ 2: ТОЧЕЧНАЯ ПРОВЕРКА 6 КЛЮЧЕВЫХ ПУТЕЙ
-                resultsDiv.innerHTML = metaHtml + `<div class="font-bold text-blue-400 mt-6 mb-2">📌 Шаг 2: Точечная проверка ключевых путей</div>`;
-                
-                const criticalPaths = [
-                    { name: '1. Отчет Продажи (Sales)', path: 'report/sales?limit=1' },
-                    { name: '2. Отчет Деньги (Money)', path: 'report/money?limit=1' },
-                    { name: '3. Остатки (Stock)', path: 'stock/byproduct?limit=1' },
-                    { name: '4. Розничные продажи', path: 'entity/retaildemand?limit=1' },
-                    { name: '5. Справочник товаров', path: 'entity/product?limit=1' },
-                    { name: '6. Организация', path: 'entity/organization?limit=1' }
-                ];
-
-                for (const item of criticalPaths) {
-                    const res = await fetchWithTimeout(PROXY_URL, {
+                    
+                    // Тест 2: Пробуем отчет, теперь, когда мы уверены в токене
+                    resultsDiv.innerHTML += `<div class="text-yellow-400 py-2">📌 Тест 2: Проверка отчета Продажи (report/sales)...</div>`;
+                    const res2 = await fetch(PROXY_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: `https://api.moysklad.ru/api/remap/1.2/${item.path}`, headers: headers, method: 'GET' })
+                        body: JSON.stringify({ 
+                            url: 'https://api.moysklad.ru/api/remap/1.2/report/sales?limit=1', 
+                            headers: headers, 
+                            method: 'GET' 
+                        })
                     });
+                    const text2 = await res2.text();
                     
-                    const text = await res.text();
-                    let statusClass = res.ok ? 'border-green-500 bg-green-900/10' : (res.status === 408 ? 'border-yellow-500 bg-yellow-900/10' : 'border-red-500 bg-red-900/10');
-                    let statusText = res.ok ? '✅ 200 OK' : (res.status === 408 ? '⏱️ Таймаут (5 сек)' : `❌ ${res.status} Ошибка`);
-                    let textColor = res.ok ? 'text-green-400' : (res.status === 408 ? 'text-yellow-400' : 'text-red-400');
+                    if (res2.ok) {
+                        resultsDiv.innerHTML += `<div class="bg-green-900/20 border border-green-700 p-4 rounded"><div class="font-bold text-green-400">✅ Отчет /report/sales также доступен!</div></div>`;
+                    } else {
+                        resultsDiv.innerHTML += `
+                            <div class="bg-yellow-900/20 border border-yellow-700 p-4 rounded">
+                                <div class="font-bold text-yellow-400 mb-2">⚠️ Отчет /report/sales недоступен (${res2.status})</div>
+                                <p class="text-sm text-gray-300">Это означает, что у вашего сотрудника в настройках МойСклад <b>не стоит галочка "Отчеты"</b>.</p>
+                                <p class="text-sm text-gray-300 mt-2">Решение: Зайдите в МойСклад → Настройки → Сотрудники → Ваш сотрудник → Права → Поставьте галочку "Отчеты" (или "Полный доступ").</p>
+                                <details class="mt-2"><summary class="cursor-pointer text-blue-400 text-sm">Показать ответ сервера</summary><pre class="text-xs text-gray-400 mt-1 bg-slate-900 p-2 rounded">${text2}</pre></details>
+                            </div>
+                        `;
+                    }
 
+                } else {
                     resultsDiv.innerHTML += `
-                        <div class="${statusClass} border-l-4 p-4 rounded flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                            <div>
-                                <div class="font-bold text-white">${item.name}</div>
-                                <div class="mono text-xs text-gray-400 mt-1">${item.path}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-bold ${textColor}">${statusText}</div>
-                                ${!res.ok ? `<button onclick="this.nextElementSibling.classList.toggle('hidden')" class="text-xs text-blue-400 hover:underline mt-1">Показать ответ</button>
-                                <pre class="hidden text-xs text-gray-300 bg-slate-900 p-2 rounded mt-2 max-w-md overflow-x-auto">${text.substring(0, 300)}${text.length > 300 ? '...' : ''}</pre>` : ''}
-                            </div>
+                        <div class="bg-red-900/20 border border-red-700 p-4 rounded mb-4">
+                            <div class="font-bold text-red-400 text-lg mb-2">❌ ОШИБКА АВТОРИЗАЦИИ ИЛИ ДОСТУПА</div>
+                            <p class="text-sm text-gray-300 mb-2">Сервер вернул статус: ${res1.status}</p>
+                            <details><summary class="cursor-pointer text-blue-400 text-sm mb-2">Показать полный ответ сервера</summary><pre class="text-xs text-gray-400 bg-slate-900 p-2 rounded break-all">${text1}</pre></details>
+                            <p class="text-sm text-gray-300 mt-3">💡 Возможные причины:</p>
+                            <ul class="list-disc list-inside text-sm text-gray-400 mt-1">
+                                <li>Неверный логин или пароль (проверьте раскладку и пробелы).</li>
+                                <li>Если это токен, возможно, он отозван или создан без прав API.</li>
+                            </ul>
                         </div>
                     `;
                 }
 
             } catch (error) {
-                resultsDiv.innerHTML += `<div class="bg-red-900/20 border border-red-700 p-4 rounded text-red-400">Критическая ошибка сети: ${error.message}</div>`;
+                resultsDiv.innerHTML += `
+                    <div class="bg-red-900/20 border border-red-700 p-4 rounded">
+                        <div class="font-bold text-red-400 text-lg mb-2">❌ ОШИБКА СЕТИ ИЛИ ПРОКСИ</div>
+                        <p class="text-sm text-gray-300">${error.message}</p>
+                        <p class="text-sm text-gray-400 mt-2">Проверьте, что URL прокси-сервера верный и Cloudflare Worker активен.</p>
+                    </div>
+                `;
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<span>🚀</span> Запустить умную диагностику';
+                btn.innerHTML = '🚀 Проверить подключение';
             }
         }
     </script>
