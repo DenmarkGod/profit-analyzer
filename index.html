@@ -351,12 +351,36 @@
         }
 
         // ================== УТИЛИТЫ ==================
-        async function proxyFetch(targetUrl, headers) {
-            return await fetch(PROXY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
-            });
+        async function proxyFetch(targetUrl, headers, retries = 3) {
+            try {
+                // Добавляем уникальный параметр времени, чтобы браузер НЕ использовал кэш 
+                // от предыдущей неудачной QUIC-попытки и создал новое TCP-соединение
+                const cacheBust = `?_t=${Date.now()}`;
+                
+                const response = await fetch(PROXY_URL + cacheBust, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
+                });
+                return response;
+            } catch (error) {
+                if (retries > 0) {
+                    console.warn(`Сетевой сбой (QUIC), переподключение через 2 сек... (осталось попыток: ${retries})`);
+                    
+                    const loadingText = document.getElementById('loading-text');
+                    const loadingDetails = document.getElementById('loading-details');
+                    if (loadingText) loadingText.textContent = 'Нестабильная сеть, переподключение...';
+                    if (loadingDetails) loadingDetails.textContent = `Попытка ${4 - retries} из 4`;
+        
+                    // Ждем 2 секунды. Это критически важно, чтобы операционная система телефона 
+                    // успела "забыть" сломанную UDP-сессию и при следующем запросе сразу использовала TCP.
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    return proxyFetch(targetUrl, headers, retries - 1);
+                }
+                
+                throw new Error('Не удалось подключиться к серверу. Проверьте интернет и попробуйте снова.');
+            }
         }
 
         function prepareAuthHeaders() {
