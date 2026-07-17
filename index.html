@@ -178,8 +178,16 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
+            
             if (response.status === 429) throw new Error('Лимит запросов (429). Подождите минуту.');
-            if (!response.ok) throw new Error(`Ошибка API: ${response.status} ${response.statusText}`);
+            
+            // ВАЖНО: Если ошибка, читаем текст ответа, чтобы узнать причину от МойСклад
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Ошибка от сервера:', response.status, errorText);
+                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
+            }
+            
             return response;
         }
 
