@@ -3,110 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тест подключения к МойСклад</title>
+    <title>Profit Analyzer - МойСклад</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background: #1e293b; color: white; padding: 40px; max-width: 600px; margin: 0 auto; }
-        .box { background: #334155; padding: 20px; border-radius: 8px; margin-top: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #475569; background: #0f172a; color: white; }
-        button { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #2563eb; }
-        .success { color: #4ade80; }
-        .error { color: #f87171; }
-        pre { background: #0f172a; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; min-height: 100vh; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen">
 
-    <h2>🔌 Шаг 1: Проверка токена</h2>
-    <p>Введите ваш токен (или логин:пароль). Мы запросим только название вашей организации.</p>
-    
-    <input type="text" id="token" placeholder="Вставьте токен или login:password">
-    <button onclick="testConnection()">Проверить подключение</button>
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="glass p-8 max-w-md w-full text-center mx-4">
+            <div class="spinner mx-auto mb-4"></div>
+            <div id="loading-text" class="text-lg font-medium mb-1">Загрузка данных...</div>
+            <div id="loading-details" class="text-sm text-gray-400 mb-4"></div>
+        </div>
+    </div>
 
-    <div id="result" class="box" style="display: none;">
-        <h3 id="statusTitle"></h3>
-        <pre id="output"></pre>
+    <div class="max-w-4xl w-full space-y-6">
+        <div class="glass p-6 md:p-8">
+            <h1 class="text-3xl font-bold mb-2 text-blue-400 text-center">Profit Analyzer</h1>
+            <p class="text-gray-400 text-center mb-6 text-sm">Точные расчеты на базе API МойСклад</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Токен API (или логин:пароль)</label>
+                    <input type="text" id="token-input" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Введите ваши данные для входа">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Период с</label>
+                        <input type="date" id="date-from" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">По</label>
+                        <input type="date" id="date-to" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm">
+                    </div>
+                </div>
+
+                <button onclick="calculateProfit()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-blue-500/20">
+                    Рассчитать прибыльность
+                </button>
+            </div>
+        </div>
+
+        <div id="results" class="hidden space-y-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass p-6 text-center">
+                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Выручка</div>
+                    <div id="profit-revenue" class="text-2xl font-bold text-green-400">0</div>
+                </div>
+                <div class="glass p-6 text-center">
+                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Себестоимость</div>
+                    <div id="profit-cost" class="text-2xl font-bold text-red-400">0</div>
+                </div>
+                <div class="glass p-6 text-center">
+                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Чистая прибыль</div>
+                    <div id="profit-value" class="text-2xl font-bold text-blue-400">0</div>
+                </div>
+                <div class="glass p-6 text-center">
+                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Маржинальность</div>
+                    <div id="profit-margin" class="text-2xl font-bold text-yellow-400">0%</div>
+                </div>
+            </div>
+
+            <div class="glass p-6">
+                <h3 class="text-lg font-bold mb-4">Топ-5 товаров по прибыли</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
+                            <tr><th class="py-3 text-left">Товар</th><th class="py-3 text-right">Выручка</th><th class="py-3 text-right">Прибыль</th><th class="py-3 text-right">Маржа</th></tr>
+                        </thead>
+                        <tbody id="profit-top-table" class="divide-y divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        async function testConnection() {
-            const tokenInput = document.getElementById('token').value.trim();
-            const resultBox = document.getElementById('result');
-            const statusTitle = document.getElementById('statusTitle');
-            const output = document.getElementById('output');
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
 
-            if (!tokenInput) {
-                alert('Пожалуйста, введите токен!');
-                return;
+        function formatMoney(amount) { 
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount); 
+        }
+
+        function getDaysAgo(days) { 
+            const d = new Date(); d.setDate(d.getDate() - days); return d.toISOString().split('T')[0]; 
+        }
+
+        // ИСПРАВЛЕНО: Строго требуемые МойСкладом заголовки
+        function getSafeHeaders(token) {
+            token = token.trim();
+            let authValue = token;
+            if (!token.startsWith("Basic ") && !token.startsWith("Bearer ")) {
+                authValue = token.includes(":") ? "Basic " + btoa(unescape(encodeURIComponent(token))) : "Bearer " + token;
             }
+            return {
+                "Authorization": authValue,
+                "Accept": "application/json;charset=utf-8", // СТРОГО ТАК, как требует документация (ошибка 1062)
+                "Content-Type": "application/json"
+            };
+        }
 
-            resultBox.style.display = 'block';
-            statusTitle.textContent = '⏳ Загрузка...';
-            statusTitle.className = '';
-            output.textContent = 'Отправка запроса...';
-
-            // Формируем заголовок авторизации согласно документации
-            let authHeader = tokenInput;
-            if (!tokenInput.startsWith('Basic ') && !tokenInput.startsWith('Bearer ')) {
-                if (tokenInput.includes(':')) {
-                    // Если это логин:пароль, кодируем в Base64
-                    authHeader = 'Basic ' + btoa(unescape(encodeURIComponent(tokenInput)));
-                } else {
-                    // Иначе считаем, что это Bearer токен
-                    authHeader = 'Bearer ' + tokenInput;
-                }
-            }
-
+        async function fetchWithRetry(url, options, retries = 3) {
             try {
-                // Запрашиваем САМУЮ простую и надежную сущность: организацию
-                // Используем прокси, чтобы избежать CORS ошибок в браузере
-                const proxyUrl = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-                
-                const response = await fetch(proxyUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        url: 'https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1',
-                        headers: {
-                            'Authorization': authHeader,
-                            'Accept': 'application/json'
-                        },
-                        method: 'GET'
-                    })
-                });
-
-                const text = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    data = text; // Если это не JSON, выводим как есть
-                }
-
-                if (response.ok) {
-                    statusTitle.textContent = '✅ УСПЕХ! Подключение работает.';
-                    statusTitle.className = 'success';
-                    
-                    // Пытаемся вытащить имя организации для красоты
-                    if (data.rows && data.rows.length > 0) {
-                        output.textContent = `Ваша организация: ${data.rows[0].name}\n\nПолный ответ API:\n` + JSON.stringify(data, null, 2);
-                    } else {
-                        output.textContent = JSON.stringify(data, null, 2);
-                    }
-                } else {
-                    statusTitle.textContent = `❌ ОШИБКА: Статус ${response.status}`;
-                    statusTitle.className = 'error';
-                    output.textContent = JSON.stringify(data, null, 2);
-                }
-
+                const separator = url.includes('?') ? '&' : '?';
+                return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
-                statusTitle.textContent = '❌ ОШИБКА СЕТИ';
-                statusTitle.className = 'error';
-                output.textContent = error.message;
+                if (retries > 0) {
+                    document.getElementById('loading-details').textContent = `Сетевой сбой, повторная попытка (${4 - retries}/3)...`;
+                    await new Promise(r => setTimeout(r, 2000));
+                    return fetchWithRetry(url, options, retries - 1);
+                }
+                throw new Error('Сеть принудительно сбрасывает соединение. Попробуйте переключиться с Wi-Fi на мобильный интернет.');
             }
         }
+
+        async function proxyFetch(targetUrl, headers) {
+            const response = await fetchWithRetry(PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
+            });
+            
+            if (response.status === 429) throw new Error('Превышен лимит запросов (429). Подождите 1 минуту.');
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Ошибка от МойСклад:', response.status, errorText);
+                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
+            }
+            return response;
+        }
+
+        async function calculateProfit() {
+            const token = document.getElementById('token-input').value.trim();
+            const dateFrom = document.getElementById('date-from').value || getDaysAgo(30);
+            const dateTo = document.getElementById('date-to').value || new Date().toISOString().split('T')[0];
+
+            if (!token) return alert('Пожалуйста, введите токен или логин:пароль');
+            localStorage.setItem('moysklad_token', token);
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
+            const loadingDetails = document.getElementById('loading-details');
+            
+            loadingOverlay.classList.remove('hidden');
+            loadingText.textContent = 'Проверка подключения...';
+            loadingDetails.textContent = '';
+
+            try {
+                const headers = getSafeHeaders(token);
+                
+                // 1. Быстрая проверка токена
+                await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', headers);
+                
+                // 2. Запрос отчета о продажах (единственный источник точной FIFO себестоимости)
+                loadingText.textContent = 'Загрузка отчета о прибыльности...';
+                loadingDetails.textContent = 'МойСклад рассчитывает точную себестоимость...';
+                
+                const safeDateFrom = dateFrom + ' 00:00:00';
+                const safeDateTo = dateTo + ' 23:59:59';
+                
+                // Формируем URL с правильным кодированием
+                const params = new URLSearchParams({
+                    'date.from': safeDateFrom,
+                    'date.to': safeDateTo,
+                    'groupBy': 'assortment',
+                    'limit': '1000'
+                });
+                const url = `https://api.moysklad.ru/api/remap/1.2/report/sales?${params.toString()}`;
+                
+                const response = await proxyFetch(url, headers);
+                const data = await response.json();
+                const rows = data.rows || [];
+
+                loadingText.textContent = 'Обработка данных...';
+                
+                let totalRevenue = 0, totalCost = 0, totalProfit = 0;
+                const byProduct = [];
+
+                for (const row of rows) {
+                    const revenue = (row.sum || 0) / 100;
+                    const cost = (row.cost || 0) / 100; // Точная FIFO себестоимость из отчета
+                    const profit = (row.profit || 0) / 100;
+                    const name = row.assortment?.name || 'Без названия';
+                    
+                    totalRevenue += revenue; 
+                    totalCost += cost; 
+                    totalProfit += profit;
+                    
+                    byProduct.push({ 
+                        name, 
+                        revenue, 
+                        cost, 
+                        profit, 
+                        margin: revenue > 0 ? (profit / revenue * 100) : 0 
+                    });
+                }
+
+                // Сортируем по прибыли
+                byProduct.sort((a, b) => b.profit - a.profit);
+                
+                // Обновляем UI
+                document.getElementById('profit-revenue').textContent = formatMoney(totalRevenue);
+                document.getElementById('profit-cost').textContent = formatMoney(totalCost);
+                document.getElementById('profit-value').textContent = formatMoney(totalProfit);
+                document.getElementById('profit-margin').textContent = totalRevenue > 0 ? ((totalProfit / totalRevenue * 100).toFixed(1) + '%') : '0%';
+
+                document.getElementById('profit-top-table').innerHTML = byProduct.slice(0, 5).map(p => `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 font-medium">${p.name}</td>
+                        <td class="py-3 text-right text-green-400">${formatMoney(p.revenue)}</td>
+                        <td class="py-3 text-right text-blue-400 font-semibold">${formatMoney(p.profit)}</td>
+                        <td class="py-3 text-right text-yellow-400">${p.margin.toFixed(1)}%</td>
+                    </tr>
+                `).join('') || '<tr><td colspan="4" class="py-8 text-center text-gray-500">Нет данных за выбранный период</td></tr>';
+
+                document.getElementById('results').classList.remove('hidden');
+                loadingOverlay.classList.add('hidden');
+
+            } catch (error) {
+                loadingOverlay.classList.add('hidden');
+                console.error('Критическая ошибка:', error);
+                alert('Ошибка: ' + error.message + '\n\nПроверьте, что в МойСкладе у сотрудника выданы права на раздел "Отчеты".');
+            }
+        }
+
+        // Инициализация при загрузке
+        window.addEventListener('load', () => {
+            const savedToken = localStorage.getItem('moysklad_token');
+            if (savedToken) document.getElementById('token-input').value = savedToken;
+            document.getElementById('date-from').value = getDaysAgo(30);
+            document.getElementById('date-to').value = new Date().toISOString().split('T')[0];
+        });
     </script>
 </body>
 </html>
