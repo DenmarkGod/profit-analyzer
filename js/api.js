@@ -1,7 +1,6 @@
 const API = {
     async fetchWithRetry(url, options, retries = CONFIG.RETRIES) {
         try {
-            // Добавляем cache-busting, чтобы избежать ошибок QUIC на мобильных
             const separator = url.includes('?') ? '&' : '?';
             const finalUrl = `${url}${separator}_t=${Date.now()}`;
             return await fetch(finalUrl, options);
@@ -38,7 +37,10 @@ const API = {
         let offset = 0;
         while (true) {
             const params = new URLSearchParams({ limit: 1000, offset });
-            if (filterStr) { params.append('filter', filterStr); params.append('order', 'moment,desc'); }
+            if (filterStr) { 
+                params.append('filter', filterStr); 
+                params.append('order', 'moment,desc'); 
+            }
             
             const response = await API.proxyFetch(`https://api.moysklad.ru/api/remap/1.2/entity/${baseEndpoint}?${params.toString()}`, headers);
             if (!response.ok) break;
@@ -69,76 +71,4 @@ const API = {
         }
         Utils.setCache('products', products);
         return products;
-    },
-
-    async getFolders(headers) {
-        const cached = Utils.getCache('folders');
-        if (cached) return cached;
-
-        UI.updateProgress(40, 'Загрузка категорий', 'Строим дерево папок...');
-        const rows = await API.fetchAllPages('productfolder', headers);
-        const folders = {};
-        for (const row of rows) {
-            let parentId = null;
-            if (row.productFolder?.meta?.href) parentId = row.productFolder.meta.href.split('/').pop();
-            else if (row.parent?.id) parentId = row.parent.id;
-            
-            folders[row.id] = { id: row.id, name: row.name || 'Без названия', parentId };
-        }
-        Utils.setCache('folders', folders);
-        return folders;
-    },
-
-    async getStock(headers) {
-        const cached = Utils.getCache('stock');
-        if (cached) return cached;
-
-        UI.updateProgress(30, 'Загрузка остатков', 'Считаем товары на складе...');
-        const rows = await API.fetchAllPages('stock', headers);
-        const stockMap = {};
-        for (const row of rows) {
-            if (row.assortment?.id) stockMap[row.assortment.id] = row.quantity || 0;
-        }
-        Utils.setCache('stock', stockMap);
-        return stockMap;
-    },
-
-    // ГЛАВНОЕ: Получаем ТОЧНЫЕ данные о прибыли (выручка, себестоимость по FIFO, прибыль) ОДНИМ запросом
-    async getProfitReport(headers, dateFrom, dateTo) {
-        UI.updateProgress(60, 'Анализ прибыльности', 'Запрашиваем отчет о продажах...');
-        
-        // Используем /report/sales с группировкой по товарам
-        // Этот отчет возвращает точную себестоимость (cost) и прибыль (profit)
-        const filter = `date.from=${dateFrom} 00:00:00&date.to=${dateTo} 23:59:59&groupBy=assortment&limit=1000`;
-        const url = `https://api.moysklad.ru/api/remap/1.2/report/sales?${filter}`;
-        
-        console.log('Запрос отчета:', url);
-        
-        const response = await API.proxyFetch(url, headers);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Ошибка отчета:', response.status, errorText);
-            throw new Error(`Ошибка ${response.status}: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Получено строк отчета:', data.rows?.length || 0);
-        
-        return data.rows || [];
-    }
-
-    async getSalesDocuments(headers, dateFrom, dateTo) {
-        // Для журнала продаж нам нужны только документы, без позиций (экономим сотни запросов)
-        const filter = `moment>=${dateFrom} 00:00:00;moment<=${dateTo} 23:59:59`;
-        let docs = await API.fetchAllPages('retaildemand', headers, filter);
-        if (docs.length === 0) docs = await API.fetchAllPages('demand', headers, filter);
-        return docs.map(d => ({
-            id: d.id,
-            name: d.name || 'Б/Н',
-            date: d.moment.split('T')[0],
-            moment: d.moment,
-            revenue: d.sum / 100
-        })).sort((a, b) => b.moment.localeCompare(a.moment));
-    }
-};
+   
