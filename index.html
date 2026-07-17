@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro</title>
+    <title>Profit Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -56,9 +56,24 @@
 <body class="gradient-bg text-white h-screen flex overflow-hidden">
 
     <div id="loading-overlay" class="loading-overlay hidden">
-        <div class="spinner mb-4"></div>
-        <div id="loading-text" class="text-lg text-gray-300 font-medium">Загрузка...</div>
-        <div id="loading-details" class="text-sm text-gray-500 mt-2"></div>
+        <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <div class="spinner mx-auto mb-4"></div>
+                <div id="loading-text" class="text-lg text-gray-300 font-medium mb-2">Загрузка...</div>
+                <div id="loading-details" class="text-sm text-gray-500"></div>
+            </div>
+            
+            <!-- Прогресс-бар -->
+            <div class="relative">
+                <div class="flex justify-between text-xs text-gray-400 mb-2">
+                    <span id="progress-stage">Подготовка</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Боковое меню -->
@@ -313,6 +328,22 @@
         let foldersData = {};
         let folderTree = [];
         let currentTopMetric = 'profit';
+
+        function updateProgress(percent, stage, details = '') {
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const progressStage = document.getElementById('progress-stage');
+            const loadingText = document.getElementById('loading-text');
+            const loadingDetails = document.getElementById('loading-details');
+            
+            if (progressBar) progressBar.style.width = `${percent}%`;
+            if (progressPercent) progressPercent.textContent = `${Math.round(percent)}%`;
+            if (progressStage) progressStage.textContent = stage;
+            if (loadingText) loadingText.textContent = stage;
+            if (loadingDetails) loadingDetails.textContent = details;
+            
+            console.log(`[${Math.round(percent)}%] ${stage}: ${details}`);
+        }
 
         // ================== УТИЛИТЫ ==================
         async function proxyFetch(targetUrl, headers) {
