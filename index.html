@@ -353,10 +353,7 @@
         // ================== УТИЛИТЫ ==================
         async function proxyFetch(targetUrl, headers, retries = 3) {
             try {
-                // Добавляем уникальный параметр времени, чтобы браузер НЕ использовал кэш 
-                // от предыдущей неудачной QUIC-попытки и создал новое TCP-соединение
                 const cacheBust = `?_t=${Date.now()}`;
-                
                 const response = await fetch(PROXY_URL + cacheBust, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -365,21 +362,20 @@
                 return response;
             } catch (error) {
                 if (retries > 0) {
-                    console.warn(`Сетевой сбой (QUIC), переподключение через 2 сек... (осталось попыток: ${retries})`);
+                    console.warn(`Сетевой сбой, переподключение... (осталось попыток: ${retries})`);
                     
                     const loadingText = document.getElementById('loading-text');
                     const loadingDetails = document.getElementById('loading-details');
-                    if (loadingText) loadingText.textContent = 'Нестабильная сеть, переподключение...';
-                    if (loadingDetails) loadingDetails.textContent = `Попытка ${4 - retries} из 4`;
+                    if (loadingText) loadingText.textContent = 'Сеть нестабильна, переподключение...';
+                    if (loadingDetails) loadingDetails.textContent = `Попытка ${4 - retries} из 4. Подождите...`;
         
-                    // Ждем 2 секунды. Это критически важно, чтобы операционная система телефона 
-                    // успела "забыть" сломанную UDP-сессию и при следующем запросе сразу использовала TCP.
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await new Promise(resolve => setTimeout(resolve, 2500)); // Увеличили паузу до 2.5 сек
                     
                     return proxyFetch(targetUrl, headers, retries - 1);
                 }
                 
-                throw new Error('Не удалось подключиться к серверу. Проверьте интернет и попробуйте снова.');
+                // Если все 4 попытки провалились, показываем полезное сообщение
+                throw new Error('Сеть принудительно сбрасывает соединение.\n\nПопробуйте:\n1. Включить и выключить Авиарежим\n2. Переключиться с Wi-Fi на мобильный интернет (или наоборот)\n3. Отключить "Экономию трафика" в браузере');
             }
         }
 
@@ -747,36 +743,35 @@
             const token = document.getElementById('token-input').value.trim();
             const statusDiv = document.getElementById('connection-status');
             const btn = document.getElementById('connect-btn');
-
+        
             if (!token) {
                 statusDiv.textContent = 'Введите токен';
                 statusDiv.className = 'text-red-400 mt-2';
                 statusDiv.classList.remove('hidden');
                 return;
             }
-
+        
             btn.disabled = true;
             btn.textContent = 'Проверка...';
             document.getElementById('loading-overlay').classList.remove('hidden');
             
             updateProgress(5, 'Подключение к МойСклад', 'Проверка токена...');
-
+        
             try {
                 authToken = token;
                 const headers = prepareAuthHeaders();
                 const res = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', headers);
                 if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-
-                updateProgress(15, 'Загрузка товаров', 'Получаем список товаров из МойСклад...');
+        
+                updateProgress(15, 'Загрузка товаров', 'Получаем список товаров (это может занять время)...');
                 productsData = await loadProducts(headers);
                 
-                updateProgress(35, 'Загрузка остатков', 'Считаем товары на складе...');
-                await loadStock(headers);
+                // ЗАГРУЗКА ОСТАТКОВ УБРАНА ОТСЮДА для стабильности на мобильных сетях
                 
                 updateProgress(50, 'Загрузка категорий', 'Строим дерево папок...');
                 foldersData = await loadFolders(headers);
                 folderTree = buildFolderTree();
-
+        
                 localStorage.setItem('moysklad_token', token);
                 
                 updateProgress(70, 'Инициализация интерфейса', 'Создаем фильтры и компоненты...');
@@ -1064,13 +1059,17 @@
 
         async function calculateStock() {
             document.getElementById('loading-overlay').classList.remove('hidden');
-            updateProgress(20, 'Анализ склада', 'Загружаем данные об остатках...');
-
+            updateProgress(10, 'Подготовка', 'Проверка кэша остатков...');
+        
             try {
-                const stockMap = JSON.parse(localStorage.getItem('stock_cache_v1') || '{}');
-                const { from, to } = getDateRange('date-range-overview');
+                const headers = prepareAuthHeaders();
+                // Принудительно загружаем остатки, если их нет в кэше
+                if (!localStorage.getItem('stock_cache_v1')) {
+                    updateProgress(20, 'Загрузка остатков', 'Получаем данные со склада МойСклад...');
+                    await loadStock(headers);
+                }
                 
-                updateProgress(40, 'Расчёт оборачиваемости', 'Анализируем скорость продаж...');
+                updateProgress(40, 'Анализ оборачиваемости', 'Сопоставляем остатки и продажи...');
                 const sales = await loadSalesForPeriod(from, to);
                 const days = Math.max(1, Math.ceil((new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)));
                 
