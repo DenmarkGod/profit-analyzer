@@ -27,9 +27,9 @@
         </div>
         <nav class="flex-1 py-4 space-y-1 overflow-y-auto">
             <button onclick="switchView('profit')" id="nav-profit" class="nav-btn active w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📊 Прибыльность</button>
-            <button onclick="switchView('money')" id="nav-money" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">💰 Движение денег</button>
+            <button onclick="switchView('money')" id="nav-money" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800"> Движение денег</button>
             <button onclick="switchView('turnover')" id="nav-turnover" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📦 Оборачиваемость</button>
-            <button onclick="switchView('sales')" id="nav-sales" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📈 Продажи</button>
+            <button onclick="switchView('sales')" id="nav-sales" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800"> Продажи</button>
             <button onclick="switchView('stock')" id="nav-stock" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">🏪 Остатки</button>
         </nav>
         <div class="p-4 border-t border-slate-800">
@@ -40,7 +40,7 @@
     <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto">
         <button onclick="switchView('profit')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Прибыль</button>
         <button onclick="switchView('money')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Деньги</button>
-        <button onclick="switchView('turnover')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Оборот</button>
+        <button onclick="switchView('turnover')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg"></span>Оборот</button>
         <button onclick="switchView('sales')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📈</span>Продажи</button>
         <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">🏪</span>Склад</button>
     </div>
@@ -69,7 +69,7 @@
         </div>
 
         <div id="view-profit" class="view-section active max-w-6xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4">📊 Отчет о прибыльности</h2>
+            <h2 class="text-2xl font-bold mb-4">📊 Отчет о прибыльности (Sales)</h2>
             <div id="profit-results" class="space-y-6">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="glass p-6 text-center"><div class="text-gray-400 text-xs mb-2">Выручка</div><div id="profit-revenue" class="text-2xl font-bold text-green-400">0</div></div>
@@ -181,7 +181,6 @@
             
             if (response.status === 429) throw new Error('Лимит запросов (429). Подождите минуту.');
             
-            // ВАЖНО: Если ошибка, читаем текст ответа, чтобы узнать причину от МойСклад
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ Ошибка от сервера:', response.status, errorText);
@@ -224,20 +223,20 @@
             }
         }
 
+        // ИСПРАВЛЕНО: используем report/sales вместо report/profit
         async function calculateProfit(headers, dateFrom, dateTo) {
-            // Исправляем кодировку: заменяем пробел на %20 явно
             const safeDateFrom = dateFrom + ' 00:00:00';
             const safeDateTo = dateTo + ' 23:59:59';
             
-            const url = `https://api.moysklad.ru/api/remap/1.2/report/profit?date.from=${encodeURIComponent(safeDateFrom)}&date.to=${encodeURIComponent(safeDateTo)}&groupBy=assortment&limit=1000`;
+            const url = `https://api.moysklad.ru/api/remap/1.2/report/sales?date.from=${encodeURIComponent(safeDateFrom)}&date.to=${encodeURIComponent(safeDateTo)}&groupBy=assortment&limit=1000`;
             
             const response = await proxyFetch(url, headers);
             const data = await response.json();
             const rows = data.rows || [];
-        
+
             let totalRevenue = 0, totalCost = 0, totalProfit = 0;
             const byProduct = [];
-        
+
             for (const row of rows) {
                 const revenue = (row.sum || 0) / 100;
                 const cost = (row.cost || 0) / 100;
@@ -246,13 +245,13 @@
                 totalRevenue += revenue; totalCost += cost; totalProfit += profit;
                 byProduct.push({ name, revenue, cost, profit, margin: revenue > 0 ? (profit / revenue * 100) : 0 });
             }
-        
+
             byProduct.sort((a, b) => b.profit - a.profit);
             document.getElementById('profit-revenue').textContent = formatMoney(totalRevenue);
             document.getElementById('profit-cost').textContent = formatMoney(totalCost);
             document.getElementById('profit-value').textContent = formatMoney(totalProfit);
             document.getElementById('profit-margin').textContent = totalRevenue > 0 ? ((totalProfit / totalRevenue * 100).toFixed(1) + '%') : '0%';
-        
+
             document.getElementById('profit-top-table').innerHTML = byProduct.slice(0, 10).map(p => `
                 <tr><td class="py-2">${p.name}</td><td class="py-2 text-right text-green-400">${formatMoney(p.revenue)}</td>
                 <td class="py-2 text-right text-blue-400">${formatMoney(p.profit)}</td><td class="py-2 text-right text-yellow-400">${p.margin.toFixed(1)}%</td></tr>
@@ -260,7 +259,6 @@
         }
 
         async function calculateMoney(headers, dateFrom, dateTo) {
-            // ИСПРАВЛЕНО: добавлена закрывающая обратная кавычка
             const params = new URLSearchParams({ 'date.from': `${dateFrom} 00:00:00`, 'date.to': `${dateTo} 23:59:59`, 'limit': '1000' });
             const response = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/money?${params}`, headers);
             const data = await response.json();
@@ -289,9 +287,11 @@
             const stockRes = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/stock/byproduct?limit=1000', headers);
             const stockData = await stockRes.json();
             
-            // ИСПРАВЛЕНО: добавлена закрывающая обратная кавычка
-            const params = new URLSearchParams({ 'date.from': `${dateFrom} 00:00:00`, 'date.to': `${dateTo} 23:59:59`, 'limit': '1000' });
-            const profitRes = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit?${params}`, headers);
+            // ИСПРАВЛЕНО: используем report/sales
+            const safeDateFrom = dateFrom + ' 00:00:00';
+            const safeDateTo = dateTo + ' 23:59:59';
+            const profitUrl = `https://api.moysklad.ru/api/remap/1.2/report/sales?date.from=${encodeURIComponent(safeDateFrom)}&date.to=${encodeURIComponent(safeDateTo)}&limit=1000`;
+            const profitRes = await proxyFetch(profitUrl, headers);
             const profitData = await profitRes.json();
 
             let totalStockValue = 0, totalCOGS = 0;
