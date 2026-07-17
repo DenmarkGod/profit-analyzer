@@ -105,15 +105,28 @@ const API = {
 
     // ГЛАВНОЕ: Получаем ТОЧНЫЕ данные о прибыли (выручка, себестоимость по FIFO, прибыль) ОДНИМ запросом
     async getProfitReport(headers, dateFrom, dateTo) {
-        UI.updateProgress(60, 'Анализ прибыльности', 'Запрашиваем точный отчет у МойСклад...');
-        // Отчет о прибыльности сразу дает точную себестоимость и прибыль без необходимости скачивать позиции чеков
-        const filter = `date.from=${dateFrom}&date.to=${dateTo}&groupBy=assortment`;
-        const response = await API.proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit?${filter}`, headers);
-        if (!response.ok) throw new Error('Ошибка загрузки отчета о прибыльности');
+        UI.updateProgress(60, 'Анализ прибыльности', 'Запрашиваем отчет о продажах...');
+        
+        // Используем /report/sales с группировкой по товарам
+        // Этот отчет возвращает точную себестоимость (cost) и прибыль (profit)
+        const filter = `date.from=${dateFrom} 00:00:00&date.to=${dateTo} 23:59:59&groupBy=assortment&limit=1000`;
+        const url = `https://api.moysklad.ru/api/remap/1.2/report/sales?${filter}`;
+        
+        console.log('Запрос отчета:', url);
+        
+        const response = await API.proxyFetch(url, headers);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Ошибка отчета:', response.status, errorText);
+            throw new Error(`Ошибка ${response.status}: ${errorText}`);
+        }
         
         const data = await response.json();
+        console.log('Получено строк отчета:', data.rows?.length || 0);
+        
         return data.rows || [];
-    },
+    }
 
     async getSalesDocuments(headers, dateFrom, dateTo) {
         // Для журнала продаж нам нужны только документы, без позиций (экономим сотни запросов)
