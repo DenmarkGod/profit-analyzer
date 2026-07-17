@@ -68,7 +68,6 @@
             </div>
         </div>
 
-        <!-- Вкладки (сокращенно для экономии места, логика та же, что и в прошлом коде) -->
         <div id="view-profit" class="view-section active max-w-6xl mx-auto space-y-6">
             <h2 class="text-2xl font-bold mb-4">📊 Отчет о прибыльности</h2>
             <div id="profit-results" class="space-y-6">
@@ -173,7 +172,7 @@
         }
 
         async function proxyFetch(targetUrl, headers) {
-            console.log('🚀 Отправка запроса через прокси:', targetUrl); // ДИАГНОСТИКА
+            console.log('🚀 Отправка запроса через прокси:', targetUrl);
             const response = await fetchWithRetry(PROXY_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -248,7 +247,8 @@
         }
 
         async function calculateMoney(headers, dateFrom, dateTo) {
-            const params = new URLSearchParams({ 'date.from': `${dateFrom} 00:00:00`, 'date.to': `${dateTo} 23:59:59', 'limit': '1000' });
+            // ИСПРАВЛЕНО: добавлена закрывающая обратная кавычка
+            const params = new URLSearchParams({ 'date.from': `${dateFrom} 00:00:00`, 'date.to': `${dateTo} 23:59:59`, 'limit': '1000' });
             const response = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/money?${params}`, headers);
             const data = await response.json();
             const rows = data.rows || [];
@@ -276,7 +276,8 @@
             const stockRes = await proxyFetch('https://api.moysklad.ru/api/remap/1.2/stock/byproduct?limit=1000', headers);
             const stockData = await stockRes.json();
             
-            const params = new URLSearchParams({ 'date.from': `${dateFrom} 00:00:00`, 'date.to': `${dateTo} 23:59:59', 'limit': '1000' });
+            // ИСПРАВЛЕНО: добавлена закрывающая обратная кавычка
+            const params = new URLSearchParams({ 'date.from': `${dateFrom} 00:00:00`, 'date.to': `${dateTo} 23:59:59`, 'limit': '1000' });
             const profitRes = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit?${params}`, headers);
             const profitData = await profitRes.json();
 
