@@ -217,14 +217,19 @@
         }
 
         async function calculateProfit(headers, dateFrom, dateTo) {
-            const params = new URLSearchParams({ 'date.from': `${dateFrom} 00:00:00`, 'date.to': `${dateTo} 23:59:59`, 'groupBy': 'assortment', 'limit': '1000' });
-            const response = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit?${params}`, headers);
+            // Исправляем кодировку: заменяем пробел на %20 явно
+            const safeDateFrom = dateFrom + ' 00:00:00';
+            const safeDateTo = dateTo + ' 23:59:59';
+            
+            const url = `https://api.moysklad.ru/api/remap/1.2/report/profit?date.from=${encodeURIComponent(safeDateFrom)}&date.to=${encodeURIComponent(safeDateTo)}&groupBy=assortment&limit=1000`;
+            
+            const response = await proxyFetch(url, headers);
             const data = await response.json();
             const rows = data.rows || [];
-
+        
             let totalRevenue = 0, totalCost = 0, totalProfit = 0;
             const byProduct = [];
-
+        
             for (const row of rows) {
                 const revenue = (row.sum || 0) / 100;
                 const cost = (row.cost || 0) / 100;
@@ -233,13 +238,13 @@
                 totalRevenue += revenue; totalCost += cost; totalProfit += profit;
                 byProduct.push({ name, revenue, cost, profit, margin: revenue > 0 ? (profit / revenue * 100) : 0 });
             }
-
+        
             byProduct.sort((a, b) => b.profit - a.profit);
             document.getElementById('profit-revenue').textContent = formatMoney(totalRevenue);
             document.getElementById('profit-cost').textContent = formatMoney(totalCost);
             document.getElementById('profit-value').textContent = formatMoney(totalProfit);
             document.getElementById('profit-margin').textContent = totalRevenue > 0 ? ((totalProfit / totalRevenue * 100).toFixed(1) + '%') : '0%';
-
+        
             document.getElementById('profit-top-table').innerHTML = byProduct.slice(0, 10).map(p => `
                 <tr><td class="py-2">${p.name}</td><td class="py-2 text-right text-green-400">${formatMoney(p.revenue)}</td>
                 <td class="py-2 text-right text-blue-400">${formatMoney(p.profit)}</td><td class="py-2 text-right text-yellow-400">${p.margin.toFixed(1)}%</td></tr>
