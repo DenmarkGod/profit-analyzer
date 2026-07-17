@@ -593,18 +593,52 @@
 
         async function loadStock(headers) {
             const cached = localStorage.getItem('stock_cache_v1');
-            if (cached) return JSON.parse(cached);
-            
-            // Загружаем остатки по всем товарам
-            const rows = await fetchAllPages('stock/byproduct', headers, 'expand=assortment');
-            const stockMap = {};
-            for (const row of rows) {
-                if (row.assortment && row.assortment.id) {
-                    stockMap[row.assortment.id] = row.quantity || 0;
-                }
+            if (cached) {
+                console.log('Остатки загружены из кэша');
+                return JSON.parse(cached);
             }
-            localStorage.setItem('stock_cache_v1', JSON.stringify(stockMap));
-            return stockMap;
+        
+            console.log('Загрузка остатков со склада...');
+            const stockMap = {};
+            let offset = 0;
+            const limit = 1000;
+        
+            try {
+                while (true) {
+                    // Правильный запрос к API остатков без ошибочных фильтров
+                    const url = `https://api.moysklad.ru/api/remap/1.2/entity/stock?limit=${limit}&offset=${offset}`;
+                    const response = await proxyFetch(url, headers);
+        
+                    if (response.status !== 200) {
+                        console.error('Ошибка загрузки остатков. Статус:', response.status);
+                        // Если ошибка 403, значит у токена нет прав на раздел "Склад"
+                        if (response.status === 403) {
+                            console.error('Проверьте, что у токена есть права на просмотр остатков (Склад)');
+                        }
+                        break;
+                    }
+        
+                    const data = await response.json();
+                    const rows = data.rows || [];
+        
+                    for (const row of rows) {
+                        if (row.assortment && row.assortment.id) {
+                            stockMap[row.assortment.id] = row.quantity || 0;
+                        }
+                    }
+        
+                    if (rows.length < limit) break;
+                    offset += limit;
+                    if (offset > 15000) break; // Защита от бесконечного цикла
+                }
+        
+                localStorage.setItem('stock_cache_v1', JSON.stringify(stockMap));
+                console.log('Остатки успешно загружены и закэшированы. Позиций:', Object.keys(stockMap).length);
+                return stockMap;
+            } catch (error) {
+                console.error('Критическая ошибка при загрузке остатков:', error);
+                return {};
+            }
         }
 
         async function loadFolders(headers) {
