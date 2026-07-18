@@ -3,5708 +3,676 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro - Главная</title>
-
+    <title>Profit Analyzer Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
     <style>
-        * {
-            font-family: 'Inter', sans-serif;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #0f172a;
-            color: #e2e8f0;
-        }
-
-        .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-        }
-
-        .nav-item {
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: rgba(59, 130, 246, 0.1);
-        }
-
-        .nav-item.active {
-            background: rgba(59, 130, 246, 0.15);
-            border-left-color: #3b82f6;
-            color: #60a5fa;
-        }
-
-        .kpi-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .kpi-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-            border-color: rgba(59, 130, 246, 0.3);
-        }
-
-        .trend-up {
-            color: #4ade80;
-        }
-
-        .trend-down {
-            color: #f87171;
-        }
-
-        .trend-neutral {
-            color: #94a3b8;
-        }
-
-        .check-item {
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .check-item:hover {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: rgba(59, 130, 246, 0.3);
-            transform: translateX(4px);
-        }
-
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            backdrop-filter: blur(4px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(59, 130, 246, 0.2);
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        input[type="date"] {
-            color-scheme: dark;
-        }
-
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 3px;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 320px;
-        }
-
-        .chart-container-large {
-            position: relative;
-            height: 400px;
-        }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4ade80;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.5;
-                transform: scale(1.2);
-            }
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        select,
-        input[type="date"] {
-            color-scheme: dark;
-        }
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        body { background: #0f172a; color: #e2e8f0; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
+        .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
+        .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
+        .kpi-card { transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); border-color: rgba(59, 130, 246, 0.3); }
+        .trend-up { color: #4ade80; }
+        .trend-down { color: #f87171; }
+        .trend-neutral { color: #94a3b8; }
+        .check-item { transition: all 0.2s ease; cursor: pointer; }
+        .check-item:hover { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); transform: translateX(4px); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input[type="date"], select { color-scheme: dark; }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .chart-container { position: relative; height: 320px; }
+        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+        .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-
 <body class="flex h-screen overflow-hidden">
 
-    <!-- =========================
-         БОКОВОЕ МЕНЮ
-    ========================== -->
-
+    <!-- БОКОВОЕ МЕНЮ -->
     <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col hidden md:flex z-20">
-
         <div class="p-6 border-b border-slate-800">
-            <h1 class="text-xl font-bold gradient-text">
-                Profit Analyzer
-            </h1>
-
-            <p class="text-xs text-gray-500 mt-1">
-                Управленческий учет ИП
-            </p>
+            <h1 class="text-xl font-bold gradient-text">Profit Analyzer</h1>
+            <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
         </div>
-
         <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-
-            <button
-                onclick="switchView('dashboard')"
-                id="nav-dashboard"
-                class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3"
-            >
-                <span class="text-lg">📊</span>
-                Главная
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3">
+                <span class="text-lg">📊</span> Главная
             </button>
-
-            <button
-                onclick="switchView('sales')"
-                id="nav-sales"
-                class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"
-            >
-                <span class="text-lg">📈</span>
-                Продажи
+            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">💰</span> Финансы
             </button>
-
-            <button
-                onclick="switchView('finance')"
-                id="nav-finance"
-                class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"
-            >
-                <span class="text-lg">💰</span>
-                Финансы
+            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">📦</span> Склад
             </button>
-
-            <button
-                onclick="switchView('stock')"
-                id="nav-stock"
-                class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"
-            >
-                <span class="text-lg">📦</span>
-                Склад
+            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">👥</span> Клиенты
             </button>
-
-            <button
-                onclick="switchView('clients')"
-                id="nav-clients"
-                class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"
-            >
-                <span class="text-lg">👥</span>
-                Клиенты
-            </button>
-
         </nav>
-
         <div class="p-4 border-t border-slate-800">
-
-            <button
-                onclick="showConnectionModal()"
-                class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition"
-            >
-                <span>🔌</span>
-                Настройки API
+            <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition">
+                <span>🔌</span> Настройки API
             </button>
-
         </div>
-
     </aside>
 
-
-    <!-- =========================
-         МОБИЛЬНОЕ МЕНЮ
-    ========================== -->
-
+    <!-- МОБИЛЬНОЕ МЕНЮ -->
     <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto">
-
-        <button
-            onclick="switchView('dashboard')"
-            class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"
-        >
-            <span class="text-lg">📊</span>
-            Главная
+        <button onclick="switchView('dashboard')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]">
+            <span class="text-lg">📊</span> Главная
         </button>
-
-        <button
-            onclick="switchView('sales')"
-            class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"
-        >
-            <span class="text-lg">📈</span>
-            Продажи
+        <button onclick="switchView('finance')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+            <span class="text-lg">💰</span> Финансы
         </button>
-
-        <button
-            onclick="switchView('finance')"
-            class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"
-        >
-            <span class="text-lg">💰</span>
-            Финансы
+        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+            <span class="text-lg">📦</span> Склад
         </button>
-
-        <button
-            onclick="switchView('stock')"
-            class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"
-        >
-            <span class="text-lg">📦</span>
-            Склад
-        </button>
-
     </div>
 
-
-    <!-- =========================
-         ОСНОВНОЙ КОНТЕНТ
-    ========================== -->
-
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <main class="flex-1 flex flex-col overflow-hidden">
-
         <!-- Верхняя панель -->
-
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
-
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-
                 <div class="flex items-center gap-3">
-
                     <div class="pulse-dot"></div>
-
-                    <h2
-                        id="page-title"
-                        class="text-xl md:text-2xl font-bold text-white"
-                    >
-                        Главная
-                    </h2>
-
+                    <h2 id="page-title" class="text-xl md:text-2xl font-bold text-white">Главная</h2>
                     <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
-
-                        Обновлено:
-
-                        <span id="last-update">
-                            -
-                        </span>
-
+                        Обновлено: <span id="last-update">-</span>
                     </span>
-
                 </div>
-
-
                 <div class="flex flex-wrap items-center gap-3">
-
                     <div class="flex bg-slate-800 rounded-lg p-1 gap-1">
-
-                        <button
-                            onclick="setPeriod('today')"
-                            class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300"
-                        >
-                            Сегодня
-                        </button>
-
-                        <button
-                            onclick="setPeriod('week')"
-                            class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition bg-blue-600 text-white"
-                        >
-                            Неделя
-                        </button>
-
-                        <button
-                            onclick="setPeriod('month')"
-                            class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300"
-                        >
-                            Месяц
-                        </button>
-
+                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Сегодня</button>
+                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition bg-blue-600 text-white">Неделя</button>
+                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Месяц</button>
                     </div>
-
-
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
-
-                        <input
-                            type="date"
-                            id="date-from"
-                            class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white"
-                        >
-
-                        <span class="text-gray-500">
-                            —
-                        </span>
-
-                        <input
-                            type="date"
-                            id="date-to"
-                            class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white"
-                        >
-
+                        <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
+                        <span class="text-gray-500">—</span>
+                        <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                     </div>
-
-
-                    <button
-                        onclick="loadDashboard()"
-                        class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-                    >
+                    <button onclick="loadDashboard()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
                         🔄 Обновить
                     </button>
-
                 </div>
-
             </div>
-
         </div>
 
-
         <!-- Область контента -->
-
         <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
-
-
-            <!-- =========================
-                 ГЛАВНАЯ
-            ========================== -->
-
-            <div
-                id="view-dashboard"
-                class="view-section active space-y-6"
-            >
-
+            
+            <!-- ГЛАВНАЯ СТРАНИЦА -->
+            <div id="view-dashboard" class="view-section active space-y-6">
+                <!-- KPI Карточки -->
                 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
-
-                    <div
-                        class="kpi-card glass p-5"
-                        onclick="showKpiDetail('revenue')"
-                    >
-                        <div class="text-xs text-gray-400 uppercase">
-                            Выручка
-                        </div>
-
-                        <div
-                            id="kpi-revenue"
-                            class="text-2xl md:text-3xl font-bold text-white mt-2"
-                        >
-                            0 ₽
-                        </div>
-
-                        <div
-                            id="kpi-revenue-trend"
-                            class="text-xs mt-2 trend-neutral"
-                        >
-                            —
-                        </div>
+                    <div class="kpi-card glass p-5" onclick="showKpiDetail('revenue')">
+                        <div class="text-xs text-gray-400 uppercase">Выручка</div>
+                        <div id="kpi-revenue" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
+                        <div id="kpi-revenue-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-
-
-                    <div
-                        class="kpi-card glass p-5"
-                        onclick="showKpiDetail('profit')"
-                    >
-                        <div class="text-xs text-gray-400 uppercase">
-                            Прибыль
-                        </div>
-
-                        <div
-                            id="kpi-profit"
-                            class="text-2xl md:text-3xl font-bold text-white mt-2"
-                        >
-                            0 ₽
-                        </div>
-
-                        <div
-                            id="kpi-profit-trend"
-                            class="text-xs mt-2 trend-neutral"
-                        >
-                            —
-                        </div>
+                    <div class="kpi-card glass p-5" onclick="showKpiDetail('profit')">
+                        <div class="text-xs text-gray-400 uppercase">Прибыль</div>
+                        <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
+                        <div id="kpi-profit-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-
-
-                    <div
-                        class="kpi-card glass p-5"
-                        onclick="showChecksList()"
-                    >
-                        <div class="text-xs text-gray-400 uppercase">
-                            Чеки
-                        </div>
-
-                        <div
-                            id="kpi-checks"
-                            class="text-2xl md:text-3xl font-bold text-white mt-2"
-                        >
-                            0
-                        </div>
-
-                        <div
-                            id="kpi-checks-trend"
-                            class="text-xs mt-2 trend-neutral"
-                        >
-                            —
-                        </div>
+                    <div class="kpi-card glass p-5" onclick="showChecksList()">
+                        <div class="text-xs text-gray-400 uppercase">Чеки</div>
+                        <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
+                        <div id="kpi-checks-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-
-
-                    <div
-                        class="kpi-card glass p-5"
-                        onclick="showKpiDetail('avgCheck')"
-                    >
-                        <div class="text-xs text-gray-400 uppercase">
-                            Средний чек
-                        </div>
-
-                        <div
-                            id="kpi-avg-check"
-                            class="text-2xl md:text-3xl font-bold text-white mt-2"
-                        >
-                            0 ₽
-                        </div>
-
-                        <div
-                            id="kpi-avg-check-trend"
-                            class="text-xs mt-2 trend-neutral"
-                        >
-                            —
-                        </div>
+                    <div class="kpi-card glass p-5" onclick="showKpiDetail('avgCheck')">
+                        <div class="text-xs text-gray-400 uppercase">Средний чек</div>
+                        <div id="kpi-avg-check" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
+                        <div id="kpi-avg-check-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-
-
-                    <div
-                        class="kpi-card glass p-5 col-span-2 lg:col-span-1"
-                        onclick="showKpiDetail('margin')"
-                    >
-                        <div class="text-xs text-gray-400 uppercase">
-                            Маржа
-                        </div>
-
-                        <div
-                            id="kpi-margin"
-                            class="text-2xl md:text-3xl font-bold text-white mt-2"
-                        >
-                            0%
-                        </div>
-
-                        <div
-                            id="kpi-margin-trend"
-                            class="text-xs mt-2 trend-neutral"
-                        >
-                            —
-                        </div>
+                    <div class="kpi-card glass p-5 col-span-2 lg:col-span-1" onclick="showKpiDetail('margin')">
+                        <div class="text-xs text-gray-400 uppercase">Маржа</div>
+                        <div id="kpi-margin" class="text-2xl md:text-3xl font-bold text-white mt-2">0%</div>
+                        <div id="kpi-margin-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-
                 </div>
 
-
+                <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
                     <div class="lg:col-span-2 glass p-6">
-
-                        <h3 class="text-lg font-bold text-white mb-4">
-                            📈 Динамика выручки
-                        </h3>
-
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
-
                     </div>
-
-
                     <div class="glass p-6">
-
-                        <h3 class="text-lg font-bold text-white mb-4">
-                            🏆 Топ-5 товаров
-                        </h3>
-
-                        <div
-                            id="top-products-list"
-                            class="space-y-3 max-h-[320px] overflow-y-auto scrollbar-thin"
-                        >
-                            Загрузка...
+                        <h3 class="text-lg font-bold text-white mb-4">🏆 Топ-5 товаров</h3>
+                        <div id="top-products-list" class="space-y-3 max-h-[320px] overflow-y-auto scrollbar-thin">
+                            <div class="text-gray-500 text-center py-8">Загрузка...</div>
                         </div>
-
                     </div>
-
                 </div>
 
-
+                <!-- Последние чеки -->
                 <div class="glass p-6">
-
                     <div class="flex items-center justify-between mb-4">
-
-                        <h3 class="text-lg font-bold text-white">
-                            🧾 Последние чеки
-                        </h3>
-
-                        <button
-                            onclick="showChecksList()"
-                            class="text-xs text-blue-400"
-                        >
-                            Показать все
-                        </button>
-
+                        <h3 class="text-lg font-bold text-white">🧾 Последние чеки</h3>
+                        <button onclick="showChecksList()" class="text-xs text-blue-400 hover:text-blue-300 transition">Показать все</button>
                     </div>
-
-                    <div
-                        id="recent-checks-list"
-                        class="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin"
-                    >
-                        Загрузка...
+                    <div id="recent-checks-list" class="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
+                        <div class="text-gray-500 text-center py-8">Загрузка...</div>
                     </div>
-
                 </div>
 
-
+                <!-- Анализ и рекомендации -->
                 <div class="glass p-6">
-
-                    <h3 class="text-lg font-bold text-white mb-4">
-                        🧠 Анализ и рекомендации
-                    </h3>
-
-                    <div
-                        id="ai-insights"
-                        class="grid grid-cols-1 md:grid-cols-2 gap-3"
-                    >
-                        Загрузка...
+                    <h3 class="text-lg font-bold text-white mb-4">🧠 Анализ и рекомендации</h3>
+                    <div id="ai-insights" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="text-gray-500 text-center py-8 md:col-span-2">Загрузка...</div>
                     </div>
-
                 </div>
-
             </div>
 
-
-            <!-- =========================
-                 ПРОДАЖИ
-            ========================== -->
-
-            <div
-                id="view-sales"
-                class="view-section hidden space-y-6"
-            >
-
-                <!-- Фильтры -->
-
-                <div class="glass p-6">
-
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-
-                        <div>
-
-                            <h2 class="text-xl font-bold text-white">
-                                📈 Аналитика продаж
-                            </h2>
-
-                            <p class="text-sm text-gray-400 mt-1">
-                                Фактические продажи, цены и себестоимость из МойСклад
-                            </p>
-
-                        </div>
-
-
-                        <button
-                            onclick="loadSalesAnalytics()"
-                            class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold transition"
-                        >
-                            Построить графики
-                        </button>
-
-                    </div>
-
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-
-                        <div>
-
-                            <label class="block text-xs text-gray-400 mb-2">
-                                Категория
-                            </label>
-
-                            <select
-                                id="sales-category"
-                                onchange="onSalesCategoryChange()"
-                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none"
-                            >
-                                <option value="">
-                                    Все категории
-                                </option>
-                            </select>
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block text-xs text-gray-400 mb-2">
-                                Подкатегория
-                            </label>
-
-                            <select
-                                id="sales-subcategory"
-                                onchange="onSalesSubcategoryChange()"
-                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none"
-                                disabled
-                            >
-                                <option value="">
-                                    Все подкатегории
-                                </option>
-                            </select>
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block text-xs text-gray-400 mb-2">
-                                Товар
-                            </label>
-
-                            <select
-                                id="sales-product"
-                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none"
-                                disabled
-                            >
-                                <option value="">
-                                    Все товары
-                                </option>
-                            </select>
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block text-xs text-gray-400 mb-2">
-                                Группировка
-                            </label>
-
-                            <select
-                                id="sales-grouping"
-                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none"
-                            >
-                                <option value="day">
-                                    По дням
-                                </option>
-
-                                <option value="week">
-                                    По неделям
-                                </option>
-
-                                <option value="month">
-                                    По месяцам
-                                </option>
-
-                                <option value="weekday">
-                                    По дням недели
-                                </option>
-
-                                <option value="hour">
-                                    По часам
-                                </option>
-                            </select>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-
-                        <div>
-
-                            <label class="block text-xs text-gray-400 mb-2">
-                                Начало периода
-                            </label>
-
-                            <input
-                                type="date"
-                                id="sales-date-from"
-                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white"
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block text-xs text-gray-400 mb-2">
-                                Конец периода
-                            </label>
-
-                            <input
-                                type="date"
-                                id="sales-date-to"
-                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-white"
-                            >
-
-                        </div>
-
-                    </div>
-
-
-                    <div
-                        id="sales-filter-status"
-                        class="text-xs text-gray-500 mt-4"
-                    >
-                        Данные еще не загружены
-                    </div>
-
-                </div>
-
-
-                <!-- KPI -->
-
-                <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
-
-                    <div class="glass p-5">
-                        <div class="text-xs text-gray-400 uppercase">
-                            Выручка
-                        </div>
-
-                        <div
-                            id="sales-kpi-revenue"
-                            class="text-2xl font-bold text-green-400 mt-2"
-                        >
-                            0 ₽
-                        </div>
-                    </div>
-
-
-                    <div class="glass p-5">
-                        <div class="text-xs text-gray-400 uppercase">
-                            Себестоимость
-                        </div>
-
-                        <div
-                            id="sales-kpi-cost"
-                            class="text-2xl font-bold text-orange-400 mt-2"
-                        >
-                            0 ₽
-                        </div>
-                    </div>
-
-
-                    <div class="glass p-5">
-                        <div class="text-xs text-gray-400 uppercase">
-                            Прибыль
-                        </div>
-
-                        <div
-                            id="sales-kpi-profit"
-                            class="text-2xl font-bold text-blue-400 mt-2"
-                        >
-                            0 ₽
-                        </div>
-                    </div>
-
-
-                    <div class="glass p-5">
-                        <div class="text-xs text-gray-400 uppercase">
-                            Продано
-                        </div>
-
-                        <div
-                            id="sales-kpi-quantity"
-                            class="text-2xl font-bold text-purple-400 mt-2"
-                        >
-                            0
-                        </div>
-                    </div>
-
-
-                    <div class="glass p-5">
-                        <div class="text-xs text-gray-400 uppercase">
-                            Чеки
-                        </div>
-
-                        <div
-                            id="sales-kpi-checks"
-                            class="text-2xl font-bold text-yellow-400 mt-2"
-                        >
-                            0
-                        </div>
-                    </div>
-
-
-                    <div class="glass p-5">
-                        <div class="text-xs text-gray-400 uppercase">
-                            Маржа
-                        </div>
-
-                        <div
-                            id="sales-kpi-margin"
-                            class="text-2xl font-bold text-cyan-400 mt-2"
-                        >
-                            0%
-                        </div>
-                    </div>
-
-                </div>
-
-
-                <!-- Основной график -->
-
-                <div class="glass p-6">
-
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-
-                        <div>
-
-                            <h3 class="text-lg font-bold text-white">
-                                Динамика продаж
-                            </h3>
-
-                            <p class="text-sm text-gray-400">
-                                Выручка, себестоимость и прибыль
-                            </p>
-
-                        </div>
-
-
-                        <div class="flex flex-wrap gap-3 text-xs">
-
-                            <label class="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="sales-chart-revenue"
-                                    checked
-                                    onchange="rebuildSalesMainChart()"
-                                >
-                                Выручка
-                            </label>
-
-                            <label class="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="sales-chart-cost"
-                                    checked
-                                    onchange="rebuildSalesMainChart()"
-                                >
-                                Себестоимость
-                            </label>
-
-                            <label class="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="sales-chart-profit"
-                                    checked
-                                    onchange="rebuildSalesMainChart()"
-                                >
-                                Прибыль
-                            </label>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="chart-container-large">
-                        <canvas id="sales-main-chart"></canvas>
-                    </div>
-
-                </div>
-
-
-                <!-- Категории / топ -->
-
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-                    <div class="glass p-6">
-
-                        <h3 class="text-lg font-bold text-white mb-4">
-                            Продажи по категориям
-                        </h3>
-
-                        <div class="chart-container">
-                            <canvas id="sales-category-chart"></canvas>
-                        </div>
-
-                    </div>
-
-
-                    <div class="glass p-6">
-
-                        <h3 class="text-lg font-bold text-white mb-4">
-                            Топ товаров
-                        </h3>
-
-                        <div
-                            id="sales-top-products"
-                            class="space-y-2 max-h-[320px] overflow-y-auto scrollbar-thin"
-                        >
-                            Нет данных
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- Таблица -->
-
-                <div class="glass p-6">
-
-                    <h3 class="text-lg font-bold text-white mb-1">
-                        Детализация продаж по товарам
-                    </h3>
-
-                    <p class="text-sm text-gray-400 mb-4">
-                        Данные рассчитываются по фактическим позициям документов МойСклад
-                    </p>
-
-
-                    <div class="overflow-x-auto">
-
-                        <table class="w-full text-sm">
-
-                            <thead>
-
-                                <tr class="border-b border-slate-700 text-gray-400 text-left">
-
-                                    <th class="p-3">
-                                        Товар
-                                    </th>
-
-                                    <th class="p-3">
-                                        Категория
-                                    </th>
-
-                                    <th class="p-3 text-right">
-                                        Продано
-                                    </th>
-
-                                    <th class="p-3 text-right">
-                                        Выручка
-                                    </th>
-
-                                    <th class="p-3 text-right">
-                                        Себестоимость
-                                    </th>
-
-                                    <th class="p-3 text-right">
-                                        Прибыль
-                                    </th>
-
-                                    <th class="p-3 text-right">
-                                        Маржа
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-
-                            <tbody id="sales-products-table">
-
-                                <tr>
-
-                                    <td
-                                        colspan="7"
-                                        class="text-center text-gray-500 p-8"
-                                    >
-                                        Нет данных
-                                    </td>
-
-                                </tr>
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Остальные разделы -->
-
-            <div
-                id="view-finance"
-                class="view-section hidden"
-            >
+            <!-- Заглушки для остальных разделов -->
+            <div id="view-finance" class="view-section hidden">
                 <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4 gradient-text">
-                        💰 Раздел «Финансы»
-                    </h2>
-                    <p class="text-gray-400">
-                        В разработке
-                    </p>
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">💰 Раздел «Финансы»</h2>
+                    <p class="text-gray-400">В разработке</p>
                 </div>
             </div>
-
-
-            <div
-                id="view-stock"
-                class="view-section hidden"
-            >
+            <div id="view-stock" class="view-section hidden">
                 <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4 gradient-text">
-                        📦 Раздел «Склад»
-                    </h2>
-                    <p class="text-gray-400">
-                        В разработке
-                    </p>
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">📦 Раздел «Склад»</h2>
+                    <p class="text-gray-400">В разработке</p>
                 </div>
             </div>
-
-
-            <div
-                id="view-clients"
-                class="view-section hidden"
-            >
+            <div id="view-clients" class="view-section hidden">
                 <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4 gradient-text">
-                        👥 Раздел «Клиенты»
-                    </h2>
-                    <p class="text-gray-400">
-                        В разработке
-                    </p>
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">👥 Раздел «Клиенты»</h2>
+                    <p class="text-gray-400">В разработке</p>
                 </div>
             </div>
-
         </div>
-
     </main>
 
-
-    <!-- =========================
-         МОДАЛЬНОЕ ОКНО API
-    ========================== -->
-
-    <div
-        id="connection-modal"
-        class="modal-overlay"
-    >
-
+    <!-- МОДАЛЬНОЕ ОКНО API -->
+    <div id="connection-modal" class="modal-overlay">
         <div class="glass p-8 max-w-md w-full shadow-2xl">
-
-            <h3 class="text-xl font-bold mb-2 text-white">
-                Подключение к МойСклад
-            </h3>
-
-            <p class="text-sm text-gray-400 mb-6">
-                Введите API-токен или логин:пароль
-            </p>
-
-            <input
-                type="text"
-                id="api-token"
-                class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none"
-                placeholder="user@domain.com:password"
-            >
-
-            <button
-                onclick="saveToken()"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mt-4"
-            >
-                Сохранить и подключить
-            </button>
-
-            <button
-                onclick="closeConnectionModal()"
-                class="w-full text-gray-400 hover:text-white text-sm py-3"
-            >
-                Отмена
-            </button>
-
+            <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
+            <p class="text-sm text-gray-400 mb-6">Введите API-токен или логин:пароль</p>
+            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none" placeholder="user@domain.com:password">
+            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mt-4">Сохранить и подключить</button>
+            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3">Отмена</button>
         </div>
-
     </div>
 
-
-    <!-- =========================
-         МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ
-    ========================== -->
-
-    <div
-        id="details-modal"
-        class="modal-overlay"
-    >
-
+    <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ -->
+    <div id="details-modal" class="modal-overlay">
         <div class="glass p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] flex flex-col">
-
             <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
-
-                <h2
-                    id="details-title"
-                    class="text-xl font-bold text-white"
-                >
-                    Детали
-                </h2>
-
-                <button
-                    onclick="closeDetailsModal()"
-                    class="text-gray-400 hover:text-white text-3xl"
-                >
-                    &times;
-                </button>
-
+                <h2 id="details-title" class="text-xl font-bold text-white">Детали</h2>
+                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
             </div>
-
-            <div
-                id="details-content"
-                class="overflow-y-auto scrollbar-thin flex-1"
-            ></div>
-
+            <div id="details-content" class="overflow-y-auto scrollbar-thin flex-1"></div>
         </div>
-
     </div>
 
-
-    <!-- =========================
-         LOADER
-    ========================== -->
-
-    <div
-        id="global-loader"
-        class="modal-overlay"
-    >
-
+    <!-- LOADER -->
+    <div id="global-loader" class="modal-overlay">
         <div class="glass p-8 max-w-sm w-full text-center">
-
             <div class="spinner mx-auto mb-4"></div>
-
-            <div
-                id="loader-text"
-                class="text-lg font-medium text-white mb-1"
-            >
-                Загрузка данных...
-            </div>
-
-            <div
-                id="loader-subtext"
-                class="text-sm text-gray-400"
-            >
-                Пожалуйста, подождите
-            </div>
-
+            <div id="loader-text" class="text-lg font-medium text-white mb-1">Загрузка данных...</div>
+            <div id="loader-subtext" class="text-sm text-gray-400">Пожалуйста, подождите</div>
         </div>
-
     </div>
-
 
     <script>
-
         // =====================================================
         // КОНФИГУРАЦИЯ
         // =====================================================
-
-        const PROXY_URL =
-            'https://moysklad-proxy.helsinkyofficial.workers.dev';
-
-        const MOYSKLAD_API =
-            'https://api.moysklad.ru/api/remap/1.2';
-
-
-        let currentPeriod =
-            'week';
-
-        let charts =
-            {};
-
-        let apiToken =
-            localStorage.getItem(
-                'moysklad_token'
-            ) || '';
-
-        let dashboardCache =
-            {};
-
-
-        // =====================================================
-        // СОСТОЯНИЕ ПРОДАЖ
-        // =====================================================
-
-        const salesAnalyticsState = {
-
-            groups: [],
-
-            products: [],
-
-            groupMap: new Map(),
-
-            productMap: new Map(),
-
-            documents: [],
-
-            rows: [],
-
-            filteredRows: [],
-
-            loaded: false,
-
-            filters: {
-
-                categoryId: '',
-
-                subcategoryId: '',
-
-                productId: '',
-
-                from: '',
-
-                to: '',
-
-                grouping: 'day'
-
-            },
-
-            summary: {
-
-                revenue: 0,
-
-                cost: 0,
-
-                profit: 0,
-
-                quantity: 0,
-
-                checks: 0,
-
-                margin: 0
-
-            }
-
-        };
-
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
+        const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
+        let currentPeriod = 'week';
+        let charts = {};
+        let apiToken = localStorage.getItem('moysklad_token') || '';
+        let dashboardCache = {};
 
         // =====================================================
         // ФОРМАТИРОВАНИЕ
         // =====================================================
-
         function formatMoney(amount) {
-
-            return new Intl.NumberFormat(
-                'ru-RU',
-                {
-                    style: 'currency',
-                    currency: 'RUB',
-                    maximumFractionDigits: 0
-                }
-            ).format(
-                Number(amount) || 0
-            );
-
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(amount) || 0);
         }
-
-
         function formatNumber(number) {
-
-            return new Intl.NumberFormat(
-                'ru-RU',
-                {
-                    maximumFractionDigits: 0
-                }
-            ).format(
-                Number(number) || 0
-            );
-
+            return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(number) || 0);
         }
-
-
         function formatDate(dateStr) {
-
-            if (!dateStr) {
-                return '-';
-            }
-
-            return new Date(
-                dateStr
-            ).toLocaleDateString(
-                'ru-RU'
-            );
-
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('ru-RU');
         }
-
-
         function formatDateTime(dateStr) {
-
-            if (!dateStr) {
-                return '-';
-            }
-
-            return new Date(
-                dateStr
-            ).toLocaleString(
-                'ru-RU'
-            );
-
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleString('ru-RU');
         }
-
-
         function escapeHtml(value) {
-
-            return String(
-                value || ''
-            )
-                .replace(
-                    /&/g,
-                    '&amp;'
-                )
-                .replace(
-                    /</g,
-                    '&lt;'
-                )
-                .replace(
-                    />/g,
-                    '&gt;'
-                )
-                .replace(
-                    /"/g,
-                    '&quot;'
-                )
-                .replace(
-                    /'/g,
-                    '&#039;'
-                );
-
+            return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
-
-
         function dateToLocalISO(date) {
-
-            const year =
-                date.getFullYear();
-
-            const month =
-                String(
-                    date.getMonth() + 1
-                ).padStart(
-                    2,
-                    '0'
-                );
-
-            const day =
-                String(
-                    date.getDate()
-                ).padStart(
-                    2,
-                    '0'
-                );
-
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
-
         }
-
-
         function getPeriodDates(period) {
-
-            const now =
-                new Date();
-
-            const from =
-                new Date(
-                    now
-                );
-
-            const to =
-                new Date(
-                    now
-                );
-
-            if (
-                period === 'today'
-            ) {
-
-                return {
-
-                    from:
-                        dateToLocalISO(
-                            from
-                        ),
-
-                    to:
-                        dateToLocalISO(
-                            to
-                        )
-
-                };
-
-            }
-
-            if (
-                period === 'week'
-            ) {
-
-                from.setDate(
-                    from.getDate() - 6
-                );
-
-            }
-
-            if (
-                period === 'month'
-            ) {
-
-                from.setDate(
-                    from.getDate() - 29
-                );
-
-            }
-
-            return {
-
-                from:
-                    dateToLocalISO(
-                        from
-                    ),
-
-                to:
-                    dateToLocalISO(
-                        to
-                    )
-
-            };
-
+            const now = new Date();
+            const from = new Date(now);
+            const to = new Date(now);
+            if (period === 'week') from.setDate(from.getDate() - 6);
+            if (period === 'month') from.setDate(from.getDate() - 29);
+            return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
         }
-
 
         // =====================================================
         // UI
         // =====================================================
-
         function switchView(view) {
-
-            document
-                .querySelectorAll(
-                    '.view-section'
-                )
-                .forEach(
-                    element => {
-
-                        element.classList.add(
-                            'hidden'
-                        );
-
-                    }
-                );
-
-            const target =
-                document.getElementById(
-                    'view-' + view
-                );
-
-            if (target) {
-
-                target.classList.remove(
-                    'hidden'
-                );
-
-            }
-
-
-            document
-                .querySelectorAll(
-                    '.nav-item'
-                )
-                .forEach(
-                    element => {
-
-                        element.classList.remove(
-                            'active',
-                            'text-blue-400'
-                        );
-
-                        element.classList.add(
-                            'text-gray-400'
-                        );
-
-                    }
-                );
-
-
-            const nav =
-                document.getElementById(
-                    'nav-' + view
-                );
-
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('view-' + view);
+            if (target) target.classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'text-blue-400');
+                el.classList.add('text-gray-400');
+            });
+            const nav = document.getElementById('nav-' + view);
             if (nav) {
-
-                nav.classList.add(
-                    'active',
-                    'text-blue-400'
-                );
-
-                nav.classList.remove(
-                    'text-gray-400'
-                );
-
+                nav.classList.add('active', 'text-blue-400');
+                nav.classList.remove('text-gray-400');
             }
-
-
-            const titles = {
-
-                dashboard:
-                    'Главная',
-
-                sales:
-                    'Продажи',
-
-                finance:
-                    'Финансы',
-
-                stock:
-                    'Склад',
-
-                clients:
-                    'Клиенты'
-
-            };
-
-
-            document
-                .getElementById(
-                    'page-title'
-                )
-                .textContent =
-                titles[view] ||
-                'Главная';
-
-
-            if (
-                view === 'sales' &&
-                apiToken &&
-                !salesAnalyticsState.groups.length
-            ) {
-
-                initializeSalesFilters();
-
-            }
-
+            
+            const titles = { dashboard: 'Главная', finance: 'Финансы', stock: 'Склад', clients: 'Клиенты' };
+            document.getElementById('page-title').textContent = titles[view] || 'Главная';
         }
-
 
         function setPeriod(period) {
-
-            currentPeriod =
-                period;
-
-
-            document
-                .querySelectorAll(
-                    '.period-btn'
-                )
-                .forEach(
-                    button => {
-
-                        button.classList.remove(
-                            'bg-blue-600',
-                            'text-white'
-                        );
-
-                        button.classList.add(
-                            'text-gray-300'
-                        );
-
-                    }
-                );
-
-
-            if (
-                event &&
-                event.target
-            ) {
-
-                event.target.classList.remove(
-                    'text-gray-300'
-                );
-
-                event.target.classList.add(
-                    'bg-blue-600',
-                    'text-white'
-                );
-
+            currentPeriod = period;
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-gray-300');
+            });
+            if (event && event.target) {
+                event.target.classList.remove('text-gray-300');
+                event.target.classList.add('bg-blue-600', 'text-white');
             }
-
-
-            const dates =
-                getPeriodDates(
-                    period
-                );
-
-
-            document
-                .getElementById(
-                    'date-from'
-                )
-                .value =
-                dates.from;
-
-
-            document
-                .getElementById(
-                    'date-to'
-                )
-                .value =
-                dates.to;
-
-
-            if (apiToken) {
-
-                loadDashboard();
-
-            }
-
+            const dates = getPeriodDates(period);
+            document.getElementById('date-from').value = dates.from;
+            document.getElementById('date-to').value = dates.to;
+            if (apiToken) loadDashboard();
         }
 
-
-        function showLoader(
-            text,
-            subtext
-        ) {
-
-            document
-                .getElementById(
-                    'loader-text'
-                )
-                .textContent =
-                text;
-
-
-            document
-                .getElementById(
-                    'loader-subtext'
-                )
-                .textContent =
-                subtext;
-
-
-            document
-                .getElementById(
-                    'global-loader'
-                )
-                .classList.add(
-                    'active'
-                );
-
+        function showLoader(text, subtext) {
+            document.getElementById('loader-text').textContent = text;
+            document.getElementById('loader-subtext').textContent = subtext;
+            document.getElementById('global-loader').classList.add('active');
         }
-
-
         function hideLoader() {
-
-            document
-                .getElementById(
-                    'global-loader'
-                )
-                .classList.remove(
-                    'active'
-                );
-
+            document.getElementById('global-loader').classList.remove('active');
         }
-
-
         function showConnectionModal() {
-
-            document
-                .getElementById(
-                    'api-token'
-                )
-                .value =
-                apiToken;
-
-
-            document
-                .getElementById(
-                    'connection-modal'
-                )
-                .classList.add(
-                    'active'
-                );
-
+            document.getElementById('api-token').value = apiToken;
+            document.getElementById('connection-modal').classList.add('active');
         }
-
-
         function closeConnectionModal() {
-
-            document
-                .getElementById(
-                    'connection-modal'
-                )
-                .classList.remove(
-                    'active'
-                );
-
+            document.getElementById('connection-modal').classList.remove('active');
         }
-
-
         function saveToken() {
-
-            apiToken =
-                document
-                    .getElementById(
-                        'api-token'
-                    )
-                    .value
-                    .trim();
-
-
-            localStorage.setItem(
-                'moysklad_token',
-                apiToken
-            );
-
-
+            apiToken = document.getElementById('api-token').value.trim();
+            localStorage.setItem('moysklad_token', apiToken);
             closeConnectionModal();
-
-
-            if (apiToken) {
-
-                loadDashboard();
-
-            }
-
+            if (apiToken) loadDashboard();
         }
-
-
-        function openDetailsModal(
-            title,
-            html
-        ) {
-
-            document
-                .getElementById(
-                    'details-title'
-                )
-                .textContent =
-                title;
-
-
-            document
-                .getElementById(
-                    'details-content'
-                )
-                .innerHTML =
-                html;
-
-
-            document
-                .getElementById(
-                    'details-modal'
-                )
-                .classList.add(
-                    'active'
-                );
-
+        function openDetailsModal(title, html) {
+            document.getElementById('details-title').textContent = title;
+            document.getElementById('details-content').innerHTML = html;
+            document.getElementById('details-modal').classList.add('active');
         }
-
-
         function closeDetailsModal() {
-
-            document
-                .getElementById(
-                    'details-modal'
-                )
-                .classList.remove(
-                    'active'
-                );
-
+            document.getElementById('details-modal').classList.remove('active');
         }
 
-
         // =====================================================
-        // API
+        // API (Оптимизированный)
         // =====================================================
-
         function getAuthHeaders() {
-
-            let authValue =
-                apiToken;
-
-
-            if (
-                !apiToken.startsWith(
-                    'Basic '
-                ) &&
-                !apiToken.startsWith(
-                    'Bearer '
-                )
-            ) {
-
-                authValue =
-                    apiToken.includes(
-                        ':'
-                    )
-
-                        ? 'Basic ' +
-                          btoa(
-                              unescape(
-                                  encodeURIComponent(
-                                      apiToken
-                                  )
-                              )
-                          )
-
-                        : 'Bearer ' +
-                          apiToken;
-
+            let authValue = apiToken;
+            if (!apiToken.startsWith('Basic ') && !apiToken.startsWith('Bearer ')) {
+                authValue = apiToken.includes(':') ? 'Basic ' + btoa(unescape(encodeURIComponent(apiToken))) : 'Bearer ' + apiToken;
             }
-
-
-            return {
-
-                Authorization:
-                    authValue,
-
-                Accept:
-                    'application/json;charset=utf-8',
-
-                'Content-Type':
-                    'application/json'
-
-            };
-
+            return { Authorization: authValue, Accept: 'application/json;charset=utf-8', 'Content-Type': 'application/json' };
         }
 
-
-        async function fetchWithRetry(
-            url,
-            options,
-            retries = 3
-        ) {
-
+        async function fetchWithRetry(url, options, retries = 3) {
             try {
-
-                const separator =
-                    url.includes(
-                        '?'
-                    )
-                        ? '&'
-                        : '?';
-
-
-                return await fetch(
-                    `${url}${separator}_t=${Date.now()}`,
-                    options
-                );
-
+                const separator = url.includes('?') ? '&' : '?';
+                return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
-
-                if (
-                    retries > 0
-                ) {
-
-                    await new Promise(
-                        resolve =>
-                            setTimeout(
-                                resolve,
-                                2500
-                            )
-                    );
-
-
-                    return fetchWithRetry(
-                        url,
-                        options,
-                        retries - 1
-                    );
-
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Уменьшили задержку для скорости
+                    return fetchWithRetry(url, options, retries - 1);
                 }
-
-                throw new Error(
-                    'Сеть сбрасывает соединение. Проверьте интернет.'
-                );
-
+                throw new Error('Сеть сбрасывает соединение.');
             }
-
         }
 
-
-        async function proxyFetch(
-            targetUrl,
-            headers
-        ) {
-
-            const response =
-                await fetchWithRetry(
-                    PROXY_URL,
-                    {
-
-                        method:
-                            'POST',
-
-                        headers:
-                            {
-                                'Content-Type':
-                                    'application/json'
-                            },
-
-                        body:
-                            JSON.stringify(
-                                {
-
-                                    url:
-                                        targetUrl,
-
-                                    headers:
-                                        headers,
-
-                                    method:
-                                        'GET'
-
-                                }
-                            )
-
-                    }
-                );
-
-
-            if (
-                response.status === 429
-            ) {
-
-                throw new Error(
-                    'Превышен лимит запросов. Подождите немного.'
-                );
-
+        async function proxyFetch(targetUrl, headers) {
+            const response = await fetchWithRetry(PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
+            });
+            if (response.status === 429) throw new Error('Превышен лимит запросов. Подождите немного.');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
             }
-
-
-            if (
-                !response.ok
-            ) {
-
-                const errorText =
-                    await response.text();
-
-
-                throw new Error(
-                    `Ошибка API ${response.status}: ${errorText}`
-                );
-
-            }
-
-
             return response;
-
         }
 
-
         // =====================================================
-        // ПАГИНАЦИЯ
+        // ГЛАВНАЯ — ЗАГРУЗКА ДАННЫХ
         // =====================================================
-
-        async function fetchAllEntities(
-            entityPath,
-            headers,
-            params = {},
-            limit = 1000
-        ) {
-
-            const result =
-                [];
-
-            let offset =
-                0;
-
-
-            while (
-                true
-            ) {
-
-                const query =
-                    new URLSearchParams(
-
-                        {
-
-                            ...params,
-
-                            limit:
-                                String(
-                                    limit
-                                ),
-
-                            offset:
-                                String(
-                                    offset
-                                )
-
-                        }
-
-                    );
-
-
-                const url =
-                    `${MOYSKLAD_API}/${entityPath}?${query}`;
-
-
-                const response =
-                    await proxyFetch(
-                        url,
-                        headers
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                const rows =
-                    Array.isArray(
-                        data.rows
-                    )
-                        ? data.rows
-                        : [];
-
-
-                result.push(
-                    ...rows
-                );
-
-
-                const total =
-                    data.meta &&
-                    data.meta.size;
-
-
-                if (
-                    rows.length === 0 ||
-                    rows.length < limit ||
-                    (
-                        total &&
-                        result.length >= total
-                    )
-                ) {
-
-                    break;
-
-                }
-
-
-                offset +=
-                    rows.length;
-
-            }
-
-
-            return result;
-
-        }
-
-
-        // =====================================================
-        // ГЛАВНАЯ
-        // =====================================================
-
         async function loadDashboard() {
-
-            if (
-                !apiToken
-            ) {
-
-                showConnectionModal();
-
-                return;
-
-            }
-
-
-            showLoader(
-                'Загрузка данных...',
-                'Обращение к API МойСклад'
-            );
-
-
+            if (!apiToken) { showConnectionModal(); return; }
+            showLoader('Загрузка данных...', 'Обращение к API МойСклад');
+            
             try {
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                const momentFrom = `${dateFrom} 00:00:00`;
+                const momentTo = `${dateTo} 23:59:59`;
+                const headers = getAuthHeaders();
 
-                const dateFrom =
-                    document
-                        .getElementById(
-                            'date-from'
-                        )
-                        .value;
+                // Параллельная загрузка 4 легких отчетов (максимальная скорость)
+                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
+                    loadDashboardMetrics(headers),
+                    loadSalesSeries(headers, momentFrom, momentTo),
+                    loadProfitByProduct(headers, momentFrom, momentTo),
+                    loadRecentChecks(headers, momentFrom, momentTo)
+                ]);
 
-
-                const dateTo =
-                    document
-                        .getElementById(
-                            'date-to'
-                        )
-                        .value;
-
-
-                const momentFrom =
-                    `${dateFrom} 00:00:00`;
-
-
-                const momentTo =
-                    `${dateTo} 23:59:59`;
-
-
-                const headers =
-                    getAuthHeaders();
-
-
-                const [
-                    dashboardData,
-                    salesSeries,
-                    profitData,
-                    checksData
-                ] =
-                    await Promise.all(
-
-                        [
-
-                            loadDashboardMetrics(
-                                headers
-                            ),
-
-                            loadSalesSeries(
-                                headers,
-                                momentFrom,
-                                momentTo
-                            ),
-
-                            loadProfitByProduct(
-                                headers,
-                                momentFrom,
-                                momentTo
-                            ),
-
-                            loadRecentChecks(
-                                headers,
-                                momentFrom,
-                                momentTo
-                            )
-
-                        ]
-
-                    );
-
-
-                dashboardCache =
-                    {
-
-                        dashboardData,
-
-                        salesSeries,
-
-                        profitData,
-
-                        checksData
-
-                    };
-
-
-                updateKPIs(
-                    dashboardData,
-                    salesSeries,
-                    profitData
-                );
-
-
-                updateMainChart(
-                    salesSeries
-                );
-
-
-                updateTopProducts(
-                    profitData
-                );
-
-
-                updateRecentChecks(
-                    checksData
-                );
-
-
-                generateInsights(
-                    dashboardData,
-                    salesSeries,
-                    profitData,
-                    checksData
-                );
-
-
-                document
-                    .getElementById(
-                        'last-update'
-                    )
-                    .textContent =
-                    new Date()
-                        .toLocaleTimeString(
-                            'ru-RU'
-                        );
-
-
+                dashboardCache = { dashboardData, salesSeries, profitData, checksData };
+                
+                updateKPIs(dashboardData, salesSeries, profitData);
+                updateMainChart(salesSeries);
+                updateTopProducts(profitData);
+                updateRecentChecks(checksData);
+                generateInsights(dashboardData, salesSeries, profitData);
+                
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
             } catch (error) {
-
-                console.error(
-                    error
-                );
-
-
-                alert(
-                    error.message
-                );
-
+                console.error(error);
+                alert(error.message);
             } finally {
-
                 hideLoader();
-
             }
-
         }
 
-
-        async function loadDashboardMetrics(
-            headers
-        ) {
-
-            const endpoint =
-                currentPeriod === 'today'
-                    ? 'day'
-                    : currentPeriod === 'month'
-                        ? 'month'
-                        : 'week';
-
-
-            const url =
-                `${MOYSKLAD_API}/report/dashboard/${endpoint}`;
-
-
-            const response =
-                await proxyFetch(
-                    url,
-                    headers
-                );
-
-
+        async function loadDashboardMetrics(headers) {
+            const endpoint = currentPeriod === 'today' ? 'day' : currentPeriod === 'month' ? 'month' : 'week';
+            const response = await proxyFetch(`${MOYSKLAD_API}/report/dashboard/${endpoint}`, headers);
             return await response.json();
-
         }
 
-
-        async function loadSalesSeries(
-            headers,
-            momentFrom,
-            momentTo
-        ) {
-
-            const interval =
-                currentPeriod === 'today'
-                    ? 'hour'
-                    : 'day';
-
-
-            const url =
-                `${MOYSKLAD_API}/report/sales/plotseries` +
-                `?momentFrom=${encodeURIComponent(momentFrom)}` +
-                `&momentTo=${encodeURIComponent(momentTo)}` +
-                `&interval=${interval}`;
-
-
-            const response =
-                await proxyFetch(
-                    url,
-                    headers
-                );
-
-
-            const data =
-                await response.json();
-
-
+        async function loadSalesSeries(headers, momentFrom, momentTo) {
+            const interval = currentPeriod === 'today' ? 'hour' : 'day';
+            const url = `${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
+            const response = await proxyFetch(url, headers);
+            const data = await response.json();
             return data.series || [];
-
         }
 
-
-        async function loadProfitByProduct(
-            headers,
-            momentFrom,
-            momentTo
-        ) {
-
-            const url =
-                `${MOYSKLAD_API}/report/profit/byproduct` +
-                `?momentFrom=${encodeURIComponent(momentFrom)}` +
-                `&momentTo=${encodeURIComponent(momentTo)}` +
-                `&limit=1000`;
-
-
-            const response =
-                await proxyFetch(
-                    url,
-                    headers
-                );
-
-
-            const data =
-                await response.json();
-
-
+        async function loadProfitByProduct(headers, momentFrom, momentTo) {
+            const url = `${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
+            const response = await proxyFetch(url, headers);
+            const data = await response.json();
             return data.rows || [];
-
         }
 
-
-        async function loadRecentChecks(
-            headers,
-            momentFrom,
-            momentTo
-        ) {
-
-            const filter =
-                [
-                    `moment>=${encodeURIComponent(momentFrom)}`,
-                    `moment<=${encodeURIComponent(momentTo)}`,
-                    'applicable=true'
-                ].join(
-                    ';'
-                );
-
-
-            const url =
-                `${MOYSKLAD_API}/entity/retaildemand` +
-                `?filter=${filter}` +
-                `&limit=20` +
-                `&order=moment,desc`;
-
-
-            const response =
-                await proxyFetch(
-                    url,
-                    headers
-                );
-
-
-            const data =
-                await response.json();
-
-
+        async function loadRecentChecks(headers, momentFrom, momentTo) {
+            const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
+            const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=20&order=moment,desc`;
+            const response = await proxyFetch(url, headers);
+            const data = await response.json();
             return data.rows || [];
-
         }
 
-
         // =====================================================
-        // ГЛАВНАЯ — KPI
+        // ГЛАВНАЯ — ОБНОВЛЕНИЕ UI
         // =====================================================
+        function updateKPIs(dashboardData, salesSeries, profitData) {
+            const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
+            const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
+            const totalChecks = dashboardData.sales?.count || 0;
+            const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
+            const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
-        function updateKPIs(
-            dashboardData,
-            salesSeries,
-            profitData
-        ) {
-
-            const totalRevenue =
-                salesSeries.reduce(
-                    (
-                        sum,
-                        row
-                    ) =>
-                        sum +
-                        (
-                            Number(
-                                row.sum
-                            ) || 0
-                        ) /
-                        100,
-
-                    0
-                );
-
-
-            const totalProfit =
-                profitData.reduce(
-                    (
-                        sum,
-                        row
-                    ) =>
-                        sum +
-                        (
-                            Number(
-                                row.profit
-                            ) || 0
-                        ) /
-                        100,
-
-                    0
-                );
-
-
-            const totalChecks =
-                dashboardData
-                    .sales
-                    ?.count ||
-                0;
-
-
-            const averageCheck =
-                totalChecks > 0
-                    ? totalRevenue /
-                      totalChecks
-                    : 0;
-
-
-            const margin =
-                totalRevenue > 0
-                    ? totalProfit /
-                      totalRevenue *
-                      100
-                    : 0;
-
-
-            document
-                .getElementById(
-                    'kpi-revenue'
-                )
-                .textContent =
-                formatMoney(
-                    totalRevenue
-                );
-
-
-            document
-                .getElementById(
-                    'kpi-profit'
-                )
-                .textContent =
-                formatMoney(
-                    totalProfit
-                );
-
-
-            document
-                .getElementById(
-                    'kpi-checks'
-                )
-                .textContent =
-                formatNumber(
-                    totalChecks
-                );
-
-
-            document
-                .getElementById(
-                    'kpi-avg-check'
-                )
-                .textContent =
-                formatMoney(
-                    averageCheck
-                );
-
-
-            document
-                .getElementById(
-                    'kpi-margin'
-                )
-                .textContent =
-                margin.toFixed(
-                    1
-                ) +
-                '%';
-
+            document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
+            document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
+            document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
+            document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
+            document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
+            
+            // Имитация трендов (можно доработать при наличии данных за прошлый период)
+            ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
+                document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
+            });
         }
 
-
-        // =====================================================
-        // ГЛАВНАЯ — ГРАФИК
-        // =====================================================
-
-        function updateMainChart(
-            salesSeries
-        ) {
-
-            const canvas =
-                document
-                    .getElementById(
-                        'main-chart'
-                    );
-
-
-            if (
-                charts.main
-            ) {
-
-                charts.main.destroy();
-
-            }
-
-
-            const labels =
-                salesSeries.map(
-                    row => {
-
-                        return new Date(
-                            row.date
-                        ).toLocaleDateString(
-                            'ru-RU',
-                            {
-                                day:
-                                    '2-digit',
-
-                                month:
-                                    '2-digit'
-                            }
-                        );
-
-                    }
-                );
-
-
-            const revenue =
-                salesSeries.map(
-                    row =>
-                        (
-                            Number(
-                                row.sum
-                            ) || 0
-                        ) /
-                        100
-                );
-
-
-            charts.main =
-                new Chart(
-
-                    canvas,
-
-                    {
-
-                        type:
-                            'line',
-
-                        data:
-                            {
-
-                                labels,
-
-                                datasets:
-                                    [
-
-                                        {
-
-                                            label:
-                                                'Выручка',
-
-                                            data:
-                                                revenue,
-
-                                            borderColor:
-                                                '#4ade80',
-
-                                            backgroundColor:
-                                                'rgba(74,222,128,0.1)',
-
-                                            fill:
-                                                true,
-
-                                            tension:
-                                                0.35
-
-                                        }
-
-                                    ]
-
-                            },
-
-                        options:
-                            {
-
-                                responsive:
-                                    true,
-
-                                maintainAspectRatio:
-                                    false,
-
-                                plugins:
-                                    {
-
-                                        tooltip:
-                                            {
-
-                                                callbacks:
-                                                    {
-
-                                                        label:
-                                                            context =>
-                                                                `${context.dataset.label}: ${formatMoney(context.parsed.y)}`
-
-                                                    }
-
-                                            }
-
-                                    },
-
-                                scales:
-                                    {
-
-                                        y:
-                                            {
-
-                                                ticks:
-                                                    {
-
-                                                        callback:
-                                                            value =>
-                                                                formatMoney(
-                                                                    value
-                                                                )
-
-                                                    }
-
-                                            }
-
-                                    }
-
-                            }
-
-                    }
-
-                );
-
-        }
-
-
-        // =====================================================
-        // ГЛАВНАЯ — ТОП ТОВАРОВ
-        // =====================================================
-
-        function updateTopProducts(
-            profitData
-        ) {
-
-            const container =
-                document
-                    .getElementById(
-                        'top-products-list'
-                    );
-
-
-            const rows =
-                [
-                    ...profitData
-                ]
-                    .sort(
-                        (
-                            a,
-                            b
-                        ) =>
-                            (
-                                b.profit ||
-                                0
-                            ) -
-                            (
-                                a.profit ||
-                                0
-                            )
-                    )
-                    .slice(
-                        0,
-                        5
-                    );
-
-
-            if (
-                !rows.length
-            ) {
-
-                container.innerHTML =
-                    '<div class="text-gray-500 text-center py-8">Нет данных</div>';
-
-                return;
-
-            }
-
-
-            container.innerHTML =
-                rows
-                    .map(
-                        row => `
-
-                            <div class="bg-slate-800/50 rounded-lg p-3">
-
-                                <div class="font-medium text-white">
-
-                                    ${escapeHtml(
-                                        row.assortment?.name ||
-                                        'Без названия'
-                                    )}
-
-                                </div>
-
-                                <div class="text-sm text-blue-400 mt-1">
-
-                                    Прибыль:
-
-                                    ${formatMoney(
-                                        (
-                                            row.profit ||
-                                            0
-                                        ) /
-                                        100
-                                    )}
-
-                                </div>
-
-                            </div>
-
-                        `
-                    )
-                    .join(
-                        ''
-                    );
-
-        }
-
-
-        // =====================================================
-        // ПРОДАЖИ — ГРУППЫ
-        // =====================================================
-
-        async function loadSalesGroups(
-            headers
-        ) {
-
-            const groups =
-                await fetchAllEntities(
-                    'entity/productfolder',
-                    headers,
-                    {
-                        order:
-                            'name'
+        function updateMainChart(salesSeries) {
+            const canvas = document.getElementById('main-chart');
+            if (charts.main) charts.main.destroy(); // Предотвращение утечек памяти
+
+            const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
+            const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
+
+            charts.main = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Выручка',
+                        data: revenue,
+                        borderColor: '#4ade80',
+                        backgroundColor: 'rgba(74,222,128,0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 500 }, // Ускоренная анимация для отзывчивости
+                    plugins: {
+                        tooltip: {
+                            callbacks: { label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` }
+                        }
                     },
-                    1000
-                );
-
-
-            salesAnalyticsState.groups =
-                groups;
-
-
-            salesAnalyticsState.groupMap =
-                new Map(
-                    groups.map(
-                        group => [
-
-                            group.id,
-
-                            group
-
-                        ]
-                    )
-                );
-
-
-            return groups;
-
-        }
-
-
-        async function loadSalesProducts(
-            headers
-        ) {
-
-            const products =
-                await fetchAllEntities(
-                    'entity/product',
-                    headers,
-                    {
-                        order:
-                            'name'
-                    },
-                    1000
-                );
-
-
-            salesAnalyticsState.products =
-                products;
-
-
-            salesAnalyticsState.productMap =
-                new Map(
-                    products.map(
-                        product => [
-
-                            product.id,
-
-                            product
-
-                        ]
-                    )
-                );
-
-
-            return products;
-
-        }
-
-
-        function renderSalesCategories() {
-
-            const select =
-                document
-                    .getElementById(
-                        'sales-category'
-                    );
-
-
-            const rootGroups =
-                salesAnalyticsState
-                    .groups
-                    .filter(
-                        group =>
-                            !group.parent
-                    )
-                    .sort(
-                        (
-                            a,
-                            b
-                        ) =>
-                            a.name.localeCompare(
-                                b.name,
-                                'ru'
-                            )
-                    );
-
-
-            select.innerHTML =
-                `
-
-                    <option value="">
-                        Все категории
-                    </option>
-
-                    ${
-                        rootGroups
-                            .map(
-                                group => `
-
-                                    <option value="${group.id}">
-
-                                        ${escapeHtml(
-                                            group.name
-                                        )}
-
-                                    </option>
-
-                                `
-                            )
-                            .join(
-                                ''
-                            )
+                    scales: {
+                        y: { ticks: { callback: value => formatMoney(value) }, grid: { color: '#1e293b' } },
+                        x: { grid: { display: false } }
                     }
-
-                `;
-
-        }
-
-
-        function onSalesCategoryChange() {
-
-            const categoryId =
-                document
-                    .getElementById(
-                        'sales-category'
-                    )
-                    .value;
-
-
-            const subcategory =
-                document
-                    .getElementById(
-                        'sales-subcategory'
-                    );
-
-
-            const product =
-                document
-                    .getElementById(
-                        'sales-product'
-                    );
-
-
-            subcategory.innerHTML =
-                `
-                    <option value="">
-                        Все подкатегории
-                    </option>
-                `;
-
-
-            product.innerHTML =
-                `
-                    <option value="">
-                        Все товары
-                    </option>
-                `;
-
-
-            product.disabled =
-                true;
-
-
-            if (
-                !categoryId
-            ) {
-
-                subcategory.disabled =
-                    true;
-
-                return;
-
-            }
-
-
-            const children =
-                salesAnalyticsState
-                    .groups
-                    .filter(
-                        group =>
-                            group.parent?.id ===
-                            categoryId
-                    )
-                    .sort(
-                        (
-                            a,
-                            b
-                        ) =>
-                            a.name.localeCompare(
-                                b.name,
-                                'ru'
-                            )
-                    );
-
-
-            subcategory.innerHTML +=
-                children
-                    .map(
-                        group => `
-
-                            <option value="${group.id}">
-
-                                ${escapeHtml(
-                                    group.name
-                                )}
-
-                            </option>
-
-                        `
-                    )
-                    .join(
-                        ''
-                    );
-
-
-            subcategory.disabled =
-                children.length === 0;
-
-
-            renderSalesProducts();
-
-        }
-
-
-        function onSalesSubcategoryChange() {
-
-            renderSalesProducts();
-
-        }
-
-
-        function getDescendantGroupIds(
-            groupId
-        ) {
-
-            const result =
-                new Set(
-                    [
-                        groupId
-                    ]
-                );
-
-
-            let changed =
-                true;
-
-
-            while (
-                changed
-            ) {
-
-                changed =
-                    false;
-
-
-                salesAnalyticsState
-                    .groups
-                    .forEach(
-                        group => {
-
-                            if (
-
-                                group.parent?.id &&
-
-                                result.has(
-                                    group.parent.id
-                                ) &&
-
-                                !result.has(
-                                    group.id
-                                )
-
-                            ) {
-
-                                result.add(
-                                    group.id
-                                );
-
-
-                                changed =
-                                    true;
-
-                            }
-
-                        }
-                    );
-
-            }
-
-
-            return result;
-
-        }
-
-
-        function renderSalesProducts() {
-
-            const categoryId =
-                document
-                    .getElementById(
-                        'sales-category'
-                    )
-                    .value;
-
-
-            const subcategoryId =
-                document
-                    .getElementById(
-                        'sales-subcategory'
-                    )
-                    .value;
-
-
-            const productSelect =
-                document
-                    .getElementById(
-                        'sales-product'
-                    );
-
-
-            let products =
-                salesAnalyticsState
-                    .products;
-
-
-            const selectedGroup =
-                subcategoryId ||
-                categoryId;
-
-
-            if (
-                selectedGroup
-            ) {
-
-                const allowedGroups =
-                    getDescendantGroupIds(
-                        selectedGroup
-                    );
-
-
-                products =
-                    products.filter(
-                        product =>
-                            allowedGroups.has(
-                                product.group?.id
-                            )
-                    );
-
-            }
-
-
-            productSelect.innerHTML =
-                `
-
-                    <option value="">
-                        Все товары
-                    </option>
-
-                    ${
-                        products
-                            .sort(
-                                (
-                                    a,
-                                    b
-                                ) =>
-                                    a.name.localeCompare(
-                                        b.name,
-                                        'ru'
-                                    )
-                            )
-                            .map(
-                                product => `
-
-                                    <option value="${product.id}">
-
-                                        ${escapeHtml(
-                                            product.name
-                                        )}
-
-                                    </option>
-
-                                `
-                            )
-                            .join(
-                                ''
-                            )
-                    }
-
-                `;
-
-
-            productSelect.disabled =
-                products.length === 0;
-
-        }
-
-
-        async function initializeSalesFilters() {
-
-            try {
-
-                const headers =
-                    getAuthHeaders();
-
-
-                showLoader(
-                    'Загрузка структуры товаров...',
-                    'Получение категорий и товаров из МойСклад'
-                );
-
-
-                await Promise.all(
-
-                    [
-
-                        loadSalesGroups(
-                            headers
-                        ),
-
-                        loadSalesProducts(
-                            headers
-                        )
-
-                    ]
-
-                );
-
-
-                renderSalesCategories();
-
-
-                const dates =
-                    getPeriodDates(
-                        'month'
-                    );
-
-
-                document
-                    .getElementById(
-                        'sales-date-from'
-                    )
-                    .value =
-                    dates.from;
-
-
-                document
-                    .getElementById(
-                        'sales-date-to'
-                    )
-                    .value =
-                    dates.to;
-
-
-            } catch (error) {
-
-                console.error(
-                    error
-                );
-
-
-                alert(
-                    error.message
-                );
-
-            } finally {
-
-                hideLoader();
-
-            }
-
-        }
-
-
-        // =====================================================
-        // ПРОДАЖИ — ДОКУМЕНТЫ
-        // =====================================================
-
-        async function loadAllRetailSales(
-            headers,
-            dateFrom,
-            dateTo
-        ) {
-
-            const momentFrom =
-                `${dateFrom} 00:00:00`;
-
-
-            const momentTo =
-                `${dateTo} 23:59:59`;
-
-
-            const filter =
-                [
-
-                    `moment>=${encodeURIComponent(momentFrom)}`,
-
-                    `moment<=${encodeURIComponent(momentTo)}`,
-
-                    'applicable=true'
-
-                ].join(
-                    ';'
-                );
-
-
-            const result =
-                [];
-
-
-            let offset =
-                0;
-
-
-            const limit =
-                100;
-
-
-            while (
-                true
-            ) {
-
-                const params =
-                    new URLSearchParams(
-
-                        {
-
-                            filter,
-
-                            fields:
-                                'stock',
-
-                            expand:
-                                'positions.assortment',
-
-                            order:
-                                'moment,asc',
-
-                            limit:
-                                String(
-                                    limit
-                                ),
-
-                            offset:
-                                String(
-                                    offset
-                                )
-
-                        }
-
-                    );
-
-
-                const url =
-                    `${MOYSKLAD_API}/entity/retaildemand?${params}`;
-
-
-                const response =
-                    await proxyFetch(
-                        url,
-                        headers
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                const rows =
-                    data.rows ||
-                    [];
-
-
-                result.push(
-                    ...rows
-                );
-
-
-                if (
-                    rows.length < limit ||
-                    (
-                        data.meta?.size &&
-                        result.length >=
-                        data.meta.size
-                    )
-                ) {
-
-                    break;
-
                 }
-
-
-                offset +=
-                    rows.length;
-
-            }
-
-
-            return result;
-
+            });
         }
 
-
-        // =====================================================
-        // ПРОДАЖИ — НОРМАЛИЗАЦИЯ
-        // =====================================================
-
-        function normalizeRetailSales(
-            documents
-        ) {
-
-            const rows =
-                [];
-
-
-            documents.forEach(
-                document => {
-
-                    const positions =
-                        document
-                            .positions
-                            ?.rows ||
-                        [];
-
-
-                    positions.forEach(
-                        position => {
-
-                            const assortment =
-                                position.assortment;
-
-
-                            if (
-                                !assortment?.id
-                            ) {
-
-                                return;
-
-                            }
-
-
-                            const quantity =
-                                Number(
-                                    position.quantity
-                                ) ||
-                                0;
-
-
-                            const price =
-                                (
-                                    Number(
-                                        position.price
-                                    ) ||
-                                    0
-                                ) /
-                                100;
-
-
-                            const revenue =
-                                price *
-                                quantity;
-
-
-                            const costPerUnit =
-                                (
-                                    Number(
-                                        position.stock?.cost
-                                    ) ||
-                                    0
-                                ) /
-                                100;
-
-
-                            const cost =
-                                costPerUnit *
-                                quantity;
-
-
-                            const profit =
-                                revenue -
-                                cost;
-
-
-                            rows.push(
-
-                                {
-
-                                    documentId:
-                                        document.id,
-
-                                    moment:
-                                        document.moment,
-
-                                    date:
-                                        document
-                                            .moment
-                                            ?.slice(
-                                                0,
-                                                10
-                                            ),
-
-                                    productId:
-                                        assortment.id,
-
-                                    productName:
-                                        assortment.name,
-
-                                    groupId:
-                                        assortment
-                                            .group
-                                            ?.id ||
-                                        null,
-
-                                    quantity,
-
-                                    price,
-
-                                    revenue,
-
-                                    cost,
-
-                                    profit
-
-                                }
-
-                            );
-
-                        }
-                    );
-
-                }
-            );
-
-
-            return rows;
-
-        }
-
-
-        // =====================================================
-        // ПРОДАЖИ — ФИЛЬТРАЦИЯ
-        // =====================================================
-
-        function filterSalesRows(
-            rows
-        ) {
-
-            const categoryId =
-                document
-                    .getElementById(
-                        'sales-category'
-                    )
-                    .value;
-
-
-            const subcategoryId =
-                document
-                    .getElementById(
-                        'sales-subcategory'
-                    )
-                    .value;
-
-
-            const productId =
-                document
-                    .getElementById(
-                        'sales-product'
-                    )
-                    .value;
-
-
-            let filtered =
-                [
-                    ...rows
-                ];
-
-
-            const selectedGroup =
-                subcategoryId ||
-                categoryId;
-
-
-            if (
-                selectedGroup
-            ) {
-
-                const groups =
-                    getDescendantGroupIds(
-                        selectedGroup
-                    );
-
-
-                filtered =
-                    filtered.filter(
-                        row =>
-                            groups.has(
-                                row.groupId
-                            )
-                    );
-
-            }
-
-
-            if (
-                productId
-            ) {
-
-                filtered =
-                    filtered.filter(
-                        row =>
-                            row.productId ===
-                            productId
-                    );
-
-            }
-
-
-            return filtered;
-
-        }
-
-
-        // =====================================================
-        // ПРОДАЖИ — KPI
-        // =====================================================
-
-        function calculateSalesSummary(
-            rows
-        ) {
-
-            const revenue =
-                rows.reduce(
-                    (
-                        sum,
-                        row
-                    ) =>
-                        sum +
-                        row.revenue,
-
-                    0
-                );
-
-
-            const cost =
-                rows.reduce(
-                    (
-                        sum,
-                        row
-                    ) =>
-                        sum +
-                        row.cost,
-
-                    0
-                );
-
-
-            const profit =
-                rows.reduce(
-                    (
-                        sum,
-                        row
-                    ) =>
-                        sum +
-                        row.profit,
-
-                    0
-                );
-
-
-            const quantity =
-                rows.reduce(
-                    (
-                        sum,
-                        row
-                    ) =>
-                        sum +
-                        row.quantity,
-
-                    0
-                );
-
-
-            const checks =
-                new Set(
-                    rows.map(
-                        row =>
-                            row.documentId
-                    )
-                ).size;
-
-
-            const margin =
-                revenue > 0
-                    ? profit /
-                      revenue *
-                      100
-                    : 0;
-
-
-            salesAnalyticsState.summary =
-                {
-
-                    revenue,
-
-                    cost,
-
-                    profit,
-
-                    quantity,
-
-                    checks,
-
-                    margin
-
-                };
-
-
-            document
-                .getElementById(
-                    'sales-kpi-revenue'
-                )
-                .textContent =
-                formatMoney(
-                    revenue
-                );
-
-
-            document
-                .getElementById(
-                    'sales-kpi-cost'
-                )
-                .textContent =
-                formatMoney(
-                    cost
-                );
-
-
-            document
-                .getElementById(
-                    'sales-kpi-profit'
-                )
-                .textContent =
-                formatMoney(
-                    profit
-                );
-
-
-            document
-                .getElementById(
-                    'sales-kpi-quantity'
-                )
-                .textContent =
-                formatNumber(
-                    quantity
-                );
-
-
-            document
-                .getElementById(
-                    'sales-kpi-checks'
-                )
-                .textContent =
-                formatNumber(
-                    checks
-                );
-
-
-            document
-                .getElementById(
-                    'sales-kpi-margin'
-                )
-                .textContent =
-                margin.toFixed(
-                    1
-                ) +
-                '%';
-
-        }
-
-
-        // =====================================================
-        // ПРОДАЖИ — ГРУППИРОВКА
-        // =====================================================
-
-        function getSalesGroupingKey(
-            row,
-            grouping
-        ) {
-
-            const date =
-                new Date(
-                    row.moment
-                );
-
-
-            if (
-                grouping === 'hour'
-            ) {
-
-                return String(
-                    date.getHours()
-                ).padStart(
-                    2,
-                    '0'
-                ) +
-                ':00';
-
-            }
-
-
-            if (
-                grouping === 'weekday'
-            ) {
-
-                return [
-
-                    'Воскресенье',
-
-                    'Понедельник',
-
-                    'Вторник',
-
-                    'Среда',
-
-                    'Четверг',
-
-                    'Пятница',
-
-                    'Суббота'
-
-                ][
-                    date.getDay()
-                ];
-
-            }
-
-
-            if (
-                grouping === 'month'
-            ) {
-
-                return `${date.getFullYear()}-${String(
-                    date.getMonth() + 1
-                ).padStart(
-                    2,
-                    '0'
-                )}`;
-
-            }
-
-
-            if (
-                grouping === 'week'
-            ) {
-
-                const firstDay =
-                    new Date(
-                        date
-                    );
-
-
-                const day =
-                    firstDay.getDay() ||
-                    7;
-
-
-                firstDay.setDate(
-                    firstDay.getDate() -
-                    day +
-                    1
-                );
-
-
-                return dateToLocalISO(
-                    firstDay
-                );
-
-            }
-
-
-            return row.date;
-
-        }
-
-
-        function aggregateSalesRows(
-            rows,
-            grouping
-        ) {
-
-            const map =
-                new Map();
-
-
-            rows.forEach(
-                row => {
-
-                    const key =
-                        getSalesGroupingKey(
-                            row,
-                            grouping
-                        );
-
-
-                    if (
-                        !map.has(
-                            key
-                        )
-                    ) {
-
-                        map.set(
-
-                            key,
-
-                            {
-
-                                key,
-
-                                revenue:
-                                    0,
-
-                                cost:
-                                    0,
-
-                                profit:
-                                    0,
-
-                                quantity:
-                                    0
-
-                            }
-
-                        );
-
-                    }
-
-
-                    const item =
-                        map.get(
-                            key
-                        );
-
-
-                    item.revenue +=
-                        row.revenue;
-
-
-                    item.cost +=
-                        row.cost;
-
-
-                    item.profit +=
-                        row.profit;
-
-
-                    item.quantity +=
-                        row.quantity;
-
-                }
-            );
-
-
-            const result =
-                Array.from(
-                    map.values()
-                );
-
-
-            if (
-                grouping === 'weekday'
-            ) {
-
-                const order =
-                    [
-
-                        'Понедельник',
-
-                        'Вторник',
-
-                        'Среда',
-
-                        'Четверг',
-
-                        'Пятница',
-
-                        'Суббота',
-
-                        'Воскресенье'
-
-                    ];
-
-
-                result.sort(
-                    (
-                        a,
-                        b
-                    ) =>
-                        order.indexOf(
-                            a.key
-                        ) -
-                        order.indexOf(
-                            b.key
-                        )
-                );
-
-            } else {
-
-                result.sort(
-                    (
-                        a,
-                        b
-                    ) =>
-                        a.key.localeCompare(
-                            b.key
-                        )
-                );
-
-            }
-
-
-            return result;
-
-        }
-
-
-        // =====================================================
-        // ПРОДАЖИ — ГЛАВНЫЙ ГРАФИК
-        // =====================================================
-
-        function rebuildSalesMainChart() {
-
-            const rows =
-                salesAnalyticsState
-                    .filteredRows;
-
-
-            const grouping =
-                document
-                    .getElementById(
-                        'sales-grouping'
-                    )
-                    .value;
-
-
-            const aggregated =
-                aggregateSalesRows(
-                    rows,
-                    grouping
-                );
-
-
-            const labels =
-                aggregated.map(
-                    item =>
-                        item.key
-                );
-
-
-            const datasets =
-                [];
-
-
-            if (
-                document
-                    .getElementById(
-                        'sales-chart-revenue'
-                    )
-                    .checked
-            ) {
-
-                datasets.push(
-
-                    {
-
-                        label:
-                            'Выручка',
-
-                        data:
-                            aggregated.map(
-                                item =>
-                                    item.revenue
-                            ),
-
-                        borderColor:
-                            '#4ade80',
-
-                        backgroundColor:
-                            'rgba(74,222,128,0.1)',
-
-                        fill:
-                            true,
-
-                        tension:
-                            0.35
-
-                    }
-
-                );
-
-            }
-
-
-            if (
-                document
-                    .getElementById(
-                        'sales-chart-cost'
-                    )
-                    .checked
-            ) {
-
-                datasets.push(
-
-                    {
-
-                        label:
-                            'Себестоимость',
-
-                        data:
-                            aggregated.map(
-                                item =>
-                                    item.cost
-                            ),
-
-                        borderColor:
-                            '#fb923c',
-
-                        backgroundColor:
-                            'rgba(251,146,60,0.08)',
-
-                        fill:
-                            false,
-
-                        tension:
-                            0.35
-
-                    }
-
-                );
-
-            }
-
-
-            if (
-                document
-                    .getElementById(
-                        'sales-chart-profit'
-                    )
-                    .checked
-            ) {
-
-                datasets.push(
-
-                    {
-
-                        label:
-                            'Прибыль',
-
-                        data:
-                            aggregated.map(
-                                item =>
-                                    item.profit
-                            ),
-
-                        borderColor:
-                            '#60a5fa',
-
-                        backgroundColor:
-                            'rgba(96,165,250,0.08)',
-
-                        fill:
-                            false,
-
-                        tension:
-                            0.35
-
-                    }
-
-                );
-
-            }
-
-
-            const canvas =
-                document
-                    .getElementById(
-                        'sales-main-chart'
-                    );
-
-
-            if (
-                charts.salesMain
-            ) {
-
-                charts.salesMain.destroy();
-
-            }
-
-
-            charts.salesMain =
-                new Chart(
-
-                    canvas,
-
-                    {
-
-                        type:
-                            'line',
-
-                        data:
-                            {
-
-                                labels,
-
-                                datasets
-
-                            },
-
-                        options:
-                            {
-
-                                responsive:
-                                    true,
-
-                                maintainAspectRatio:
-                                    false,
-
-                                interaction:
-                                    {
-
-                                        mode:
-                                            'index',
-
-                                        intersect:
-                                            false
-
-                                    },
-
-                                plugins:
-                                    {
-
-                                        tooltip:
-                                            {
-
-                                                callbacks:
-                                                    {
-
-                                                        label:
-                                                            context =>
-                                                                `${context.dataset.label}: ${formatMoney(context.parsed.y)}`
-
-                                                    }
-
-                                            }
-
-                                    },
-
-                                scales:
-                                    {
-
-                                        y:
-                                            {
-
-                                                ticks:
-                                                    {
-
-                                                        callback:
-                                                            value =>
-                                                                formatMoney(
-                                                                    value
-                                                                )
-
-                                                    }
-
-                                            }
-
-                                    }
-
-                            }
-
-                    }
-
-                );
-
-        }
-
-
-        // =====================================================
-        // ПРОДАЖИ — КАТЕГОРИИ
-        // =====================================================
-
-        function renderSalesCategoryChart() {
-
-            const map =
-                new Map();
-
-
-            salesAnalyticsState
-                .filteredRows
-                .forEach(
-                    row => {
-
-                        const product =
-                            salesAnalyticsState
-                                .productMap
-                                .get(
-                                    row.productId
-                                );
-
-
-                        const groupId =
-                            product
-                                ?.group
-                                ?.id;
-
-
-                        const group =
-                            groupId
-                                ? salesAnalyticsState
-                                    .groupMap
-                                    .get(
-                                        groupId
-                                    )
-                                : null;
-
-
-                        const name =
-                            group
-                                ?.name ||
-                            'Без категории';
-
-
-                        map.set(
-                            name,
-                            (
-                                map.get(
-                                    name
-                                ) ||
-                                0
-                            ) +
-                            row.revenue
-                        );
-
-                    }
-                );
-
-
-            const rows =
-                Array.from(
-                    map.entries()
-                )
-                .sort(
-                    (
-                        a,
-                        b
-                    ) =>
-                        b[1] -
-                        a[1]
-                );
-
-
-            const canvas =
-                document
-                    .getElementById(
-                        'sales-category-chart'
-                    );
-
-
-            if (
-                charts.salesCategory
-            ) {
-
-                charts.salesCategory.destroy();
-
-            }
-
-
-            charts.salesCategory =
-                new Chart(
-
-                    canvas,
-
-                    {
-
-                        type:
-                            'doughnut',
-
-                        data:
-                            {
-
-                                labels:
-                                    rows.map(
-                                        row =>
-                                            row[0]
-                                    ),
-
-                                datasets:
-                                    [
-
-                                        {
-
-                                            data:
-                                                rows.map(
-                                                    row =>
-                                                        row[1]
-                                                )
-
-                                        }
-
-                                    ]
-
-                            },
-
-                        options:
-                            {
-
-                                responsive:
-                                    true,
-
-                                maintainAspectRatio:
-                                    false,
-
-                                plugins:
-                                    {
-
-                                        legend:
-                                            {
-
-                                                position:
-                                                    'bottom'
-
-                                            },
-
-                                        tooltip:
-                                            {
-
-                                                callbacks:
-                                                    {
-
-                                                        label:
-                                                            context =>
-                                                                `${context.label}: ${formatMoney(context.raw)}`
-
-                                                    }
-
-                                            }
-
-                                    }
-
-                            }
-
-                    }
-
-                );
-
-        }
-
-
-        // =====================================================
-        // ПРОДАЖИ — ТОП ТОВАРОВ
-        // =====================================================
-
-        function getProductAggregates() {
-
-            const map =
-                new Map();
-
-
-            salesAnalyticsState
-                .filteredRows
-                .forEach(
-                    row => {
-
-                        if (
-                            !map.has(
-                                row.productId
-                            )
-                        ) {
-
-                            map.set(
-
-                                row.productId,
-
-                                {
-
-                                    productId:
-                                        row.productId,
-
-                                    productName:
-                                        row.productName,
-
-                                    quantity:
-                                        0,
-
-                                    revenue:
-                                        0,
-
-                                    cost:
-                                        0,
-
-                                    profit:
-                                        0
-
-                                }
-
-                            );
-
-                        }
-
-
-                        const item =
-                            map.get(
-                                row.productId
-                            );
-
-
-                        item.quantity +=
-                            row.quantity;
-
-
-                        item.revenue +=
-                            row.revenue;
-
-
-                        item.cost +=
-                            row.cost;
-
-
-                        item.profit +=
-                            row.profit;
-
-                    }
-                );
-
-
-            return Array.from(
-                map.values()
-            );
-
-        }
-
-
-        function renderSalesTopProducts() {
-
-            const container =
-                document
-                    .getElementById(
-                        'sales-top-products'
-                    );
-
-
-            const products =
-                getProductAggregates()
-                    .sort(
-                        (
-                            a,
-                            b
-                        ) =>
-                            b.profit -
-                            a.profit
-                    )
-                    .slice(
-                        0,
-                        20
-                    );
-
-
-            if (
-                !products.length
-            ) {
-
-                container.innerHTML =
-                    '<div class="text-center text-gray-500 py-8">Нет данных</div>';
-
+        function updateTopProducts(profitData) {
+            const container = document.getElementById('top-products-list');
+            const rows = [...profitData].sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5);
+            
+            if (!rows.length) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет данных</div>';
                 return;
-
             }
-
-
-            container.innerHTML =
-                products
-                    .map(
-                        (
-                            product,
-                            index
-                        ) => `
-
-                            <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-
-                                <div class="flex justify-between gap-3">
-
-                                    <div class="min-w-0">
-
-                                        <div class="font-medium text-white truncate">
-
-                                            ${index + 1}.
-                                            ${escapeHtml(
-                                                product.productName
-                                            )}
-
-                                        </div>
-
-                                        <div class="text-xs text-gray-400 mt-1">
-
-                                            Продано:
-                                            ${formatNumber(
-                                                product.quantity
-                                            )}
-
-                                            шт.
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div class="text-right">
-
-                                        <div class="font-bold text-blue-400">
-
-                                            ${formatMoney(
-                                                product.profit
-                                            )}
-
-                                        </div>
-
-                                        <div class="text-xs text-gray-400">
-
-                                            ${formatMoney(
-                                                product.revenue
-                                            )}
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        `
-                    )
-                    .join(
-                        ''
-                    );
-
+            
+            container.innerHTML = rows.map(row => `
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                    <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
+                    <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
+                </div>
+            `).join('');
         }
 
-
-        // =====================================================
-        // ПРОДАЖИ — ТАБЛИЦА
-        // =====================================================
-
-        function renderSalesProductsTable() {
-
-            const tbody =
-                document
-                    .getElementById(
-                        'sales-products-table'
-                    );
-
-
-            const products =
-                getProductAggregates()
-                    .sort(
-                        (
-                            a,
-                            b
-                        ) =>
-                            b.revenue -
-                            a.revenue
-                    );
-
-
-            if (
-                !products.length
-            ) {
-
-                tbody.innerHTML =
-                    `
-
-                        <tr>
-
-                            <td
-                                colspan="7"
-                                class="text-center text-gray-500 p-8"
-                            >
-                                Нет данных
-                            </td>
-
-                        </tr>
-
-                    `;
-
+        function updateRecentChecks(checks) {
+            const container = document.getElementById('recent-checks-list');
+            if (!checks.length) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет чеков за период</div>';
                 return;
-
             }
-
-
-            tbody.innerHTML =
-                products
-                    .map(
-                        product => {
-
-                            const margin =
-                                product.revenue >
-                                0
-
-                                    ? product.profit /
-                                      product.revenue *
-                                      100
-
-                                    : 0;
-
-
-                            const productInfo =
-                                salesAnalyticsState
-                                    .productMap
-                                    .get(
-                                        product.productId
-                                    );
-
-
-                            const group =
-                                productInfo
-                                    ?.group
-                                    ?.id
-                                    ? salesAnalyticsState
-                                        .groupMap
-                                        .get(
-                                            productInfo
-                                                .group
-                                                .id
-                                        )
-                                    : null;
-
-
-                            return `
-
-                                <tr class="border-b border-slate-800 hover:bg-slate-800/40">
-
-                                    <td class="p-3 text-white">
-
-                                        ${escapeHtml(
-                                            product.productName
-                                        )}
-
-                                    </td>
-
-
-                                    <td class="p-3 text-gray-400">
-
-                                        ${escapeHtml(
-                                            group?.name ||
-                                            'Без категории'
-                                        )}
-
-                                    </td>
-
-
-                                    <td class="p-3 text-right">
-
-                                        ${formatNumber(
-                                            product.quantity
-                                        )}
-
-                                    </td>
-
-
-                                    <td class="p-3 text-right text-green-400">
-
-                                        ${formatMoney(
-                                            product.revenue
-                                        )}
-
-                                    </td>
-
-
-                                    <td class="p-3 text-right text-orange-400">
-
-                                        ${formatMoney(
-                                            product.cost
-                                        )}
-
-                                    </td>
-
-
-                                    <td class="p-3 text-right text-blue-400">
-
-                                        ${formatMoney(
-                                            product.profit
-                                        )}
-
-                                    </td>
-
-
-                                    <td class="p-3 text-right text-cyan-400">
-
-                                        ${margin.toFixed(
-                                            1
-                                        )}%
-
-                                    </td>
-
-                                </tr>
-
-                            `;
-
-                        }
-                    )
-                    .join(
-                        ''
-                    );
-
-        }
-
-
-        // =====================================================
-        // ОСНОВНАЯ ЗАГРУЗКА ПРОДАЖ
-        // =====================================================
-
-        async function loadSalesAnalytics() {
-
-            if (
-                !apiToken
-            ) {
-
-                showConnectionModal();
-
-                return;
-
-            }
-
-
-            const dateFrom =
-                document
-                    .getElementById(
-                        'sales-date-from'
-                    )
-                    .value;
-
-
-            const dateTo =
-                document
-                    .getElementById(
-                        'sales-date-to'
-                    )
-                    .value;
-
-
-            if (
-                !dateFrom ||
-                !dateTo
-            ) {
-
-                alert(
-                    'Выберите период.'
-                );
-
-                return;
-
-            }
-
-
-            if (
-                dateFrom >
-                dateTo
-            ) {
-
-                alert(
-                    'Начало периода не может быть позже конца периода.'
-                );
-
-                return;
-
-            }
-
-
-            showLoader(
-                'Загрузка аналитики продаж...',
-                'Получение документов продаж и фактической себестоимости'
-            );
-
-
-            try {
-
-                const headers =
-                    getAuthHeaders();
-
-
-                if (
-                    !salesAnalyticsState.groups.length
-                ) {
-
-                    await loadSalesGroups(
-                        headers
-                    );
-
-                    renderSalesCategories();
-
-                }
-
-
-                if (
-                    !salesAnalyticsState.products.length
-                ) {
-
-                    await loadSalesProducts(
-                        headers
-                    );
-
-                }
-
-
-                const documents =
-                    await loadAllRetailSales(
-                        headers,
-                        dateFrom,
-                        dateTo
-                    );
-
-
-                const rows =
-                    normalizeRetailSales(
-                        documents
-                    );
-
-
-                const filteredRows =
-                    filterSalesRows(
-                        rows
-                    );
-
-
-                salesAnalyticsState.documents =
-                    documents;
-
-
-                salesAnalyticsState.rows =
-                    rows;
-
-
-                salesAnalyticsState.filteredRows =
-                    filteredRows;
-
-
-                salesAnalyticsState.filters =
-                    {
-
-                        categoryId:
-                            document
-                                .getElementById(
-                                    'sales-category'
-                                )
-                                .value,
-
-                        subcategoryId:
-                            document
-                                .getElementById(
-                                    'sales-subcategory'
-                                )
-                                .value,
-
-                        productId:
-                            document
-                                .getElementById(
-                                    'sales-product'
-                                )
-                                .value,
-
-                        from:
-                            dateFrom,
-
-                        to:
-                            dateTo,
-
-                        grouping:
-                            document
-                                .getElementById(
-                                    'sales-grouping'
-                                )
-                                .value
-
-                    };
-
-
-                calculateSalesSummary(
-                    filteredRows
-                );
-
-
-                rebuildSalesMainChart();
-
-
-                renderSalesCategoryChart();
-
-
-                renderSalesTopProducts();
-
-
-                renderSalesProductsTable();
-
-
-                document
-                    .getElementById(
-                        'sales-filter-status'
-                    )
-                    .textContent =
-                    `Документов: ${documents.length}. ` +
-                    `Позиций продаж: ${filteredRows.length}. ` +
-                    `Товаров: ${getProductAggregates().length}.`;
-
-
-            } catch (error) {
-
-                console.error(
-                    'Ошибка загрузки аналитики продаж:',
-                    error
-                );
-
-
-                alert(
-                    'Ошибка загрузки продаж: ' +
-                    error.message
-                );
-
-            } finally {
-
-                hideLoader();
-
-            }
-
-        }
-
-
-        // =====================================================
-        // ПОСЛЕДНИЕ ЧЕКИ
-        // =====================================================
-
-        function updateRecentChecks(
-            checks
-        ) {
-
-            const container =
-                document
-                    .getElementById(
-                        'recent-checks-list'
-                    );
-
-
-            if (
-                !checks.length
-            ) {
-
-                container.innerHTML =
-                    '<div class="text-gray-500 text-center py-8">Нет чеков за период</div>';
-
-                return;
-
-            }
-
-
-            container.innerHTML =
-                checks
-                    .map(
-                        check => `
-
-                            <div
-                                class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50"
-                                onclick="showCheckDetails(
-                                    '${check.id}',
-                                    '${escapeHtml(check.name || 'Чек')}',
-                                    ${(check.sum || 0) / 100},
-                                    '${formatDateTime(check.moment)}'
-                                )"
-                            >
-
-                                <div class="flex justify-between items-center">
-
-                                    <div>
-
-                                        <div class="font-medium text-white">
-
-                                            ${escapeHtml(
-                                                check.name ||
-                                                'Чек'
-                                            )}
-
-                                        </div>
-
-                                        <div class="text-xs text-gray-400">
-
-                                            ${formatDateTime(
-                                                check.moment
-                                            )}
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div class="font-bold text-green-400">
-
-                                        ${formatMoney(
-                                            (
-                                                check.sum ||
-                                                0
-                                            ) /
-                                            100
-                                        )}
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        `
-                    )
-                    .join(
-                        ''
-                    );
-
-        }
-
-
-        async function showCheckDetails(
-            checkId,
-            checkName,
-            checkSum,
-            checkMoment
-        ) {
-
-            openDetailsModal(
-                'Загрузка...',
-                '<div class="text-center py-8">Загрузка позиций чека...</div>'
-            );
-
-
-            try {
-
-                const headers =
-                    getAuthHeaders();
-
-
-                const url =
-                    `${MOYSKLAD_API}/entity/retaildemand/${checkId}` +
-                    '?expand=positions.assortment' +
-                    '&fields=stock';
-
-
-                const response =
-                    await proxyFetch(
-                        url,
-                        headers
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                const positions =
-                    data
-                        .positions
-                        ?.rows ||
-                    [];
-
-
-                const items =
-                    positions
-                        .map(
-                            position => `
-
-                                <div class="bg-slate-900 rounded-lg p-4 mb-2">
-
-                                    <div class="font-medium text-white">
-
-                                        ${escapeHtml(
-                                            position.assortment?.name ||
-                                            'Товар'
-                                        )}
-
-                                    </div>
-
-                                    <div class="text-sm text-gray-400 mt-1">
-
-                                        ${formatNumber(
-                                            position.quantity
-                                        )}
-                                        шт ×
-                                        ${formatMoney(
-                                            (
-                                                position.price ||
-                                                0
-                                            ) /
-                                            100
-                                        )}
-
-                                    </div>
-
-                                    <div class="text-green-400 font-bold mt-2">
-
-                                        ${formatMoney(
-                                            (
-                                                position.sum ||
-                                                0
-                                            ) /
-                                            100
-                                        )}
-
-                                    </div>
-
-                                </div>
-
-                            `
-                        )
-                        .join(
-                            ''
-                        );
-
-
-                openDetailsModal(
-
-                    `Чек: ${checkName}`,
-
-                    `
-
-                        <div class="space-y-4">
-
-                            <div class="bg-slate-800 p-6 rounded-lg">
-
-                                <div class="text-sm text-gray-400">
-
-                                    ${checkMoment}
-
-                                </div>
-
-                                <div class="text-3xl font-bold text-green-400 mt-2">
-
-                                    ${formatMoney(
-                                        checkSum
-                                    )}
-
-                                </div>
-
-                            </div>
-
-
-                            <div>
-
-                                <h3 class="font-bold text-white mb-3">
-
-                                    Товары
-
-                                </h3>
-
-                                ${items || '<div class="text-gray-500">Нет позиций</div>'}
-
-                            </div>
-
+            container.innerHTML = checks.map(check => `
+                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
+                            <div class="text-xs text-gray-400">${formatDateTime(check.moment)}</div>
                         </div>
-
-                    `
-
-                );
-
-            } catch (error) {
-
-                openDetailsModal(
-                    'Ошибка',
-                    `<div class="text-red-400">${escapeHtml(error.message)}</div>`
-                );
-
-            }
-
+                        <div class="font-bold text-green-400">${formatMoney((check.sum || 0) / 100)}</div>
+                    </div>
+                </div>
+            `).join('');
         }
 
+        function generateInsights(dashboardData, salesSeries, profitData) {
+            const container = document.getElementById('ai-insights');
+            const revenue = salesSeries.reduce((sum, row) => sum + (row.sum || 0) / 100, 0);
+            const profit = profitData.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
+            const margin = revenue > 0 ? (profit / revenue * 100) : 0;
+            
+            const insights = [];
+            if (revenue > 0) {
+                insights.push({ icon: '📊', title: 'Выручка за период', text: formatMoney(revenue) });
+                insights.push({ icon: margin >= 30 ? '💪' : '⚠️', title: 'Маржинальность', text: `Текущая маржа: ${margin.toFixed(1)}%` });
+            }
+
+            if (!insights.length) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-8 md:col-span-2">Недостаточно данных</div>';
+                return;
+            }
+
+            container.innerHTML = insights.map(insight => `
+                <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                    <div class="flex gap-3">
+                        <span class="text-2xl">${insight.icon}</span>
+                        <div>
+                            <div class="font-semibold text-white">${insight.title}</div>
+                            <div class="text-sm text-gray-400 mt-1">${insight.text}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // =====================================================
+        // ДЕТАЛИЗАЦИЯ ЧЕКОВ
+        // =====================================================
+        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка позиций чека...</div>');
+            try {
+                const headers = getAuthHeaders();
+                const url = `${MOYSKLAD_API}/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
+                const response = await proxyFetch(url, headers);
+                const data = await response.json();
+                const positions = data.positions?.rows || [];
+
+                const items = positions.map(position => `
+                    <div class="bg-slate-900 rounded-lg p-4 mb-2 border border-slate-800">
+                        <div class="font-medium text-white">${escapeHtml(position.assortment?.name || 'Товар')}</div>
+                        <div class="text-sm text-gray-400 mt-1">${formatNumber(position.quantity)} шт × ${formatMoney((position.price || 0) / 100)}</div>
+                        <div class="text-green-400 font-bold mt-2">${formatMoney((position.sum || 0) / 100)}</div>
+                    </div>
+                `).join('');
+
+                openDetailsModal(`Чек: ${checkName}`, `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+                            <div class="text-sm text-gray-400">${checkMoment}</div>
+                            <div class="text-3xl font-bold text-green-400 mt-2">${formatMoney(checkSum)}</div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white mb-3">Товары в чеке</h3>
+                            ${items || '<div class="text-gray-500">Нет позиций</div>'}
+                        </div>
+                    </div>
+                `);
+            } catch (error) {
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
+            }
+        }
 
         async function showChecksList() {
-
-            openDetailsModal(
-                'Загрузка...',
-                '<div class="text-center py-8">Загрузка чеков...</div>'
-            );
-
-
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка чеков...</div>');
             try {
-
-                const dateFrom =
-                    document
-                        .getElementById(
-                            'date-from'
-                        )
-                        .value;
-
-
-                const dateTo =
-                    document
-                        .getElementById(
-                            'date-to'
-                        )
-                        .value;
-
-
-                const headers =
-                    getAuthHeaders();
-
-
-                const checks =
-                    await loadRecentChecks(
-
-                        headers,
-
-                        `${dateFrom} 00:00:00`,
-
-                        `${dateTo} 23:59:59`
-
-                    );
-
-
-                openDetailsModal(
-
-                    `Чеки (${checks.length})`,
-
-                    checks
-                        .map(
-                            check => `
-
-                                <div
-                                    class="check-item bg-slate-800/50 rounded-lg p-4 mb-2"
-                                    onclick="showCheckDetails(
-                                        '${check.id}',
-                                        '${escapeHtml(check.name || 'Чек')}',
-                                        ${(check.sum || 0) / 100},
-                                        '${formatDateTime(check.moment)}'
-                                    )"
-                                >
-
-                                    <div class="flex justify-between">
-
-                                        <span class="text-white">
-
-                                            ${escapeHtml(
-                                                check.name ||
-                                                'Чек'
-                                            )}
-
-                                        </span>
-
-                                        <span class="text-green-400 font-bold">
-
-                                            ${formatMoney(
-                                                (
-                                                    check.sum ||
-                                                    0
-                                                ) /
-                                                100
-                                            )}
-
-                                        </span>
-
-                                    </div>
-
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                const headers = getAuthHeaders();
+                const checks = await loadRecentChecks(headers, `${dateFrom} 00:00:00`, `${dateTo} 23:59:59`);
+                
+                openDetailsModal(`Чеки (${checks.length})`, `
+                    <div class="space-y-2">
+                        ${checks.map(check => `
+                            <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white font-medium">${escapeHtml(check.name || 'Чек')}</span>
+                                    <span class="text-green-400 font-bold">${formatMoney((check.sum || 0) / 100)}</span>
                                 </div>
-
-                            `
-                        )
-                        .join(
-                            ''
-                        ) ||
-                    '<div class="text-gray-500 text-center py-8">Нет чеков</div>'
-
-                );
-
-            } catch (error) {
-
-                openDetailsModal(
-                    'Ошибка',
-                    `<div class="text-red-400">${escapeHtml(error.message)}</div>`
-                );
-
-            }
-
-        }
-
-
-        // =====================================================
-        // РЕКОМЕНДАЦИИ
-        // =====================================================
-
-        function generateInsights(
-            dashboardData,
-            salesSeries,
-            profitData
-        ) {
-
-            const container =
-                document
-                    .getElementById(
-                        'ai-insights'
-                    );
-
-
-            const revenue =
-                salesSeries.reduce(
-                    (
-                        sum,
-                        row
-                    ) =>
-                        sum +
-                        (
-                            row.sum ||
-                            0
-                        ) /
-                        100,
-
-                    0
-                );
-
-
-            const profit =
-                profitData.reduce(
-                    (
-                        sum,
-                        row
-                    ) =>
-                        sum +
-                        (
-                            row.profit ||
-                            0
-                        ) /
-                        100,
-
-                    0
-                );
-
-
-            const margin =
-                revenue > 0
-                    ? profit /
-                      revenue *
-                      100
-                    : 0;
-
-
-            const insights =
-                [];
-
-
-            if (
-                revenue > 0
-            ) {
-
-                insights.push(
-
-                    {
-
-                        icon:
-                            '📊',
-
-                        title:
-                            'Выручка за период',
-
-                        text:
-                            formatMoney(
-                                revenue
-                            )
-
-                    }
-
-                );
-
-            }
-
-
-            if (
-                revenue > 0
-            ) {
-
-                insights.push(
-
-                    {
-
-                        icon:
-                            margin >= 30
-                                ? '💪'
-                                : '⚠️',
-
-                        title:
-                            'Маржинальность',
-
-                        text:
-                            `Текущая маржа: ${margin.toFixed(1)}%`
-
-                    }
-
-                );
-
-            }
-
-
-            if (
-                !insights.length
-            ) {
-
-                container.innerHTML =
-                    '<div class="text-gray-500 text-center py-8 md:col-span-2">Недостаточно данных</div>';
-
-                return;
-
-            }
-
-
-            container.innerHTML =
-                insights
-                    .map(
-                        insight => `
-
-                            <div class="bg-slate-800/50 rounded-lg p-4">
-
-                                <div class="flex gap-3">
-
-                                    <span class="text-2xl">
-
-                                        ${insight.icon}
-
-                                    </span>
-
-                                    <div>
-
-                                        <div class="font-semibold text-white">
-
-                                            ${insight.title}
-
-                                        </div>
-
-                                        <div class="text-sm text-gray-400 mt-1">
-
-                                            ${insight.text}
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
+                                <div class="text-xs text-gray-400 mt-1">${formatDateTime(check.moment)}</div>
                             </div>
-
-                        `
-                    )
-                    .join(
-                        ''
-                    );
-
-        }
-
-
-        // =====================================================
-        // KPI DETAILS
-        // =====================================================
-
-        function showKpiDetail(
-            type
-        ) {
-
-            const titles =
-                {
-
-                    revenue:
-                        'Детализация выручки',
-
-                    profit:
-                        'Детализация прибыли',
-
-                    avgCheck:
-                        'Средний чек',
-
-                    margin:
-                        'Маржинальность'
-
-                };
-
-
-            const elements =
-                {
-
-                    revenue:
-                        document
-                            .getElementById(
-                                'kpi-revenue'
-                            )
-                            .textContent,
-
-                    profit:
-                        document
-                            .getElementById(
-                                'kpi-profit'
-                            )
-                            .textContent,
-
-                    avgCheck:
-                        document
-                            .getElementById(
-                                'kpi-avg-check'
-                            )
-                            .textContent,
-
-                    margin:
-                        document
-                            .getElementById(
-                                'kpi-margin'
-                            )
-                            .textContent
-
-                };
-
-
-            openDetailsModal(
-
-                titles[type],
-
-                `
-
-                    <div class="bg-slate-800 p-6 rounded-lg">
-
-                        <div class="text-sm text-gray-400 mb-2">
-
-                            Значение за выбранный период
-
-                        </div>
-
-                        <div class="text-4xl font-bold text-blue-400">
-
-                            ${elements[type]}
-
-                        </div>
-
+                        `).join('') || '<div class="text-gray-500 text-center py-8">Нет чеков</div>'}
                     </div>
-
-                `
-
-            );
-
+                `);
+            } catch (error) {
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
+            }
         }
 
+        function showKpiDetail(type) {
+            const titles = { revenue: 'Детализация выручки', profit: 'Детализация прибыли', avgCheck: 'Средний чек', margin: 'Маржинальность' };
+            const elements = {
+                revenue: document.getElementById('kpi-revenue').textContent,
+                profit: document.getElementById('kpi-profit').textContent,
+                avgCheck: document.getElementById('kpi-avg-check').textContent,
+                margin: document.getElementById('kpi-margin').textContent
+            };
+            openDetailsModal(titles[type], `
+                <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-blue-500">
+                    <div class="text-sm text-gray-400 mb-2">Значение за выбранный период</div>
+                    <div class="text-4xl font-bold text-blue-400">${elements[type]}</div>
+                </div>
+            `);
+        }
 
         // =====================================================
         // ИНИЦИАЛИЗАЦИЯ
         // =====================================================
-
-        window.addEventListener(
-            'load',
-            () => {
-
-                const dates =
-                    getPeriodDates(
-                        'week'
-                    );
-
-
-                document
-                    .getElementById(
-                        'date-from'
-                    )
-                    .value =
-                    dates.from;
-
-
-                document
-                    .getElementById(
-                        'date-to'
-                    )
-                    .value =
-                    dates.to;
-
-
-                if (
-                    apiToken
-                ) {
-
-                    loadDashboard();
-
-                } else {
-
-                    showConnectionModal();
-
-                }
-
+        window.addEventListener('load', () => {
+            const dates = getPeriodDates('week');
+            document.getElementById('date-from').value = dates.from;
+            document.getElementById('date-to').value = dates.to;
+            
+            if (apiToken) {
+                loadDashboard();
+            } else {
+                showConnectionModal();
             }
-        );
-
+        });
     </script>
-
 </body>
 </html>
