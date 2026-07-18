@@ -15,7 +15,7 @@
         .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
         .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
         .kpi-card { transition: all 0.3s; cursor: pointer; }
-        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
         .modal-content { background: #1e293b; border-radius: 16px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
         .chart-container { position: relative; height: 300px; }
@@ -50,21 +50,6 @@
             </button>
             <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
                 <span class="text-lg">👥</span> Клиенты
-            </button>
-            <button onclick="switchView('suppliers')" id="nav-suppliers" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">🏭</span> Поставщики
-            </button>
-            <button onclick="switchView('analytics')" id="nav-analytics" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">🔍</span> Аналитика
-            </button>
-            <button onclick="switchView('forecast')" id="nav-forecast" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">🔮</span> Прогнозирование
-            </button>
-            <button onclick="switchView('reports')" id="nav-reports" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">📋</span> Отчеты
-            </button>
-            <button onclick="switchView('settings')" id="nav-settings" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">⚙️</span> Настройки
             </button>
         </nav>
         <div class="p-4 border-t border-slate-800">
@@ -101,7 +86,7 @@
                         <span class="text-gray-500">—</span>
                         <input type="date" id="date-to" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
                     </div>
-                    <button onclick="loadDashboard()" class="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2">
+                    <button onclick="loadCurrentView()" class="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2">
                         <span>🔄</span> Обновить
                     </button>
                 </div>
@@ -109,27 +94,24 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-6 scrollbar-thin">
+            <!-- ГЛАВНАЯ СТРАНИЦА -->
             <div id="view-dashboard" class="view-section space-y-6">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="kpi-card glass p-6" onclick="showRevenueDetails()">
                         <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Выручка</div>
                         <div id="kpi-revenue" class="text-2xl font-bold text-green-400">0</div>
-                        <div id="kpi-revenue-trend" class="text-sm mt-2 text-green-400">+0%</div>
                     </div>
                     <div class="kpi-card glass p-6" onclick="showProfitDetails()">
                         <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Прибыль</div>
                         <div id="kpi-profit" class="text-2xl font-bold text-blue-400">0</div>
-                        <div id="kpi-profit-trend" class="text-sm mt-2 text-green-400">+0%</div>
                     </div>
                     <div class="kpi-card glass p-6" onclick="showChecksDetails()">
                         <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Чеки</div>
                         <div id="kpi-checks" class="text-2xl font-bold text-purple-400">0</div>
-                        <div id="kpi-checks-trend" class="text-sm mt-2 text-green-400">+0%</div>
                     </div>
                     <div class="kpi-card glass p-6" onclick="showAvgCheckDetails()">
                         <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Средний чек</div>
                         <div id="kpi-avg-check" class="text-2xl font-bold text-yellow-400">0</div>
-                        <div id="kpi-avg-check-trend" class="text-sm mt-2 text-green-400">+0%</div>
                     </div>
                 </div>
 
@@ -142,26 +124,21 @@
             </div>
 
             <!-- Заглушки для других разделов -->
-            <div id="view-sales" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">📈 Раздел "Продажи"</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-finance" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">💰 Раздел "Финансы"</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-stock" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">📦 Раздел "Товары и склад"</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-clients" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">👥 Раздел "Клиенты"</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-suppliers" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">🏭 Раздел "Поставщики"</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-analytics" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">🔍 Раздел "Аналитика"</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-forecast" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">🔮 Раздел "Прогнозирование"</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-reports" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">📋 Раздел "Отчеты"</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-settings" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">⚙️ Раздел "Настройки"</h2><p class="text-gray-400">В разработке</p></div></div>
+            <div id="view-sales" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">📈 Продажи</h2><p class="text-gray-400">В разработке</p></div></div>
+            <div id="view-finance" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">💰 Финансы</h2><p class="text-gray-400">В разработке</p></div></div>
+            <div id="view-stock" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">📦 Склад</h2><p class="text-gray-400">В разработке</p></div></div>
+            <div id="view-clients" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">👥 Клиенты</h2><p class="text-gray-400">В разработке</p></div></div>
         </div>
     </main>
 
     <!-- Модальное окно подключения -->
     <div id="connection-modal" class="modal-overlay hidden">
         <div class="modal-content p-6 max-w-md">
-            <h3 class="text-xl font-bold mb-4">Подключение к МойСклад API</h3>
+            <h3 class="text-xl font-bold mb-4">Подключение к API</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium mb-2">Токен API или логин:пароль</label>
-                    <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white" placeholder="Введите токен">
+                    <label class="block text-sm font-medium mb-2">Токен или логин:пароль</label>
+                    <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white" placeholder="Введите данные">
                 </div>
                 <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Сохранить</button>
                 <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm">Отмена</button>
@@ -215,7 +192,7 @@
             const dates = getPeriodDates(period);
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
-            if (apiToken) loadDashboard();
+            if (apiToken) loadCurrentView();
         }
 
         function switchView(view) {
@@ -228,12 +205,11 @@
             });
             document.getElementById('nav-' + view).classList.add('active');
             document.getElementById('nav-' + view).classList.remove('text-gray-400');
-            const titles = {
-                'dashboard': 'Главная', 'sales': 'Продажи', 'finance': 'Финансы',
-                'stock': 'Товары и склад', 'clients': 'Клиенты', 'suppliers': 'Поставщики',
-                'analytics': 'Аналитика', 'forecast': 'Прогнозирование', 'reports': 'Отчеты', 'settings': 'Настройки'
-            };
+            
+            const titles = { 'dashboard': 'Главная', 'sales': 'Продажи', 'finance': 'Финансы', 'stock': 'Склад', 'clients': 'Клиенты' };
             document.getElementById('page-title').textContent = titles[view] || 'Главная';
+            
+            if (apiToken) loadCurrentView();
         }
 
         function showConnectionModal() {
@@ -246,15 +222,20 @@
             apiToken = document.getElementById('api-token').value.trim();
             localStorage.setItem('moysklad_token', apiToken);
             closeConnectionModal();
-            if (apiToken) loadDashboard();
+            if (apiToken) loadCurrentView();
         }
 
+        // ИСПРАВЛЕНО: Добавлен критически важный заголовок Accept, требуемый документацией МойСклад
         function getAuthHeaders() {
             let authValue = apiToken;
             if (!apiToken.startsWith("Basic ") && !apiToken.startsWith("Bearer ")) {
                 authValue = apiToken.includes(":") ? "Basic " + btoa(unescape(encodeURIComponent(apiToken))) : "Bearer " + apiToken;
             }
-            return { "Authorization": authValue, "Accept": "application/json;charset=utf-8", "Content-Type": "application/json" };
+            return { 
+                "Authorization": authValue, 
+                "Accept": "application/json;charset=utf-8", 
+                "Content-Type": "application/json" 
+            };
         }
 
         async function fetchWithRetry(url, options, retries = 3) {
@@ -276,7 +257,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
-            if (response.status === 429) throw new Error('Превышен лимит запросов (429). Подождите 1 минуту.');
+            if (response.status === 429) throw new Error('Лимит запросов (429). Подождите 1 минуту.');
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error('Ошибка API ' + response.status + ': ' + errorText);
@@ -284,39 +265,56 @@
             return response;
         }
 
-        async function loadDashboard() {
+        async function loadCurrentView() {
             if (!apiToken) { showConnectionModal(); return; }
-            const headers = getAuthHeaders();
-            const dateFrom = document.getElementById('date-from').value;
-            const dateTo = document.getElementById('date-to').value;
-            const momentFrom = dateFrom + ' 00:00:00';
-            const momentTo = dateTo + ' 23:59:59';
+            
+            // Показываем простую индикацию загрузки на кнопке
+            const btn = document.querySelector('button[onclick="loadCurrentView()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Загрузка...';
+            btn.disabled = true;
 
             try {
-                const [salesData, profitData] = await Promise.all([
-                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day', headers),
-                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&limit=1000', headers)
-                ]);
+                const headers = getAuthHeaders();
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                
+                // Формат даты строго по документации: YYYY-MM-DD HH:MM:SS
+                const momentFrom = `${dateFrom} 00:00:00`;
+                const momentTo = `${dateTo} 23:59:59`;
 
-                const salesResult = await salesData.json();
-                const profitResult = await profitData.json();
+                if (currentView === 'dashboard') {
+                    // Параллельная загрузка для скорости
+                    const [salesData, profitData] = await Promise.all([
+                        proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
+                        proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`, headers)
+                    ]);
 
-                dashboardData = { sales: salesResult, profit: profitResult, dateFrom, dateTo, momentFrom, momentTo };
+                    const salesResult = await salesData.json();
+                    const profitResult = await profitData.json();
 
-                const totalRevenue = salesResult.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-                const totalChecks = salesResult.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
-                const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
-                const totalProfit = profitResult.rows.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
+                    dashboardData = { sales: salesResult, profit: profitResult, dateFrom, dateTo, momentFrom, momentTo };
 
-                document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
-                document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
-                document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
-                document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
+                    const totalRevenue = salesResult.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+                    const totalChecks = salesResult.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
+                    const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
+                    const totalProfit = profitResult.rows.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
 
-                updateMainChart(salesResult);
+                    document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
+                    document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
+                    document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
+                    document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
+
+                    updateMainChart(salesResult);
+                }
+                
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
             } catch (error) {
                 alert('Ошибка: ' + error.message);
+                console.error(error);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
 
@@ -393,17 +391,23 @@
             openDetailsModal('Детализация прибыли', html);
         }
 
-        // === ИСПРАВЛЕННАЯ ФУНКЦИЯ: Список чеков ===
+        // =====================================================================
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Получение списка чеков за период
+        // Согласно документации, для документов используется filter=moment>=...;moment<=...
+        // =====================================================================
         async function showChecksDetails() {
             openDetailsModal('Загрузка чеков...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
+            
             try {
                 const headers = getAuthHeaders();
                 const momentFrom = dashboardData.momentFrom;
                 const momentTo = dashboardData.momentTo;
 
-                // ИСПРАВЛЕНИЕ 1: Добавлен filter=applicable=true, чтобы получать только проведенные чеки, 
-                // которые учитываются в отчетах. Это решает проблему "1000 чеков вместо 29".
-                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&filter=applicable=true&limit=1000&order=moment,desc`;
+                // ИСПРАВЛЕНИЕ: Правильный синтаксис фильтрации документов по дате + только проведенные (applicable=true)
+                const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
+                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?filter=${filter}&limit=1000&order=moment,desc`;
+                
+                console.log('Запрос чеков:', url); // Для отладки в консоли браузера
                 
                 const response = await proxyFetch(url, headers);
                 const data = await response.json();
@@ -413,7 +417,7 @@
 
                 const html = `
                     <div class="space-y-4">
-                        <div class="bg-slate-800 p-4 rounded-lg flex justify-between items-center border-l-4 border-purple-500">
+                        <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-purple-500 flex justify-between items-center">
                             <div>
                                 <div class="text-sm text-gray-400">Всего чеков за период</div>
                                 <div class="text-2xl font-bold text-purple-400">${checks.length}</div>
@@ -423,13 +427,14 @@
                                 <div class="text-xl font-bold text-green-400">${formatMoney(totalSum)}</div>
                             </div>
                         </div>
+                        
                         <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
                             ${checks.length === 0 ? '<div class="text-center text-gray-500 py-8">Проведенных чеков за этот период не найдено</div>' : ''}
                             ${checks.map(c => {
                                 const sum = (c.sum || 0) / 100;
                                 const date = c.moment ? new Date(c.moment).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
                                 return `
-                                    <div class="bg-slate-800 p-4 rounded-lg cursor-pointer hover:bg-slate-700 transition border border-transparent hover:border-blue-500/50" onclick="showCheckPositions('${c.id}', '${c.name || 'Чек'}', ${sum}, '${date}')">
+                                    <div class="bg-slate-800 p-4 rounded-lg cursor-pointer hover:bg-slate-700 transition border border-transparent hover:border-blue-500/50" onclick="loadCheckDetails('${c.id}', '${c.name || 'Чек'}', ${sum}, '${date}')">
                                         <div class="flex justify-between items-center mb-2">
                                             <span class="font-bold text-lg">${c.name || 'Чек'}</span>
                                             <span class="font-bold text-green-400 text-lg">${formatMoney(sum)}</span>
@@ -446,35 +451,37 @@
                 `;
                 openDetailsModal(`Список чеков (${checks.length})`, html);
             } catch (error) {
-                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-4">Не удалось загрузить чеки:<br>${error.message}</div>`);
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-4">Не удалось загрузить чеки:<br><br>${error.message}</div>`);
+                console.error('Ошибка загрузки чеков:', error);
             }
         }
 
-        // === ИСПРАВЛЕННАЯ ФУНКЦИЯ: Детализация чека с товарами ===
-        async function showCheckPositions(checkId, checkName, checkSum, checkMoment) {
+        // =====================================================================
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Детализация конкретного чека с товарами
+        // Используем expand=positions.assortment для получения названий товаров
+        // =====================================================================
+        async function loadCheckDetails(checkId, checkName, checkSum, checkMoment) {
             const modal = document.getElementById('details-modal');
             const title = document.getElementById('details-title');
             const content = document.getElementById('details-content');
 
             title.textContent = 'Загрузка товаров...';
             content.innerHTML = '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка позиций чека...</div>';
-            modal.classList.remove('hidden');
-
+            
             try {
                 const headers = getAuthHeaders();
-                
-                // ИСПРАВЛЕНИЕ 2: Согласно документации МойСклад, для получения названий товаров 
-                // внутри позиций необходимо использовать expand=positions.assortment
+                // ИСПРАВЛЕНИЕ: expand=positions.assortment гарантирует возврат объектов товаров с именами
                 const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment`;
+                
+                console.log('Запрос деталей чека:', url);
                 
                 const response = await proxyFetch(url, headers);
                 const checkData = await response.json();
-
                 const positions = checkData.positions?.rows || [];
 
                 let totalCalculated = 0;
                 const itemsHtml = positions.map(p => {
-                    // Теперь название гарантированно будет получено из p.assortment.name
+                    // Безопасное получение имени из вложенного объекта assortment
                     const productName = p.assortment?.name || 'Товар без названия';
                     const quantity = p.quantity || 0;
                     const price = (p.price || 0) / 100;
@@ -541,8 +548,9 @@
                 content.innerHTML = html;
             } catch (error) {
                 title.textContent = 'Ошибка';
-                content.innerHTML = `<div class="text-red-400 text-center py-4">Не удалось загрузить позиции:<br>${error.message}</div>
+                content.innerHTML = `<div class="text-red-400 text-center py-4">Не удалось загрузить позиции:<br><br>${error.message}</div>
                 <button onclick="showChecksDetails()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition">Назад к списку</button>`;
+                console.error('Ошибка загрузки деталей чека:', error);
             }
         }
 
@@ -582,7 +590,7 @@
             const dates = getPeriodDates('week');
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
-            if (apiToken) loadDashboard();
+            if (apiToken) loadCurrentView();
         });
     </script>
 </body>
