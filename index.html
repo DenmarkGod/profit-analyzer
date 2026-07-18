@@ -3,105 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro - Главная</title>
+
+    <title>Profit Analyzer Pro — Управленческий учет ИП</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-        body { background: #0f172a; color: #e2e8f0; }
-        
-        .glass { 
-            background: rgba(30, 41, 59, 0.7); 
-            backdrop-filter: blur(12px); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            border-radius: 16px; 
+        * {
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
         }
-        
-        .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
-        .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
-        .nav-item.active { 
-            background: rgba(59, 130, 246, 0.15); 
-            border-left-color: #3b82f6; 
-            color: #60a5fa; 
+
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
         }
-        
-        .kpi-card { 
-            transition: all 0.3s ease; 
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+        }
+
+        .nav-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-left-color: #3b82f6;
+            color: #60a5fa;
+        }
+
+        .kpi-card {
+            transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
             overflow: hidden;
         }
-        .kpi-card:hover { 
-            transform: translateY(-4px); 
-            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
             border-color: rgba(59, 130, 246, 0.3);
         }
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, currentColor, transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
+
+        .trend-up {
+            color: #4ade80;
         }
-        .kpi-card:hover::before { opacity: 1; }
-        
-        .trend-up { color: #4ade80; }
-        .trend-down { color: #f87171; }
-        .trend-neutral { color: #94a3b8; }
-        
+
+        .trend-down {
+            color: #f87171;
+        }
+
+        .trend-neutral {
+            color: #94a3b8;
+        }
+
         .check-item {
             transition: all 0.2s ease;
             cursor: pointer;
         }
+
         .check-item:hover {
             background: rgba(59, 130, 246, 0.1);
             border-color: rgba(59, 130, 246, 0.3);
             transform: translateX(4px);
         }
-        
-        .modal-overlay { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.85); 
-            z-index: 100; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 20px; 
-            backdrop-filter: blur(4px); 
-            opacity: 0; 
-            pointer-events: none; 
-            transition: opacity 0.3s ease; 
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
-        .modal-overlay.active { 
-            opacity: 1; 
-            pointer-events: auto; 
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
         }
-        
-        .spinner { 
-            width: 40px; 
-            height: 40px; 
-            border: 3px solid rgba(59, 130, 246, 0.2); 
-            border-top-color: #3b82f6; 
-            border-radius: 50%; 
-            animation: spin 0.8s linear infinite; 
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        input[type="date"] { color-scheme: dark; }
-        
-        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        
-        .chart-container { position: relative; height: 320px; }
-        
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        input[type="date"] {
+            color-scheme: dark;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+        }
+
         .pulse-dot {
             width: 8px;
             height: 8px;
@@ -109,11 +145,19 @@
             background: #4ade80;
             animation: pulse 2s infinite;
         }
+
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
         }
-        
+
         .gradient-text {
             background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
             -webkit-background-clip: text;
@@ -122,1195 +166,3887 @@
         }
     </style>
 </head>
+
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Боковое меню -->
-    <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col hidden md:flex z-20">
-        <div class="p-6 border-b border-slate-800">
-            <h1 class="text-xl font-bold gradient-text">Profit Analyzer</h1>
-            <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
-        </div>
-        <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3">
-                <span class="text-lg">📊</span> Главная
-            </button>
-            <button onclick="switchView('sales')" id="nav-sales" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg"></span> Продажи
-            </button>
-            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">💰</span> Финансы
-            </button>
-            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">📦</span> Склад
-            </button>
-            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">👥</span> Клиенты
-            </button>
-        </nav>
-        <div class="p-4 border-t border-slate-800">
-            <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition">
-                <span>🔌</span> Настройки API
-            </button>
-        </div>
-    </aside>
+<!-- =========================
+     SIDEBAR
+========================= -->
 
-    <!-- Мобильное меню -->
-    <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto backdrop-blur-md">
-        <button onclick="switchView('dashboard')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]">
-            <span class="text-lg">📊</span>Главная
-        </button>
-        <button onclick="switchView('sales')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
-            <span class="text-lg">📈</span>Продажи
-        </button>
-        <button onclick="switchView('finance')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
-            <span class="text-lg">💰</span>Финансы
-        </button>
-        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
-            <span class="text-lg">📦</span>Склад
-        </button>
+<aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col hidden md:flex z-20">
+
+    <div class="p-6 border-b border-slate-800">
+        <h1 class="text-xl font-bold gradient-text">
+            Profit Analyzer
+        </h1>
+
+        <p class="text-xs text-gray-500 mt-1">
+            Управленческий учет ИП
+        </p>
     </div>
 
-    <!-- Основной контент -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-        
-        <!-- Верхняя панель -->
-        <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="pulse-dot"></div>
-                    <h2 id="page-title" class="text-xl md:text-2xl font-bold text-white">Главная</h2>
-                    <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
-                        Обновлено: <span id="last-update">-</span>
-                    </span>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex bg-slate-800 rounded-lg p-1 gap-1">
-                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Сегодня</button>
-                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition bg-blue-600 text-white">Неделя</button>
-                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Месяц</button>
-                    </div>
-                    <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
-                        <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
-                        <span class="text-gray-500">—</span>
-                        <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
-                    </div>
-                    <button onclick="loadDashboard()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2 shadow-lg shadow-blue-500/20">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Обновить
+    <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+
+        <button
+            onclick="switchView('dashboard')"
+            id="nav-dashboard"
+            class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3"
+        >
+            <span class="text-lg">📊</span>
+            Главная
+        </button>
+
+        <button
+            onclick="switchView('sales')"
+            id="nav-sales"
+            class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"
+        >
+            <span class="text-lg">📈</span>
+            Продажи
+        </button>
+
+        <button
+            onclick="switchView('finance')"
+            id="nav-finance"
+            class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"
+        >
+            <span class="text-lg">💰</span>
+            Финансы
+        </button>
+
+        <button
+            onclick="switchView('stock')"
+            id="nav-stock"
+            class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"
+        >
+            <span class="text-lg">📦</span>
+            Склад
+        </button>
+
+        <button
+            onclick="switchView('clients')"
+            id="nav-clients"
+            class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"
+        >
+            <span class="text-lg">👥</span>
+            Клиенты
+        </button>
+
+    </nav>
+
+    <div class="p-4 border-t border-slate-800">
+
+        <button
+            onclick="showConnectionModal()"
+            class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition"
+        >
+            <span>🔌</span>
+            Настройки API
+        </button>
+
+        <button
+            onclick="disconnectApi()"
+            class="w-full text-xs text-red-400 hover:text-red-300 flex items-center justify-center gap-2 py-2 mt-1 rounded-lg hover:bg-slate-800 transition"
+        >
+            <span>⏏</span>
+            Отключиться
+        </button>
+
+    </div>
+
+</aside>
+
+
+<!-- =========================
+     MOBILE NAVIGATION
+========================= -->
+
+<div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto backdrop-blur-md">
+
+    <button
+        onclick="switchView('dashboard')"
+        class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"
+    >
+        <span class="text-lg">📊</span>
+        Главная
+    </button>
+
+    <button
+        onclick="switchView('sales')"
+        class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"
+    >
+        <span class="text-lg">📈</span>
+        Продажи
+    </button>
+
+    <button
+        onclick="switchView('finance')"
+        class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"
+    >
+        <span class="text-lg">💰</span>
+        Финансы
+    </button>
+
+    <button
+        onclick="switchView('stock')"
+        class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"
+    >
+        <span class="text-lg">📦</span>
+        Склад
+    </button>
+
+</div>
+
+
+<!-- =========================
+     MAIN
+========================= -->
+
+<main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- HEADER -->
+
+    <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+            <div class="flex items-center gap-3">
+
+                <div class="pulse-dot"></div>
+
+                <h2
+                    id="page-title"
+                    class="text-xl md:text-2xl font-bold text-white"
+                >
+                    Главная
+                </h2>
+
+                <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
+                    Обновлено:
+                    <span id="last-update">—</span>
+                </span>
+
+            </div>
+
+
+            <div class="flex flex-wrap items-center gap-3">
+
+                <div class="flex bg-slate-800 rounded-lg p-1 gap-1">
+
+                    <button
+                        onclick="setPeriod('today')"
+                        data-period="today"
+                        class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300"
+                    >
+                        Сегодня
                     </button>
+
+                    <button
+                        onclick="setPeriod('week')"
+                        data-period="week"
+                        class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition bg-blue-600 text-white"
+                    >
+                        Неделя
+                    </button>
+
+                    <button
+                        onclick="setPeriod('month')"
+                        data-period="month"
+                        class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300"
+                    >
+                        Месяц
+                    </button>
+
                 </div>
+
+
+                <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
+
+                    <input
+                        type="date"
+                        id="date-from"
+                        class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white"
+                    >
+
+                    <span class="text-gray-500">—</span>
+
+                    <input
+                        type="date"
+                        id="date-to"
+                        class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white"
+                    >
+
+                </div>
+
+
+                <button
+                    onclick="loadDashboard()"
+                    class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                >
+                    ↻
+                    Обновить
+                </button>
+
             </div>
+
         </div>
 
-        <!-- Область контента -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
-            
-            <!-- ГЛАВНАЯ СТРАНИЦА -->
-            <div id="view-dashboard" class="view-section active space-y-6">
-                
-                <!-- KPI Карточки -->
-                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div class="kpi-card glass p-5" onclick="showKpiDetail('revenue')" style="color: #4ade80;">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Выручка</div>
-                            <span class="text-lg"></span>
+    </div>
+
+
+    <!-- CONTENT -->
+
+    <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
+
+
+        <!-- =========================
+             DASHBOARD
+        ========================= -->
+
+        <div
+            id="view-dashboard"
+            class="view-section active space-y-6"
+        >
+
+
+            <!-- KPI -->
+
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+
+
+                <!-- REVENUE -->
+
+                <div
+                    class="kpi-card glass p-5"
+                    onclick="showKpiDetail('revenue')"
+                    style="color:#4ade80"
+                >
+
+                    <div class="flex items-start justify-between mb-2">
+
+                        <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                            Выручка
                         </div>
-                        <div id="kpi-revenue" class="text-2xl md:text-3xl font-bold text-white mb-2">0 ₽</div>
-                        <div id="kpi-revenue-trend" class="text-xs flex items-center gap-1 trend-neutral">
-                            <span>—</span> <span>0%</span>
-                        </div>
+
+                        <span class="text-lg">💵</span>
+
                     </div>
-                    
-                    <div class="kpi-card glass p-5" onclick="showKpiDetail('profit')" style="color: #60a5fa;">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Прибыль</div>
-                            <span class="text-lg"></span>
-                        </div>
-                        <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mb-2">0 ₽</div>
-                        <div id="kpi-profit-trend" class="text-xs flex items-center gap-1 trend-neutral">
-                            <span>—</span> <span>0%</span>
-                        </div>
+
+                    <div
+                        id="kpi-revenue"
+                        class="text-2xl md:text-3xl font-bold text-white mb-2"
+                    >
+                        0 ₽
                     </div>
-                    
-                    <div class="kpi-card glass p-5" onclick="showChecksList()" style="color: #c084fc;">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Чеки</div>
-                            <span class="text-lg">🧾</span>
-                        </div>
-                        <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mb-2">0</div>
-                        <div id="kpi-checks-trend" class="text-xs flex items-center gap-1 trend-neutral">
-                            <span>—</span> <span>0%</span>
-                        </div>
+
+                    <div
+                        id="kpi-revenue-trend"
+                        class="text-xs flex items-center gap-1 trend-neutral"
+                    >
+                        <span>→</span>
+                        <span>0%</span>
                     </div>
-                    
-                    <div class="kpi-card glass p-5" onclick="showKpiDetail('avgCheck')" style="color: #fbbf24;">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Средний чек</div>
-                            <span class="text-lg">🎯</span>
-                        </div>
-                        <div id="kpi-avg-check" class="text-2xl md:text-3xl font-bold text-white mb-2">0 ₽</div>
-                        <div id="kpi-avg-check-trend" class="text-xs flex items-center gap-1 trend-neutral">
-                            <span>—</span> <span>0%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="kpi-card glass p-5 col-span-2 lg:col-span-1" onclick="showKpiDetail('margin')" style="color: #34d399;">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Маржа</div>
-                            <span class="text-lg">📊</span>
-                        </div>
-                        <div id="kpi-margin" class="text-2xl md:text-3xl font-bold text-white mb-2">0%</div>
-                        <div id="kpi-margin-trend" class="text-xs flex items-center gap-1 trend-neutral">
-                            <span>—</span> <span>0%</span>
-                        </div>
-                    </div>
+
                 </div>
 
-                <!-- График и Топ товаров -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 glass p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                                <span class="text-blue-400">📈</span> Динамика выручки и прибыли
-                            </h3>
-                            <div class="flex gap-2 text-xs">
-                                <span class="flex items-center gap-1 text-green-400">
-                                    <span class="w-3 h-3 rounded-full bg-green-400"></span> Выручка
-                                </span>
-                                <span class="flex items-center gap-1 text-blue-400">
-                                    <span class="w-3 h-3 rounded-full bg-blue-400"></span> Прибыль
-                                </span>
-                            </div>
+
+                <!-- PROFIT -->
+
+                <div
+                    class="kpi-card glass p-5"
+                    onclick="showKpiDetail('profit')"
+                    style="color:#60a5fa"
+                >
+
+                    <div class="flex items-start justify-between mb-2">
+
+                        <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                            Прибыль
                         </div>
-                        <div class="chart-container">
-                            <canvas id="main-chart"></canvas>
-                        </div>
+
+                        <span class="text-lg">📈</span>
+
                     </div>
-                    
-                    <div class="glass p-6">
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
-                            <span class="text-yellow-400">🏆</span> Топ-5 товаров по прибыли
-                        </h3>
-                        <div id="top-products-list" class="space-y-3 custom-scroll max-h-[320px] overflow-y-auto pr-2">
-                            <div class="text-sm text-gray-500 text-center py-8">
-                                <div class="spinner mx-auto mb-3" style="width: 24px; height: 24px; border-width: 2px;"></div>
-                                Загрузка данных...
-                            </div>
-                        </div>
+
+                    <div
+                        id="kpi-profit"
+                        class="text-2xl md:text-3xl font-bold text-white mb-2"
+                    >
+                        0 ₽
                     </div>
+
+                    <div
+                        id="kpi-profit-trend"
+                        class="text-xs flex items-center gap-1 trend-neutral"
+                    >
+                        <span>→</span>
+                        <span>0%</span>
+                    </div>
+
                 </div>
 
-                <!-- Последние чеки -->
-                <div class="glass p-6">
+
+                <!-- CHECKS -->
+
+                <div
+                    class="kpi-card glass p-5"
+                    onclick="showChecksList()"
+                    style="color:#c084fc"
+                >
+
+                    <div class="flex items-start justify-between mb-2">
+
+                        <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                            Чеки
+                        </div>
+
+                        <span class="text-lg">🧾</span>
+
+                    </div>
+
+                    <div
+                        id="kpi-checks"
+                        class="text-2xl md:text-3xl font-bold text-white mb-2"
+                    >
+                        0
+                    </div>
+
+                    <div
+                        id="kpi-checks-trend"
+                        class="text-xs flex items-center gap-1 trend-neutral"
+                    >
+                        <span>→</span>
+                        <span>0%</span>
+                    </div>
+
+                </div>
+
+
+                <!-- AVG CHECK -->
+
+                <div
+                    class="kpi-card glass p-5"
+                    onclick="showKpiDetail('avgCheck')"
+                    style="color:#fbbf24"
+                >
+
+                    <div class="flex items-start justify-between mb-2">
+
+                        <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                            Средний чек
+                        </div>
+
+                        <span class="text-lg">🎯</span>
+
+                    </div>
+
+                    <div
+                        id="kpi-avg-check"
+                        class="text-2xl md:text-3xl font-bold text-white mb-2"
+                    >
+                        0 ₽
+                    </div>
+
+                    <div
+                        id="kpi-avg-check-trend"
+                        class="text-xs flex items-center gap-1 trend-neutral"
+                    >
+                        <span>→</span>
+                        <span>0%</span>
+                    </div>
+
+                </div>
+
+
+                <!-- MARGIN -->
+
+                <div
+                    class="kpi-card glass p-5 col-span-2 lg:col-span-1"
+                    onclick="showKpiDetail('margin')"
+                    style="color:#34d399"
+                >
+
+                    <div class="flex items-start justify-between mb-2">
+
+                        <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">
+                            Маржа
+                        </div>
+
+                        <span class="text-lg">📊</span>
+
+                    </div>
+
+                    <div
+                        id="kpi-margin"
+                        class="text-2xl md:text-3xl font-bold text-white mb-2"
+                    >
+                        0%
+                    </div>
+
+                    <div
+                        id="kpi-margin-trend"
+                        class="text-xs flex items-center gap-1 trend-neutral"
+                    >
+                        <span>→</span>
+                        <span>0 п.п.</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CHART + TOP PRODUCTS -->
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+
+                <div class="lg:col-span-2 glass p-6">
+
                     <div class="flex items-center justify-between mb-4">
+
                         <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                            <span class="text-purple-400"></span> Последние чеки за период
+                            <span class="text-blue-400">📈</span>
+                            Динамика продаж
                         </h3>
-                        <button onclick="showChecksList()" class="text-xs text-blue-400 hover:text-blue-300 transition flex items-center gap-1">
-                            Показать все
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div id="recent-checks-list" class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto pr-2">
-                        <div class="text-sm text-gray-500 text-center py-8">
-                            <div class="spinner mx-auto mb-3" style="width: 24px; height: 24px; border-width: 2px;"></div>
-                            Загрузка чеков...
+
+                        <div class="flex gap-2 text-xs">
+
+                            <span class="flex items-center gap-1 text-green-400">
+                                <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                                Выручка
+                            </span>
+
+                            <span class="flex items-center gap-1 text-purple-400">
+                                <span class="w-3 h-3 rounded-full bg-purple-400"></span>
+                                Чеки
+                            </span>
+
                         </div>
+
                     </div>
+
+                    <div class="chart-container">
+                        <canvas id="main-chart"></canvas>
+                    </div>
+
                 </div>
 
-                <!-- Интеллектуальные рекомендации -->
+
                 <div class="glass p-6">
+
                     <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
-                        <span class="text-cyan-400">🧠</span> Анализ и рекомендации
+                        <span class="text-yellow-400">🏆</span>
+                        Топ-5 товаров по прибыли
                     </h3>
-                    <div id="ai-insights" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="text-sm text-gray-500 text-center py-8 md:col-span-2">
-                            <div class="spinner mx-auto mb-3" style="width: 24px; height: 24px; border-width: 2px;"></div>
-                            Анализ данных...
+
+                    <div
+                        id="top-products-list"
+                        class="space-y-3 custom-scroll max-h-[320px] overflow-y-auto pr-2"
+                    >
+                        <div class="text-sm text-gray-500 text-center py-8">
+                            Загрузка данных...
                         </div>
                     </div>
+
                 </div>
+
             </div>
 
-            <!-- Заглушки для других разделов -->
-            <div id="view-sales" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4 gradient-text"> Раздел "Продажи"</h2>
-                    <p class="text-gray-400">В разработке. Скоро здесь появится полный анализ продаж.</p>
-                </div>
-            </div>
-            <div id="view-finance" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4 gradient-text">💰 Раздел "Финансы"</h2>
-                    <p class="text-gray-400">В разработке. Скоро здесь появится анализ денежных потоков.</p>
-                </div>
-            </div>
-            <div id="view-stock" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4 gradient-text">📦 Раздел "Склад"</h2>
-                    <p class="text-gray-400">В разработке. Скоро здесь появится управление остатками.</p>
-                </div>
-            </div>
-            <div id="view-clients" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4 gradient-text">👥 Раздел "Клиенты"</h2>
-                    <p class="text-gray-400">В разработке. Скоро здесь появится анализ клиентской базы.</p>
-                </div>
-            </div>
-        </div>
-    </main>
 
-    <!-- Модальное окно: Подключение к API -->
-    <div id="connection-modal" class="modal-overlay">
-        <div class="glass p-8 max-w-md w-full shadow-2xl">
-            <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
-            <p class="text-sm text-gray-400 mb-6">Введите ваш API токен или пару логин:пароль для начала работы.</p>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">Токен или логин:пароль</label>
-                    <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Например: user@domain.com:password">
+            <!-- RECENT CHECKS -->
+
+            <div class="glass p-6">
+
+                <div class="flex items-center justify-between mb-4">
+
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <span class="text-purple-400">🧾</span>
+                        Последние чеки за период
+                    </h3>
+
+                    <button
+                        onclick="showChecksList()"
+                        class="text-xs text-blue-400 hover:text-blue-300 transition"
+                    >
+                        Показать все →
+                    </button>
+
                 </div>
-                <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-blue-500/20">
-                    Сохранить и подключить
-                </button>
-                <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-2 transition">
-                    Отмена
-                </button>
+
+                <div
+                    id="recent-checks-list"
+                    class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto pr-2"
+                >
+                    <div class="text-sm text-gray-500 text-center py-8">
+                        Загрузка чеков...
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- INSIGHTS -->
+
+            <div class="glass p-6">
+
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
+                    <span class="text-cyan-400">🧠</span>
+                    Анализ и рекомендации
+                </h3>
+
+                <div
+                    id="ai-insights"
+                    class="grid grid-cols-1 md:grid-cols-2 gap-3"
+                >
+                    <div class="text-sm text-gray-500 text-center py-8 md:col-span-2">
+                        Анализ данных...
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             OTHER SECTIONS
+        ========================= -->
+
+        <div
+            id="view-sales"
+            class="view-section hidden"
+        >
+            <div class="glass p-8 text-center">
+                <h2 class="text-2xl font-bold mb-4 gradient-text">
+                    📈 Раздел «Продажи»
+                </h2>
+
+                <p class="text-gray-400">
+                    В разработке.
+                </p>
             </div>
         </div>
+
+
+        <div
+            id="view-finance"
+            class="view-section hidden"
+        >
+            <div class="glass p-8 text-center">
+                <h2 class="text-2xl font-bold mb-4 gradient-text">
+                    💰 Раздел «Финансы»
+                </h2>
+
+                <p class="text-gray-400">
+                    В разработке.
+                </p>
+            </div>
+        </div>
+
+
+        <div
+            id="view-stock"
+            class="view-section hidden"
+        >
+            <div class="glass p-8 text-center">
+                <h2 class="text-2xl font-bold mb-4 gradient-text">
+                    📦 Раздел «Склад»
+                </h2>
+
+                <p class="text-gray-400">
+                    В разработке.
+                </p>
+            </div>
+        </div>
+
+
+        <div
+            id="view-clients"
+            class="view-section hidden"
+        >
+            <div class="glass p-8 text-center">
+                <h2 class="text-2xl font-bold mb-4 gradient-text">
+                    👥 Раздел «Клиенты»
+                </h2>
+
+                <p class="text-gray-400">
+                    В разработке.
+                </p>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Модальное окно: Детали -->
-    <div id="details-modal" class="modal-overlay">
-        <div class="glass p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] flex flex-col">
-            <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
-                <h2 id="details-title" class="text-xl font-bold text-white">Детали</h2>
-                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white text-3xl leading-none transition">&times;</button>
+</main>
+
+
+<!-- =========================
+     CONNECTION MODAL
+========================= -->
+
+<div
+    id="connection-modal"
+    class="modal-overlay"
+>
+
+    <div class="glass p-8 max-w-md w-full shadow-2xl">
+
+        <h3 class="text-xl font-bold mb-2 text-white">
+            Подключение к МойСклад
+        </h3>
+
+        <p class="text-sm text-gray-400 mb-6">
+            Введите API-токен или пару логин:пароль.
+        </p>
+
+        <div class="space-y-4">
+
+            <div>
+
+                <label class="block text-xs font-medium text-gray-400 mb-1">
+                    Токен или логин:пароль
+                </label>
+
+                <input
+                    type="password"
+                    id="api-token"
+                    class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    placeholder="Bearer ... или user@domain.com:password"
+                >
+
             </div>
-            <div id="details-content" class="overflow-y-auto custom-scroll flex-1 pr-2"></div>
+
+            <button
+                onclick="saveToken()"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
+            >
+                Сохранить и подключить
+            </button>
+
+            <button
+                onclick="closeConnectionModal()"
+                class="w-full text-gray-400 hover:text-white text-sm py-2 transition"
+            >
+                Отмена
+            </button>
+
         </div>
+
     </div>
 
-    <!-- Глобальный индикатор загрузки -->
-    <div id="global-loader" class="modal-overlay">
-        <div class="glass p-8 max-w-sm w-full text-center shadow-2xl">
-            <div class="spinner mx-auto mb-4"></div>
-            <div id="loader-text" class="text-lg font-medium text-white mb-1">Загрузка данных...</div>
-            <div id="loader-subtext" class="text-sm text-gray-400">Пожалуйста, подождите</div>
+</div>
+
+
+<!-- =========================
+     DETAILS MODAL
+========================= -->
+
+<div
+    id="details-modal"
+    class="modal-overlay"
+>
+
+    <div class="glass p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] flex flex-col">
+
+        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
+
+            <h2
+                id="details-title"
+                class="text-xl font-bold text-white"
+            >
+                Детали
+            </h2>
+
+            <button
+                onclick="closeDetailsModal()"
+                class="text-gray-400 hover:text-white text-3xl leading-none"
+            >
+                &times;
+            </button>
+
         </div>
+
+        <div
+            id="details-content"
+            class="overflow-y-auto scrollbar-thin flex-1 pr-2"
+        ></div>
+
     </div>
 
-    <script>
-        // ==========================================
-        // КОНФИГУРАЦИЯ И СОСТОЯНИЕ
-        // ==========================================
-        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-        let currentPeriod = 'week';
-        let charts = {};
-        let apiToken = localStorage.getItem('moysklad_token') || '';
-        let dashboardCache = {};
+</div>
 
-        // ==========================================
-        // УТИЛИТЫ
-        // ==========================================
-        function formatMoney(amount) {
-            return new Intl.NumberFormat('ru-RU', { 
-                style: 'currency', 
-                currency: 'RUB', 
-                maximumFractionDigits: 0 
-            }).format(amount || 0);
-        }
-        
-        function formatNumber(num) {
-            return new Intl.NumberFormat('ru-RU', { 
-                maximumFractionDigits: 0 
-            }).format(num || 0);
-        }
-        
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('ru-RU', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric' 
-            });
-        }
-        
-        function formatDateTime(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            return date.toLocaleString('ru-RU', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
 
-        function getPeriodDates(period) {
-            const now = new Date();
-            let from = new Date(), to = new Date();
-            
-            if (period === 'today') {
-                // Сегодня
-            } else if (period === 'week') {
-                from.setDate(now.getDate() - 7);
-            } else if (period === 'month') {
-                from.setMonth(now.getMonth() - 1);
-            }
-            
-            return { 
-                from: from.toISOString().split('T')[0], 
-                to: to.toISOString().split('T')[0] 
-            };
-        }
+<!-- =========================
+     GLOBAL LOADER
+========================= -->
 
-        function getDashboardEndpoint(period) {
-            if (period === 'today') return 'day';
-            if (period === 'week') return 'week';
-            if (period === 'month') return 'month';
-            return 'week';
-        }
+<div
+    id="global-loader"
+    class="modal-overlay"
+>
 
-        // ==========================================
-        // УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ
-        // ==========================================
-        function setPeriod(period) {
-            currentPeriod = period;
-            
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white');
-                btn.classList.add('text-gray-300');
-            });
-            event.target.classList.remove('text-gray-300');
-            event.target.classList.add('bg-blue-600', 'text-white');
-            
-            const dates = getPeriodDates(period);
-            document.getElementById('date-from').value = dates.from;
-            document.getElementById('date-to').value = dates.to;
-            
-            if (apiToken) loadDashboard();
-        }
+    <div class="glass p-8 max-w-sm w-full text-center shadow-2xl">
 
-        function switchView(view) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + view).classList.remove('hidden');
-            
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('active', 'text-blue-400');
-                el.classList.add('text-gray-400');
-            });
-            const activeNav = document.getElementById('nav-' + view);
-            if (activeNav) {
-                activeNav.classList.add('active', 'text-blue-400');
-                activeNav.classList.remove('text-gray-400');
-            }
-            
-            const titles = { 
-                'dashboard': 'Главная', 
-                'sales': 'Продажи', 
-                'finance': 'Финансы', 
-                'stock': 'Склад', 
-                'clients': 'Клиенты' 
-            };
-            document.getElementById('page-title').textContent = titles[view] || 'Главная';
+        <div class="spinner mx-auto mb-4"></div>
+
+        <div
+            id="loader-text"
+            class="text-lg font-medium text-white mb-1"
+        >
+            Загрузка данных...
+        </div>
+
+        <div
+            id="loader-subtext"
+            class="text-sm text-gray-400"
+        >
+            Пожалуйста, подождите
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /*
+    ============================================================
+    КОНФИГУРАЦИЯ
+    ============================================================
+    */
+
+    const API_BASE =
+        'https://api.moysklad.ru/api/remap/1.2';
+
+    const PROXY_URL =
+        'https://moysklad-proxy.helsinkyofficial.workers.dev';
+
+    let currentPeriod = 'week';
+
+    let charts = {};
+
+    let apiToken =
+        sessionStorage.getItem('moysklad_token') || '';
+
+    let dashboardCache = {
+        current: null,
+        previous: null
+    };
+
+    let loadingRequestId = 0;
+
+
+    /*
+    ============================================================
+    УТИЛИТЫ
+    ============================================================
+    */
+
+    function formatMoney(amount) {
+
+        return new Intl.NumberFormat('ru-RU', {
+            style: 'currency',
+            currency: 'RUB',
+            maximumFractionDigits: 0
+        }).format(Number(amount) || 0);
+
+    }
+
+
+    function formatNumber(number) {
+
+        return new Intl.NumberFormat('ru-RU', {
+            maximumFractionDigits: 0
+        }).format(Number(number) || 0);
+
+    }
+
+
+    function formatPercent(number) {
+
+        return `${Number(number || 0).toFixed(1)}%`;
+
+    }
+
+
+    function escapeHtml(value) {
+
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+    }
+
+
+    function formatDate(dateString) {
+
+        if (!dateString) {
+            return '-';
         }
 
-        function showLoader(text, subtext) {
-            document.getElementById('loader-text').textContent = text;
-            document.getElementById('loader-subtext').textContent = subtext;
-            document.getElementById('global-loader').classList.add('active');
-        }
-        
-        function hideLoader() {
-            document.getElementById('global-loader').classList.remove('active');
+        const date = new Date(dateString);
+
+        if (Number.isNaN(date.getTime())) {
+            return String(dateString);
         }
 
-        function showConnectionModal() {
-            document.getElementById('api-token').value = apiToken;
-            document.getElementById('connection-modal').classList.add('active');
-        }
-        
-        function closeConnectionModal() { 
-            document.getElementById('connection-modal').classList.remove('active'); 
-        }
-        
-        function saveToken() {
-            apiToken = document.getElementById('api-token').value.trim();
-            localStorage.setItem('moysklad_token', apiToken);
-            closeConnectionModal();
-            if (apiToken) loadDashboard();
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+
+    }
+
+
+    function formatDateTime(dateString) {
+
+        if (!dateString) {
+            return '-';
         }
 
-        function openDetailsModal(title, contentHtml) {
-            document.getElementById('details-title').textContent = title;
-            document.getElementById('details-content').innerHTML = contentHtml;
-            document.getElementById('details-modal').classList.add('active');
-        }
-        
-        function closeDetailsModal() { 
-            document.getElementById('details-modal').classList.remove('active'); 
+        const date = new Date(dateString);
+
+        if (Number.isNaN(date.getTime())) {
+            return String(dateString);
         }
 
-        // ==========================================
-        // СЕТЕВОЙ СЛОЙ
-        // ==========================================
-        function getAuthHeaders() {
-            let authValue = apiToken;
-            if (!apiToken.startsWith("Basic ") && !apiToken.startsWith("Bearer ")) {
-                authValue = apiToken.includes(":") 
-                    ? "Basic " + btoa(unescape(encodeURIComponent(apiToken))) 
-                    : "Bearer " + apiToken;
-            }
+        return date.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+    }
+
+
+    function parseDateOnly(dateString) {
+
+        const [year, month, day] =
+            dateString.split('-').map(Number);
+
+        return new Date(year, month - 1, day);
+
+    }
+
+
+    function formatDateOnly(date) {
+
+        const year =
+            date.getFullYear();
+
+        const month =
+            String(date.getMonth() + 1).padStart(2, '0');
+
+        const day =
+            String(date.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+
+    }
+
+
+    function getPeriodDates(period) {
+
+        const now = new Date();
+
+        const to = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+        );
+
+        const from = new Date(to);
+
+        if (period === 'today') {
+
             return {
-                "Authorization": authValue,
-                "Accept": "application/json;charset=utf-8",
-                "Content-Type": "application/json"
+                from: formatDateOnly(from),
+                to: formatDateOnly(to)
             };
+
         }
 
-        async function fetchWithRetry(url, options, retries = 3) {
-            try {
-                const separator = url.includes('?') ? '&' : '?';
-                return await fetch(`${url}${separator}_t=${Date.now()}`, options);
-            } catch (error) {
-                if (retries > 0) {
-                    await new Promise(r => setTimeout(r, 2500));
-                    return fetchWithRetry(url, options, retries - 1);
-                }
-                throw new Error('Сеть сбрасывает соединение. Проверьте интернет.');
-            }
+        if (period === 'week') {
+
+            from.setDate(from.getDate() - 6);
+
+            return {
+                from: formatDateOnly(from),
+                to: formatDateOnly(to)
+            };
+
         }
 
-        async function proxyFetch(targetUrl, headers) {
-            const response = await fetchWithRetry(PROXY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    url: targetUrl, 
-                    headers: headers, 
-                    method: 'GET' 
-                })
+        if (period === 'month') {
+
+            from.setDate(from.getDate() - 29);
+
+            return {
+                from: formatDateOnly(from),
+                to: formatDateOnly(to)
+            };
+
+        }
+
+        return {
+            from: formatDateOnly(from),
+            to: formatDateOnly(to)
+        };
+
+    }
+
+
+    function getPreviousPeriodDates(fromString, toString) {
+
+        const from =
+            parseDateOnly(fromString);
+
+        const to =
+            parseDateOnly(toString);
+
+        const duration =
+            Math.round(
+                (to - from) / 86400000
+            ) + 1;
+
+        const previousTo =
+            new Date(from);
+
+        previousTo.setDate(
+            previousTo.getDate() - 1
+        );
+
+        const previousFrom =
+            new Date(previousTo);
+
+        previousFrom.setDate(
+            previousFrom.getDate() - duration + 1
+        );
+
+        return {
+            from: formatDateOnly(previousFrom),
+            to: formatDateOnly(previousTo)
+        };
+
+    }
+
+
+    function buildMomentRange(from, to) {
+
+        return {
+            momentFrom: `${from} 00:00:00`,
+            momentTo: `${to} 23:59:59`
+        };
+
+    }
+
+
+    function getInterval(from, to) {
+
+        if (from === to) {
+            return 'hour';
+        }
+
+        return 'day';
+
+    }
+
+
+    /*
+    ============================================================
+    UI
+    ============================================================
+    */
+
+    function setPeriod(period) {
+
+        currentPeriod = period;
+
+        document
+            .querySelectorAll('.period-btn')
+            .forEach(button => {
+
+                const isActive =
+                    button.dataset.period === period;
+
+                button.classList.toggle(
+                    'bg-blue-600',
+                    isActive
+                );
+
+                button.classList.toggle(
+                    'text-white',
+                    isActive
+                );
+
+                button.classList.toggle(
+                    'text-gray-300',
+                    !isActive
+                );
+
             });
-            
-            if (response.status === 429) {
-                throw new Error('Превышен лимит запросов (429). Подождите 1 минуту.');
-            }
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
-            }
-            
-            return response;
+
+        const dates =
+            getPeriodDates(period);
+
+        document
+            .getElementById('date-from')
+            .value = dates.from;
+
+        document
+            .getElementById('date-to')
+            .value = dates.to;
+
+        if (apiToken) {
+            loadDashboard();
         }
 
-        // ==========================================
-        // ЗАГРУЗКА ДАННЫХ ГЛАВНОЙ СТРАНИЦЫ
-        // ==========================================
-        async function loadDashboard() {
-            if (!apiToken) { 
-                showConnectionModal(); 
-                return; 
-            }
-            
-            showLoader('Загрузка данных...', 'Обращение к API МойСклад');
-            
-            try {
-                const dateFrom = document.getElementById('date-from').value;
-                const dateTo = document.getElementById('date-to').value;
-                const momentFrom = `${dateFrom} 00:00:00`;
-                const momentTo = `${dateTo} 23:59:59`;
-                const headers = getAuthHeaders();
-                
-                // Параллельная загрузка всех данных
-                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
-                    loadDashboardMetrics(headers),
-                    loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitByProduct(headers, momentFrom, momentTo),
-                    loadRecentChecks(headers, momentFrom, momentTo)
-                ]);
-                
-                // Обновление KPI с трендами
-                updateKPIs(dashboardData, salesSeries, profitData);
-                
-                // Обновление графика
-                updateMainChart(salesSeries);
-                
-                // Обновление топа товаров
-                updateTopProducts(profitData);
-                
-                // Обновление списка чеков
-                updateRecentChecks(checksData);
-                
-                // Генерация рекомендаций
-                generateInsights(dashboardData, salesSeries, profitData, checksData);
-                
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
-                
-            } catch (error) {
-                console.error('Ошибка загрузки:', error);
-                alert('Ошибка: ' + error.message);
-            } finally {
-                hideLoader();
-            }
-        }
+    }
 
-        async function loadDashboardMetrics(headers) {
-            const endpoint = getDashboardEndpoint(currentPeriod);
-            const url = `https://api.moysklad.ru/api/remap/1.2/report/dashboard/${endpoint}`;
-            const response = await proxyFetch(url, headers);
-            return await response.json();
-        }
 
-        async function loadSalesSeries(headers, momentFrom, momentTo) {
-            const interval = currentPeriod === 'today' ? 'hour' : 'day';
-            const url = `https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.series || [];
-        }
+    function switchView(view) {
 
-        async function loadProfitByProduct(headers, momentFrom, momentTo) {
-            const url = `https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.rows || [];
-        }
+        document
+            .querySelectorAll('.view-section')
+            .forEach(section => {
 
-        async function loadRecentChecks(headers, momentFrom, momentTo) {
-            const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
-            const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?filter=${filter}&limit=20&order=moment,desc`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.rows || [];
-        }
+                section.classList.add('hidden');
 
-        // ==========================================
-        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
-        // ==========================================
-        function updateKPIs(dashboardData, salesSeries, profitData) {
-            // Выручка
-            const totalRevenue = salesSeries.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-            const revenueMovement = dashboardData.sales?.movementAmount || 0;
-            const revenuePercent = dashboardData.sales?.amount ? (revenueMovement / dashboardData.sales.amount * 100) : 0;
-            
-            document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
-            updateTrend('kpi-revenue-trend', revenueMovement, revenuePercent);
-            
-            // Прибыль (из отчета прибыльности)
-            const totalProfit = profitData.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
-            const profitMovement = dashboardData.sales?.amount ? (totalProfit - (dashboardData.sales.amount / 100)) : 0;
-            const profitPercent = dashboardData.sales?.amount ? (profitMovement / (dashboardData.sales.amount / 100) * 100) : 0;
-            
-            document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
-            updateTrend('kpi-profit-trend', profitMovement, profitPercent);
-            
-            // Чеки
-            const totalChecks = salesSeries.reduce((sum, s) => sum + (s.quantity || 0), 0);
-            const checksMovement = dashboardData.sales?.count ? (totalChecks - dashboardData.sales.count) : 0;
-            const checksPercent = dashboardData.sales?.count ? (checksMovement / dashboardData.sales.count * 100) : 0;
-            
-            document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
-            updateTrend('kpi-checks-trend', checksMovement, checksPercent);
-            
-            // Средний чек
-            const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
-            const prevAvgCheck = dashboardData.sales?.count > 0 ? (dashboardData.sales.amount / 100) / dashboardData.sales.count : 0;
-            const avgCheckMovement = avgCheck - prevAvgCheck;
-            const avgCheckPercent = prevAvgCheck > 0 ? (avgCheckMovement / prevAvgCheck * 100) : 0;
-            
-            document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
-            updateTrend('kpi-avg-check-trend', avgCheckMovement, avgCheckPercent);
-            
-            // Маржа
-            const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
-            const prevMargin = dashboardData.sales?.amount > 0 ? ((totalProfit - profitMovement) / ((dashboardData.sales.amount / 100) - revenueMovement) * 100) : 0;
-            const marginMovement = margin - prevMargin;
-            
-            document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
-            updateTrend('kpi-margin-trend', marginMovement, marginMovement, true);
-        }
-
-        function updateTrend(elementId, movement, percent, isPercent = false) {
-            const element = document.getElementById(elementId);
-            let arrow = '→';
-            let trendClass = 'trend-neutral';
-            let sign = '';
-            
-            if (movement > 0) {
-                arrow = '↑';
-                trendClass = 'trend-up';
-                sign = '+';
-            } else if (movement < 0) {
-                arrow = '↓';
-                trendClass = 'trend-down';
-                sign = '';
-            }
-            
-            const displayValue = isPercent ? `${sign}${movement.toFixed(1)}%` : `${sign}${percent.toFixed(0)}%`;
-            
-            element.className = `text-xs flex items-center gap-1 ${trendClass}`;
-            element.innerHTML = `<span>${arrow}</span> <span>${displayValue}</span>`;
-        }
-
-        function updateMainChart(salesSeries) {
-            const ctx = document.getElementById('main-chart');
-            if (charts['main']) charts['main'].destroy();
-            
-            const labels = salesSeries.map(s => {
-                const date = new Date(s.date);
-                return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
             });
-            
-            const revenueData = salesSeries.map(s => (s.sum || 0) / 100);
-            const profitData = salesSeries.map(s => ((s.sum || 0) * 0.3) / 100); // Примерная прибыль
-            
-            charts['main'] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Выручка',
-                            data: revenueData,
-                            borderColor: '#4ade80',
-                            backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        },
-                        {
-                            label: 'Прибыль (оценка)',
-                            data: profitData,
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: '#94a3b8', font: { size: 12 } }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                            titleColor: '#e2e8f0',
-                            bodyColor: '#e2e8f0',
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                            borderWidth: 1,
-                            padding: 12,
-                            callbacks: {
-                                label: (context) => {
-                                    return `${context.dataset.label}: ${formatMoney(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            ticks: { 
-                                callback: v => formatMoney(v), 
-                                color: '#64748b',
-                                font: { size: 11 }
-                            },
-                            grid: { color: '#1e293b' }
-                        },
-                        x: {
-                            ticks: { 
-                                color: '#64748b',
-                                font: { size: 11 }
-                            },
-                            grid: { display: false }
-                        }
+
+        const target =
+            document.getElementById(`view-${view}`);
+
+        if (target) {
+            target.classList.remove('hidden');
+        }
+
+        document
+            .querySelectorAll('.nav-item')
+            .forEach(item => {
+
+                item.classList.remove(
+                    'active',
+                    'text-blue-400'
+                );
+
+                item.classList.add(
+                    'text-gray-400'
+                );
+
+            });
+
+        const activeNav =
+            document.getElementById(`nav-${view}`);
+
+        if (activeNav) {
+
+            activeNav.classList.add(
+                'active',
+                'text-blue-400'
+            );
+
+            activeNav.classList.remove(
+                'text-gray-400'
+            );
+
+        }
+
+        const titles = {
+
+            dashboard: 'Главная',
+            sales: 'Продажи',
+            finance: 'Финансы',
+            stock: 'Склад',
+            clients: 'Клиенты'
+
+        };
+
+        document
+            .getElementById('page-title')
+            .textContent =
+            titles[view] || 'Главная';
+
+    }
+
+
+    function showLoader(text, subtext) {
+
+        document
+            .getElementById('loader-text')
+            .textContent = text;
+
+        document
+            .getElementById('loader-subtext')
+            .textContent = subtext;
+
+        document
+            .getElementById('global-loader')
+            .classList.add('active');
+
+    }
+
+
+    function hideLoader() {
+
+        document
+            .getElementById('global-loader')
+            .classList.remove('active');
+
+    }
+
+
+    function showConnectionModal() {
+
+        document
+            .getElementById('api-token')
+            .value = apiToken;
+
+        document
+            .getElementById('connection-modal')
+            .classList.add('active');
+
+    }
+
+
+    function closeConnectionModal() {
+
+        document
+            .getElementById('connection-modal')
+            .classList.remove('active');
+
+    }
+
+
+    function saveToken() {
+
+        const value =
+            document
+                .getElementById('api-token')
+                .value
+                .trim();
+
+        if (!value) {
+
+            alert('Введите токен или логин:пароль.');
+
+            return;
+
+        }
+
+        apiToken = value;
+
+        sessionStorage.setItem(
+            'moysklad_token',
+            apiToken
+        );
+
+        closeConnectionModal();
+
+        loadDashboard();
+
+    }
+
+
+    function disconnectApi() {
+
+        apiToken = '';
+
+        sessionStorage.removeItem(
+            'moysklad_token'
+        );
+
+        dashboardCache = {
+            current: null,
+            previous: null
+        };
+
+        showConnectionModal();
+
+    }
+
+
+    function openDetailsModal(title, contentHtml) {
+
+        document
+            .getElementById('details-title')
+            .textContent = title;
+
+        document
+            .getElementById('details-content')
+            .innerHTML = contentHtml;
+
+        document
+            .getElementById('details-modal')
+            .classList.add('active');
+
+    }
+
+
+    function closeDetailsModal() {
+
+        document
+            .getElementById('details-modal')
+            .classList.remove('active');
+
+    }
+
+
+    /*
+    ============================================================
+    AUTHENTICATION
+    ============================================================
+    */
+
+    function getAuthHeaders() {
+
+        if (!apiToken) {
+            throw new Error(
+                'API-токен не указан.'
+            );
+        }
+
+        let authorization =
+            apiToken;
+
+        if (
+            !apiToken.startsWith('Basic ') &&
+            !apiToken.startsWith('Bearer ')
+        ) {
+
+            if (apiToken.includes(':')) {
+
+                authorization =
+                    'Basic ' +
+                    btoa(
+                        unescape(
+                            encodeURIComponent(apiToken)
+                        )
+                    );
+
+            } else {
+
+                authorization =
+                    'Bearer ' + apiToken;
+
+            }
+
+        }
+
+        return {
+
+            Authorization: authorization,
+
+            Accept:
+                'application/json;charset=utf-8'
+
+        };
+
+    }
+
+
+    /*
+    ============================================================
+    NETWORK
+    ============================================================
+    */
+
+    async function fetchWithRetry(
+        url,
+        options,
+        retries = 3
+    ) {
+
+        let lastError;
+
+        for (
+            let attempt = 0;
+            attempt <= retries;
+            attempt++
+        ) {
+
+            try {
+
+                const response =
+                    await fetch(
+                        url,
+                        options
+                    );
+
+                if (
+                    response.status === 429 ||
+                    response.status >= 500
+                ) {
+
+                    if (
+                        attempt < retries
+                    ) {
+
+                        await new Promise(
+                            resolve =>
+                                setTimeout(
+                                    resolve,
+                                    1000 *
+                                    Math.pow(
+                                        2,
+                                        attempt
+                                    )
+                                )
+                        );
+
+                        continue;
+
                     }
+
                 }
+
+                return response;
+
+            } catch (error) {
+
+                lastError = error;
+
+                if (
+                    attempt < retries
+                ) {
+
+                    await new Promise(
+                        resolve =>
+                            setTimeout(
+                                resolve,
+                                1000 *
+                                Math.pow(
+                                    2,
+                                    attempt
+                                )
+                            )
+                    );
+
+                }
+
+            }
+
+        }
+
+        throw new Error(
+            lastError?.message ||
+            'Сеть недоступна.'
+        );
+
+    }
+
+
+    async function proxyFetch(
+        targetUrl,
+        headers
+    ) {
+
+        const response =
+            await fetchWithRetry(
+                PROXY_URL,
+                {
+
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+
+                    body: JSON.stringify({
+
+                        url: targetUrl,
+
+                        headers,
+
+                        method: 'GET'
+
+                    })
+
+                }
+            );
+
+        if (
+            response.status === 429
+        ) {
+
+            throw new Error(
+                'Превышен лимит запросов API. Попробуйте позже.'
+            );
+
+        }
+
+        if (
+            !response.ok
+        ) {
+
+            const errorText =
+                await response.text();
+
+            throw new Error(
+                `Ошибка API ${response.status}: ${errorText}`
+            );
+
+        }
+
+        return response;
+
+    }
+
+
+    async function getJson(
+        url,
+        headers
+    ) {
+
+        const response =
+            await proxyFetch(
+                url,
+                headers
+            );
+
+        return response.json();
+
+    }
+
+
+    async function getAllPages(
+        firstUrl,
+        headers,
+        maxPages = 100
+    ) {
+
+        const rows = [];
+
+        let url =
+            firstUrl;
+
+        let page = 0;
+
+        while (
+            url &&
+            page < maxPages
+        ) {
+
+            const data =
+                await getJson(
+                    url,
+                    headers
+                );
+
+            if (
+                Array.isArray(
+                    data.rows
+                )
+            ) {
+
+                rows.push(
+                    ...data.rows
+                );
+
+            }
+
+            url =
+                data.meta?.nextHref ||
+                null;
+
+            page++;
+
+        }
+
+        return rows;
+
+    }
+
+
+    /*
+    ============================================================
+    API LOADERS
+    ============================================================
+    */
+
+
+    async function loadSalesSeries(
+        headers,
+        momentFrom,
+        momentTo
+    ) {
+
+        const params =
+            new URLSearchParams({
+
+                momentFrom,
+
+                momentTo,
+
+                interval:
+                    getInterval(
+                        momentFrom.slice(0, 10),
+                        momentTo.slice(0, 10)
+                    )
+
             });
+
+        const url =
+            `${API_BASE}/report/sales/plotseries?${params}`;
+
+        const data =
+            await getJson(
+                url,
+                headers
+            );
+
+        return Array.isArray(
+            data.series
+        )
+            ? data.series
+            : [];
+
+    }
+
+
+    async function loadProfitByProduct(
+        headers,
+        momentFrom,
+        momentTo
+    ) {
+
+        const params =
+            new URLSearchParams({
+
+                momentFrom,
+
+                momentTo,
+
+                limit: '1000'
+
+            });
+
+        const url =
+            `${API_BASE}/report/profit/byproduct?${params}`;
+
+        return getAllPages(
+            url,
+            headers
+        );
+
+    }
+
+
+    async function loadChecks(
+        headers,
+        momentFrom,
+        momentTo
+    ) {
+
+        const filter =
+            [
+                `moment>=${momentFrom}`,
+                `moment<=${momentTo}`,
+                'applicable=true'
+            ].join(';');
+
+        const params =
+            new URLSearchParams({
+
+                filter,
+
+                limit: '1000',
+
+                order: 'moment,desc'
+
+            });
+
+        const url =
+            `${API_BASE}/entity/retaildemand?${params}`;
+
+        return getAllPages(
+            url,
+            headers
+        );
+
+    }
+
+
+    async function loadCheckById(
+        headers,
+        checkId
+    ) {
+
+        const params =
+            new URLSearchParams({
+
+                expand:
+                    'positions.assortment',
+
+                fields:
+                    'stock'
+
+            });
+
+        const url =
+            `${API_BASE}/entity/retaildemand/${encodeURIComponent(checkId)}?${params}`;
+
+        return getJson(
+            url,
+            headers
+        );
+
+    }
+
+
+    /*
+    ============================================================
+    DATA NORMALIZATION
+    ============================================================
+    */
+
+
+    function getMoneyValue(
+        value
+    ) {
+
+        return (
+            Number(value) || 0
+        ) / 100;
+
+    }
+
+
+    function getRevenueFromSeries(
+        series
+    ) {
+
+        return series.reduce(
+            (
+                total,
+                point
+            ) =>
+                total +
+                getMoneyValue(
+                    point.sum
+                ),
+            0
+        );
+
+    }
+
+
+    function getProfitFromRows(
+        rows
+    ) {
+
+        return rows.reduce(
+            (
+                total,
+                row
+            ) =>
+                total +
+                getMoneyValue(
+                    row.profit
+                ),
+            0
+        );
+
+    }
+
+
+    function getRevenueFromChecks(
+        checks
+    ) {
+
+        return checks.reduce(
+            (
+                total,
+                check
+            ) =>
+                total +
+                getMoneyValue(
+                    check.sum
+                ),
+            0
+        );
+
+    }
+
+
+    function buildDailySeries(
+        salesSeries,
+        checks
+    ) {
+
+        const map =
+            new Map();
+
+        for (
+            const point of salesSeries
+        ) {
+
+            const date =
+                String(
+                    point.date ||
+                    point.moment ||
+                    ''
+                ).slice(0, 10);
+
+            if (!date) {
+                continue;
+            }
+
+            const existing =
+                map.get(date) ||
+                {
+                    date,
+                    revenue: 0,
+                    checks: 0
+                };
+
+            existing.revenue +=
+                getMoneyValue(
+                    point.sum
+                );
+
+            map.set(
+                date,
+                existing
+            );
+
         }
 
-        function updateTopProducts(profitData) {
-            const sorted = profitData
-                .sort((a, b) => (b.profit || 0) - (a.profit || 0))
-                .slice(0, 5);
-            
-            const container = document.getElementById('top-products-list');
-            
-            if (sorted.length === 0) {
-                container.innerHTML = '<div class="text-sm text-gray-500 text-center py-8">Нет данных за период</div>';
+
+        for (
+            const check of checks
+        ) {
+
+            const date =
+                String(
+                    check.moment ||
+                    ''
+                ).slice(0, 10);
+
+            if (!date) {
+                continue;
+            }
+
+            const existing =
+                map.get(date) ||
+                {
+                    date,
+                    revenue: 0,
+                    checks: 0
+                };
+
+            existing.checks++;
+
+            if (
+                !salesSeries.length
+            ) {
+
+                existing.revenue +=
+                    getMoneyValue(
+                        check.sum
+                    );
+
+            }
+
+            map.set(
+                date,
+                existing
+            );
+
+        }
+
+
+        return Array
+            .from(
+                map.values()
+            )
+            .sort(
+                (
+                    a,
+                    b
+                ) =>
+                    a.date.localeCompare(
+                        b.date
+                    )
+            );
+
+    }
+
+
+    /*
+    ============================================================
+    DASHBOARD LOADING
+    ============================================================
+    */
+
+    async function loadPeriodData(
+        headers,
+        from,
+        to
+    ) {
+
+        const {
+            momentFrom,
+            momentTo
+        } =
+            buildMomentRange(
+                from,
+                to
+            );
+
+        const results =
+            await Promise.allSettled([
+
+                loadSalesSeries(
+                    headers,
+                    momentFrom,
+                    momentTo
+                ),
+
+                loadProfitByProduct(
+                    headers,
+                    momentFrom,
+                    momentTo
+                ),
+
+                loadChecks(
+                    headers,
+                    momentFrom,
+                    momentTo
+                )
+
+            ]);
+
+        const salesSeries =
+            results[0].status === 'fulfilled'
+                ? results[0].value
+                : [];
+
+        const profitData =
+            results[1].status === 'fulfilled'
+                ? results[1].value
+                : [];
+
+        const checks =
+            results[2].status === 'fulfilled'
+                ? results[2].value
+                : [];
+
+        const errors =
+            results
+                .filter(
+                    result =>
+                        result.status === 'rejected'
+                )
+                .map(
+                    result =>
+                        result.reason?.message ||
+                        'Ошибка загрузки'
+                );
+
+        const daily =
+            buildDailySeries(
+                salesSeries,
+                checks
+            );
+
+        const revenue =
+            salesSeries.length
+                ? getRevenueFromSeries(
+                    salesSeries
+                )
+                : getRevenueFromChecks(
+                    checks
+                );
+
+        const profit =
+            getProfitFromRows(
+                profitData
+            );
+
+        const checkCount =
+            checks.length;
+
+        const averageCheck =
+            checkCount > 0
+                ? revenue / checkCount
+                : 0;
+
+        const margin =
+            revenue > 0
+                ? profit / revenue * 100
+                : 0;
+
+        return {
+
+            from,
+
+            to,
+
+            salesSeries,
+
+            profitData,
+
+            checks,
+
+            daily,
+
+            revenue,
+
+            profit,
+
+            checkCount,
+
+            averageCheck,
+
+            margin,
+
+            errors
+
+        };
+
+    }
+
+
+    async function loadDashboard() {
+
+        if (!apiToken) {
+
+            showConnectionModal();
+
+            return;
+
+        }
+
+        const requestId =
+            ++loadingRequestId;
+
+        showLoader(
+            'Загрузка данных...',
+            'Обращение к API МойСклад'
+        );
+
+        try {
+
+            const from =
+                document
+                    .getElementById('date-from')
+                    .value;
+
+            const to =
+                document
+                    .getElementById('date-to')
+                    .value;
+
+            if (!from || !to) {
+
+                throw new Error(
+                    'Укажите начальную и конечную дату.'
+                );
+
+            }
+
+            if (from > to) {
+
+                throw new Error(
+                    'Начальная дата не может быть позже конечной.'
+                );
+
+            }
+
+            const previous =
+                getPreviousPeriodDates(
+                    from,
+                    to
+                );
+
+            const headers =
+                getAuthHeaders();
+
+            const [
+                currentResult,
+                previousResult
+            ] =
+                await Promise.all([
+
+                    loadPeriodData(
+                        headers,
+                        from,
+                        to
+                    ),
+
+                    loadPeriodData(
+                        headers,
+                        previous.from,
+                        previous.to
+                    )
+
+                ]);
+
+            if (
+                requestId !== loadingRequestId
+            ) {
                 return;
             }
-            
-            const medals = ['', '🥈', '🥉', '4️⃣', '5️⃣'];
-            
-            container.innerHTML = sorted.map((product, index) => {
-                const profit = (product.profit || 0) / 100;
-                const revenue = (product.sellSum || 0) / 100;
-                const margin = product.salesMargin ? (product.salesMargin * 100).toFixed(1) : '0.0';
-                
-                return `
-                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50 hover:border-blue-500/30 transition">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="flex items-center gap-2 flex-1 min-w-0">
-                                <span class="text-lg">${medals[index]}</span>
-                                <div class="font-medium text-sm text-white truncate">${product.assortment?.name || 'Без названия'}</div>
-                            </div>
-                            <div class="text-right ml-2">
-                                <div class="font-bold text-blue-400 text-sm">${formatMoney(profit)}</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between text-xs text-gray-400">
-                            <span>Выручка: ${formatMoney(revenue)}</span>
-                            <span class="text-yellow-400">Маржа: ${margin}%</span>
-                        </div>
+
+            dashboardCache = {
+
+                current:
+                    currentResult,
+
+                previous:
+                    previousResult
+
+            };
+
+            updateKPIs(
+                currentResult,
+                previousResult
+            );
+
+            updateMainChart(
+                currentResult
+            );
+
+            updateTopProducts(
+                currentResult.profitData
+            );
+
+            updateRecentChecks(
+                currentResult.checks.slice(
+                    0,
+                    20
+                )
+            );
+
+            generateInsights(
+                currentResult,
+                previousResult
+            );
+
+            document
+                .getElementById('last-update')
+                .textContent =
+                new Date()
+                    .toLocaleTimeString(
+                        'ru-RU'
+                    );
+
+            const errors =
+                [
+                    ...currentResult.errors,
+                    ...previousResult.errors
+                ];
+
+            if (
+                errors.length
+            ) {
+
+                console.warn(
+                    'Часть данных не загружена:',
+                    errors
+                );
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Ошибка загрузки:',
+                error
+            );
+
+            alert(
+                'Ошибка: ' +
+                error.message
+            );
+
+        } finally {
+
+            if (
+                requestId === loadingRequestId
+            ) {
+
+                hideLoader();
+
+            }
+
+        }
+
+    }
+
+
+    /*
+    ============================================================
+    KPI
+    ============================================================
+    */
+
+    function calculateChange(
+        current,
+        previous
+    ) {
+
+        if (
+            previous === 0
+        ) {
+
+            return current === 0
+                ? 0
+                : 100;
+
+        }
+
+        return (
+            (current - previous) /
+            Math.abs(previous)
+        ) * 100;
+
+    }
+
+
+    function updateKPIs(
+        current,
+        previous
+    ) {
+
+        document
+            .getElementById('kpi-revenue')
+            .textContent =
+            formatMoney(
+                current.revenue
+            );
+
+        updateTrend(
+            'kpi-revenue-trend',
+            calculateChange(
+                current.revenue,
+                previous.revenue
+            ),
+            false
+        );
+
+
+        document
+            .getElementById('kpi-profit')
+            .textContent =
+            formatMoney(
+                current.profit
+            );
+
+        updateTrend(
+            'kpi-profit-trend',
+            calculateChange(
+                current.profit,
+                previous.profit
+            ),
+            false
+        );
+
+
+        document
+            .getElementById('kpi-checks')
+            .textContent =
+            formatNumber(
+                current.checkCount
+            );
+
+        updateTrend(
+            'kpi-checks-trend',
+            calculateChange(
+                current.checkCount,
+                previous.checkCount
+            ),
+            false
+        );
+
+
+        document
+            .getElementById('kpi-avg-check')
+            .textContent =
+            formatMoney(
+                current.averageCheck
+            );
+
+        updateTrend(
+            'kpi-avg-check-trend',
+            calculateChange(
+                current.averageCheck,
+                previous.averageCheck
+            ),
+            false
+        );
+
+
+        document
+            .getElementById('kpi-margin')
+            .textContent =
+            formatPercent(
+                current.margin
+            );
+
+        const marginChange =
+            current.margin -
+            previous.margin;
+
+        updateTrend(
+            'kpi-margin-trend',
+            marginChange,
+            true
+        );
+
+    }
+
+
+    function updateTrend(
+        elementId,
+        value,
+        isPercentagePoints
+    ) {
+
+        const element =
+            document
+                .getElementById(
+                    elementId
+                );
+
+        let arrow =
+            '→';
+
+        let trendClass =
+            'trend-neutral';
+
+        if (
+            value > 0.05
+        ) {
+
+            arrow =
+                '↑';
+
+            trendClass =
+                'trend-up';
+
+        } else if (
+            value < -0.05
+        ) {
+
+            arrow =
+                '↓';
+
+            trendClass =
+                'trend-down';
+
+        }
+
+        const suffix =
+            isPercentagePoints
+                ? ' п.п.'
+                : '%';
+
+        const sign =
+            value > 0
+                ? '+'
+                : '';
+
+        element.className =
+            `text-xs flex items-center gap-1 ${trendClass}`;
+
+        element.innerHTML =
+            `
+                <span>${arrow}</span>
+                <span>${sign}${value.toFixed(1)}${suffix}</span>
+            `;
+
+    }
+
+
+    /*
+    ============================================================
+    CHART
+    ============================================================
+    */
+
+    function updateMainChart(
+        data
+    ) {
+
+        const canvas =
+            document
+                .getElementById(
+                    'main-chart'
+                );
+
+        if (
+            charts.main
+        ) {
+
+            charts.main.destroy();
+
+        }
+
+        const labels =
+            data.daily.map(
+                point =>
+                    formatDate(
+                        point.date
+                    )
+            );
+
+        const revenue =
+            data.daily.map(
+                point =>
+                    point.revenue
+            );
+
+        const checks =
+            data.daily.map(
+                point =>
+                    point.checks
+            );
+
+        charts.main =
+            new Chart(
+                canvas,
+                {
+
+                    type: 'line',
+
+                    data: {
+
+                        labels,
+
+                        datasets: [
+
+                            {
+
+                                label:
+                                    'Выручка',
+
+                                data:
+                                    revenue,
+
+                                yAxisID:
+                                    'money',
+
+                                borderColor:
+                                    '#4ade80',
+
+                                backgroundColor:
+                                    'rgba(74,222,128,0.1)',
+
+                                fill:
+                                    true,
+
+                                tension:
+                                    0.35,
+
+                                borderWidth:
+                                    2,
+
+                                pointRadius:
+                                    3
+
+                            },
+
+                            {
+
+                                label:
+                                    'Чеки',
+
+                                data:
+                                    checks,
+
+                                yAxisID:
+                                    'checks',
+
+                                borderColor:
+                                    '#c084fc',
+
+                                backgroundColor:
+                                    'rgba(192,132,252,0.1)',
+
+                                fill:
+                                    false,
+
+                                tension:
+                                    0.35,
+
+                                borderWidth:
+                                    2,
+
+                                pointRadius:
+                                    3
+
+                            }
+
+                        ]
+
+                    },
+
+                    options: {
+
+                        responsive:
+                            true,
+
+                        maintainAspectRatio:
+                            false,
+
+                        interaction: {
+
+                            mode:
+                                'index',
+
+                            intersect:
+                                false
+
+                        },
+
+                        plugins: {
+
+                            legend: {
+
+                                labels: {
+
+                                    color:
+                                        '#94a3b8'
+
+                                }
+
+                            },
+
+                            tooltip: {
+
+                                callbacks: {
+
+                                    label:
+                                        context => {
+
+                                            if (
+                                                context.dataset.yAxisID ===
+                                                'money'
+                                            ) {
+
+                                                return (
+                                                    context.dataset.label +
+                                                    ': ' +
+                                                    formatMoney(
+                                                        context.parsed.y
+                                                    )
+                                                );
+
+                                            }
+
+                                            return (
+                                                context.dataset.label +
+                                                ': ' +
+                                                formatNumber(
+                                                    context.parsed.y
+                                                )
+                                            );
+
+                                        }
+
+                                }
+
+                            }
+
+                        },
+
+                        scales: {
+
+                            money: {
+
+                                position:
+                                    'left',
+
+                                ticks: {
+
+                                    color:
+                                        '#64748b',
+
+                                    callback:
+                                        value =>
+                                            formatMoney(
+                                                value
+                                            )
+
+                                },
+
+                                grid: {
+
+                                    color:
+                                        '#1e293b'
+
+                                }
+
+                            },
+
+                            checks: {
+
+                                position:
+                                    'right',
+
+                                ticks: {
+
+                                    color:
+                                        '#64748b',
+
+                                    precision:
+                                        0
+
+                                },
+
+                                grid: {
+
+                                    drawOnChartArea:
+                                        false
+
+                                }
+
+                            },
+
+                            x: {
+
+                                ticks: {
+
+                                    color:
+                                        '#64748b'
+
+                                },
+
+                                grid: {
+
+                                    display:
+                                        false
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            );
+
+    }
+
+
+    /*
+    ============================================================
+    TOP PRODUCTS
+    ============================================================
+    */
+
+    function updateTopProducts(
+        profitData
+    ) {
+
+        const container =
+            document
+                .getElementById(
+                    'top-products-list'
+                );
+
+        const sorted =
+            [...profitData]
+                .sort(
+                    (
+                        a,
+                        b
+                    ) =>
+                        (
+                            Number(
+                                b.profit
+                            ) || 0
+                        ) -
+                        (
+                            Number(
+                                a.profit
+                            ) || 0
+                        )
+                )
+                .slice(
+                    0,
+                    5
+                );
+
+        if (
+            !sorted.length
+        ) {
+
+            container.innerHTML =
+                `
+                    <div class="text-sm text-gray-500 text-center py-8">
+                        Нет данных за период
                     </div>
                 `;
-            }).join('');
+
+            return;
+
         }
 
-        function updateRecentChecks(checks) {
-            const container = document.getElementById('recent-checks-list');
-            
-            if (checks.length === 0) {
-                container.innerHTML = '<div class="text-sm text-gray-500 text-center py-8">Нет чеков за период</div>';
-                return;
-            }
-            
-            container.innerHTML = checks.map(check => {
-                const sum = (check.sum || 0) / 100;
-                const moment = check.moment ? formatDateTime(check.moment) : '-';
-                const name = check.name || 'Чек';
-                
-                return `
-                    <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${name}', ${sum}, '${moment}')">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <div class="font-medium text-white">${name}</div>
-                                    <div class="text-xs text-gray-400">${moment}</div>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-bold text-green-400">${formatMoney(sum)}</div>
-                                <div class="text-xs text-blue-400 flex items-center gap-1 justify-end">
-                                    Подробнее
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+        const medals = [
+            '🥇',
+            '🥈',
+            '🥉',
+            '4️⃣',
+            '5️⃣'
+        ];
 
-        function generateInsights(dashboardData, salesSeries, profitData, checks) {
-            const container = document.getElementById('ai-insights');
-            const insights = [];
-            
-            // Анализ выручки
-            const totalRevenue = salesSeries.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-            const revenueMovement = dashboardData.sales?.movementAmount || 0;
-            
-            if (revenueMovement > 0) {
-                insights.push({
-                    type: 'success',
-                    icon: '📈',
-                    title: 'Выручка растет',
-                    text: `Выручка увеличилась на ${formatMoney(Math.abs(revenueMovement) / 100)} по сравнению с прошлым периодом`
-                });
-            } else if (revenueMovement < 0) {
-                insights.push({
-                    type: 'warning',
-                    icon: '📉',
-                    title: 'Выручка снижается',
-                    text: `Выручка уменьшилась на ${formatMoney(Math.abs(revenueMovement) / 100)}. Проверьте ассортимент и цены`
-                });
-            }
-            
-            // Анализ маржи
-            const totalProfit = profitData.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
-            const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
-            
-            if (margin < 20 && totalRevenue > 0) {
-                insights.push({
-                    type: 'warning',
-                    icon: '⚠️',
-                    title: 'Низкая маржинальность',
-                    text: `Маржа составляет ${margin.toFixed(1)}%. Рассмотрите повышение цен или оптимизацию затрат`
-                });
-            } else if (margin >= 30) {
-                insights.push({
-                    type: 'success',
-                    icon: '💪',
-                    title: 'Высокая маржинальность',
-                    text: `Отличная маржа ${margin.toFixed(1)}%! Бизнес работает эффективно`
-                });
-            }
-            
-            // Анализ чеков
-            const totalChecks = salesSeries.reduce((sum, s) => sum + (s.quantity || 0), 0);
-            const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
-            
-            if (totalChecks > 0) {
-                insights.push({
-                    type: 'info',
-                    icon: '🧾',
-                    title: 'Статистика чеков',
-                    text: `Всего ${formatNumber(totalChecks)} чеков, средний чек ${formatMoney(avgCheck)}`
-                });
-            }
-            
-            // Топ товар
-            if (profitData.length > 0) {
-                const topProduct = profitData.sort((a, b) => (b.profit || 0) - (a.profit || 0))[0];
-                insights.push({
-                    type: 'info',
-                    icon: '🏆',
-                    title: 'Лидер продаж',
-                    text: `${topProduct.assortment?.name || 'Товар'} приносит больше всего прибыли: ${formatMoney((topProduct.profit || 0) / 100)}`
-                });
-            }
-            
-            // Отображение
-            if (insights.length === 0) {
-                container.innerHTML = '<div class="text-sm text-gray-500 text-center py-8 md:col-span-2">Недостаточно данных для анализа</div>';
-                return;
-            }
-            
-            const colors = {
-                success: 'border-green-500/30 bg-green-500/5',
-                warning: 'border-yellow-500/30 bg-yellow-500/5',
-                info: 'border-blue-500/30 bg-blue-500/5'
-            };
-            
-            container.innerHTML = insights.map(insight => `
-                <div class="border-l-4 ${colors[insight.type]} rounded-lg p-4">
-                    <div class="flex items-start gap-3">
-                        <span class="text-2xl">${insight.icon}</span>
-                        <div class="flex-1">
-                            <div class="font-semibold text-white mb-1">${insight.title}</div>
-                            <div class="text-sm text-gray-400">${insight.text}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
+        container.innerHTML =
+            sorted
+                .map(
+                    (
+                        product,
+                        index
+                    ) => {
 
-        // ==========================================
-        // ДЕТАЛИЗАЦИЯ
-        // ==========================================
-        function showKpiDetail(type) {
-            const titles = {
-                revenue: 'Детализация выручки',
-                profit: 'Детализация прибыли',
-                avgCheck: 'Детализация среднего чека',
-                margin: 'Детализация маржи'
-            };
-            
-            let content = '';
-            
-            if (type === 'revenue') {
-                const revenue = document.getElementById('kpi-revenue').textContent;
-                content = `
-                    <div class="space-y-4">
-                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
-                            <div class="text-sm text-gray-400 mb-2">Общая выручка за период</div>
-                            <div class="text-4xl font-bold text-green-400">${revenue}</div>
-                        </div>
-                        <div class="bg-slate-800 p-4 rounded-lg">
-                            <h4 class="font-bold mb-3 text-white">Выручка по дням</h4>
-                            <div class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto">
-                                ${charts['main']?.data?.labels?.map((label, i) => `
-                                    <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
-                                        <span class="text-sm text-gray-300">${label}</span>
-                                        <span class="font-bold text-green-400">${formatMoney(charts['main'].data.datasets[0].data[i])}</span>
+                        const profit =
+                            getMoneyValue(
+                                product.profit
+                            );
+
+                        const revenue =
+                            getMoneyValue(
+                                product.sellSum
+                            );
+
+                        const margin =
+                            Number(
+                                product.salesMargin
+                            ) || 0;
+
+                        const name =
+                            escapeHtml(
+                                product.assortment?.name ||
+                                'Без названия'
+                            );
+
+                        return `
+                            <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+
+                                <div class="flex items-start justify-between mb-2">
+
+                                    <div class="flex items-center gap-2 flex-1 min-w-0">
+
+                                        <span class="text-lg">
+                                            ${medals[index]}
+                                        </span>
+
+                                        <div class="font-medium text-sm text-white truncate">
+                                            ${name}
+                                        </div>
+
                                     </div>
-                                `).join('') || '<div class="text-gray-500 text-center">Нет данных</div>'}
+
+                                    <div class="text-right ml-2">
+
+                                        <div class="font-bold text-blue-400 text-sm">
+                                            ${formatMoney(profit)}
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="flex items-center justify-between text-xs text-gray-400">
+
+                                    <span>
+                                        Выручка:
+                                        ${formatMoney(revenue)}
+                                    </span>
+
+                                    <span class="text-yellow-400">
+                                        Маржа:
+                                        ${formatPercent(margin * 100)}
+                                    </span>
+
+                                </div>
+
                             </div>
-                        </div>
+                        `;
+
+                    }
+                )
+                .join('');
+
+    }
+
+
+    /*
+    ============================================================
+    RECENT CHECKS
+    ============================================================
+    */
+
+    function updateRecentChecks(
+        checks
+    ) {
+
+        const container =
+            document
+                .getElementById(
+                    'recent-checks-list'
+                );
+
+        if (
+            !checks.length
+        ) {
+
+            container.innerHTML =
+                `
+                    <div class="text-sm text-gray-500 text-center py-8">
+                        Нет чеков за период
                     </div>
                 `;
-            } else if (type === 'profit') {
-                const profit = document.getElementById('kpi-profit').textContent;
-                content = `
+
+            return;
+
+        }
+
+        container.innerHTML =
+            checks
+                .map(
+                    check => {
+
+                        const sum =
+                            getMoneyValue(
+                                check.sum
+                            );
+
+                        const name =
+                            escapeHtml(
+                                check.name ||
+                                'Чек'
+                            );
+
+                        const moment =
+                            formatDateTime(
+                                check.moment
+                            );
+
+                        return `
+                            <div
+                                class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50"
+                                data-check-id="${escapeHtml(check.id)}"
+                            >
+
+                                <div class="flex items-center justify-between">
+
+                                    <div class="flex items-center gap-3">
+
+                                        <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                            🧾
+                                        </div>
+
+                                        <div>
+
+                                            <div class="font-medium text-white">
+                                                ${name}
+                                            </div>
+
+                                            <div class="text-xs text-gray-400">
+                                                ${moment}
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="text-right">
+
+                                        <div class="font-bold text-green-400">
+                                            ${formatMoney(sum)}
+                                        </div>
+
+                                        <div class="text-xs text-blue-400">
+                                            Подробнее →
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join('');
+
+        container
+            .querySelectorAll(
+                '[data-check-id]'
+            )
+            .forEach(
+                element => {
+
+                    element.addEventListener(
+                        'click',
+                        () =>
+                            showCheckDetails(
+                                element.dataset.checkId
+                            )
+                    );
+
+                }
+            );
+
+    }
+
+
+    /*
+    ============================================================
+    INSIGHTS
+    ============================================================
+    */
+
+    function generateInsights(
+        current,
+        previous
+    ) {
+
+        const container =
+            document
+                .getElementById(
+                    'ai-insights'
+                );
+
+        const insights = [];
+
+        const revenueChange =
+            calculateChange(
+                current.revenue,
+                previous.revenue
+            );
+
+        if (
+            revenueChange > 5
+        ) {
+
+            insights.push({
+
+                type:
+                    'success',
+
+                icon:
+                    '📈',
+
+                title:
+                    'Выручка растет',
+
+                text:
+                    `Выручка выше предыдущего периода на ${revenueChange.toFixed(1)}%.`
+
+            });
+
+        } else if (
+            revenueChange < -5
+        ) {
+
+            insights.push({
+
+                type:
+                    'warning',
+
+                icon:
+                    '📉',
+
+                title:
+                    'Выручка снижается',
+
+                text:
+                    `Выручка ниже предыдущего периода на ${Math.abs(revenueChange).toFixed(1)}%.`
+
+            });
+
+        }
+
+
+        if (
+            current.margin < 20 &&
+            current.revenue > 0
+        ) {
+
+            insights.push({
+
+                type:
+                    'warning',
+
+                icon:
+                    '⚠️',
+
+                title:
+                    'Низкая маржинальность',
+
+                text:
+                    `Текущая маржинальность составляет ${formatPercent(current.margin)}.`
+
+            });
+
+        } else if (
+            current.margin >= 30
+        ) {
+
+            insights.push({
+
+                type:
+                    'success',
+
+                icon:
+                    '💪',
+
+                title:
+                    'Хорошая маржинальность',
+
+                text:
+                    `Маржинальность составляет ${formatPercent(current.margin)}.`
+
+            });
+
+        }
+
+
+        if (
+            current.checkCount > 0
+        ) {
+
+            insights.push({
+
+                type:
+                    'info',
+
+                icon:
+                    '🧾',
+
+                title:
+                    'Статистика чеков',
+
+                text:
+                    `${formatNumber(current.checkCount)} чеков. Средний чек — ${formatMoney(current.averageCheck)}.`
+
+            });
+
+        }
+
+
+        if (
+            current.profitData.length
+        ) {
+
+            const topProduct =
+                [...current.profitData]
+                    .sort(
+                        (
+                            a,
+                            b
+                        ) =>
+                            (
+                                Number(
+                                    b.profit
+                                ) || 0
+                            ) -
+                            (
+                                Number(
+                                    a.profit
+                                ) || 0
+                            )
+                    )[0];
+
+            insights.push({
+
+                type:
+                    'info',
+
+                icon:
+                    '🏆',
+
+                title:
+                    'Самый прибыльный товар',
+
+                text:
+                    `${topProduct.assortment?.name || 'Товар'} принес ${formatMoney(getMoneyValue(topProduct.profit))}.`
+
+            });
+
+        }
+
+
+        if (
+            !insights.length
+        ) {
+
+            container.innerHTML =
+                `
+                    <div class="text-sm text-gray-500 text-center py-8 md:col-span-2">
+                        Недостаточно данных для анализа
+                    </div>
+                `;
+
+            return;
+
+        }
+
+
+        const colors = {
+
+            success:
+                'border-green-500/30 bg-green-500/5',
+
+            warning:
+                'border-yellow-500/30 bg-yellow-500/5',
+
+            info:
+                'border-blue-500/30 bg-blue-500/5'
+
+        };
+
+
+        container.innerHTML =
+            insights
+                .map(
+                    insight => `
+
+                        <div class="border-l-4 ${colors[insight.type]} rounded-lg p-4">
+
+                            <div class="flex items-start gap-3">
+
+                                <span class="text-2xl">
+                                    ${insight.icon}
+                                </span>
+
+                                <div class="flex-1">
+
+                                    <div class="font-semibold text-white mb-1">
+                                        ${escapeHtml(insight.title)}
+                                    </div>
+
+                                    <div class="text-sm text-gray-400">
+                                        ${escapeHtml(insight.text)}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    `
+                )
+                .join('');
+
+    }
+
+
+    /*
+    ============================================================
+    KPI DETAILS
+    ============================================================
+    */
+
+    function showKpiDetail(
+        type
+    ) {
+
+        const current =
+            dashboardCache.current;
+
+        if (
+            !current
+        ) {
+
+            return;
+
+        }
+
+        const titles = {
+
+            revenue:
+                'Детализация выручки',
+
+            profit:
+                'Детализация прибыли',
+
+            avgCheck:
+                'Детализация среднего чека',
+
+            margin:
+                'Детализация маржи'
+
+        };
+
+
+        let content = '';
+
+
+        if (
+            type === 'revenue'
+        ) {
+
+            content =
+                `
+
                     <div class="space-y-4">
+
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+
+                            <div class="text-sm text-gray-400 mb-2">
+                                Выручка за период
+                            </div>
+
+                            <div class="text-4xl font-bold text-green-400">
+                                ${formatMoney(current.revenue)}
+                            </div>
+
+                        </div>
+
+                        <div class="bg-slate-800 p-4 rounded-lg">
+
+                            <h4 class="font-bold mb-3 text-white">
+                                Выручка по дням
+                            </h4>
+
+                            <div class="space-y-2">
+
+                                ${
+                                    current.daily
+                                        .map(
+                                            day => `
+
+                                                <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
+
+                                                    <span class="text-sm text-gray-300">
+                                                        ${formatDate(day.date)}
+                                                    </span>
+
+                                                    <span class="font-bold text-green-400">
+                                                        ${formatMoney(day.revenue)}
+                                                    </span>
+
+                                                </div>
+
+                                            `
+                                        )
+                                        .join('')
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+        }
+
+
+        if (
+            type === 'profit'
+        ) {
+
+            content =
+                `
+
+                    <div class="space-y-4">
+
                         <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-blue-500">
-                            <div class="text-sm text-gray-400 mb-2">Общая прибыль за период</div>
-                            <div class="text-4xl font-bold text-blue-400">${profit}</div>
+
+                            <div class="text-sm text-gray-400 mb-2">
+                                Прибыль за период
+                            </div>
+
+                            <div class="text-4xl font-bold text-blue-400">
+                                ${formatMoney(current.profit)}
+                            </div>
+
                         </div>
+
                         <div class="bg-slate-800 p-4 rounded-lg">
-                            <h4 class="font-bold mb-3 text-white">Топ-10 товаров по прибыли</h4>
-                            <div class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto">
-                                ${dashboardCache.profitData?.sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 10).map(p => `
-                                    <div class="flex justify-between items-center p-3 bg-slate-900 rounded">
-                                        <span class="text-sm font-medium text-white">${p.assortment?.name || 'Без названия'}</span>
-                                        <span class="font-bold text-blue-400">${formatMoney((p.profit || 0) / 100)}</span>
-                                    </div>
-                                `).join('') || '<div class="text-gray-500 text-center">Нет данных</div>'}
+
+                            <h4 class="font-bold mb-3 text-white">
+                                Топ-10 товаров
+                            </h4>
+
+                            <div class="space-y-2">
+
+                                ${
+                                    [...current.profitData]
+                                        .sort(
+                                            (
+                                                a,
+                                                b
+                                            ) =>
+                                                (
+                                                    Number(
+                                                        b.profit
+                                                    ) || 0
+                                                ) -
+                                                (
+                                                    Number(
+                                                        a.profit
+                                                    ) || 0
+                                                )
+                                        )
+                                        .slice(
+                                            0,
+                                            10
+                                        )
+                                        .map(
+                                            product => `
+
+                                                <div class="flex justify-between items-center p-3 bg-slate-900 rounded">
+
+                                                    <span class="text-sm font-medium text-white">
+                                                        ${escapeHtml(product.assortment?.name || 'Без названия')}
+                                                    </span>
+
+                                                    <span class="font-bold text-blue-400">
+                                                        ${formatMoney(getMoneyValue(product.profit))}
+                                                    </span>
+
+                                                </div>
+
+                                            `
+                                        )
+                                        .join('')
+                                }
+
                             </div>
+
                         </div>
+
                     </div>
+
                 `;
-            } else if (type === 'avgCheck') {
-                const avgCheck = document.getElementById('kpi-avg-check').textContent;
-                const checks = document.getElementById('kpi-checks').textContent;
-                content = `
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-yellow-500">
-                                <div class="text-sm text-gray-400 mb-2">Средний чек</div>
-                                <div class="text-3xl font-bold text-yellow-400">${avgCheck}</div>
-                            </div>
-                            <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-purple-500">
-                                <div class="text-sm text-gray-400 mb-2">Всего чеков</div>
-                                <div class="text-3xl font-bold text-purple-400">${checks}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (type === 'margin') {
-                const margin = document.getElementById('kpi-margin').textContent;
-                content = `
-                    <div class="space-y-4">
-                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-emerald-500">
-                            <div class="text-sm text-gray-400 mb-2">Маржинальность</div>
-                            <div class="text-4xl font-bold text-emerald-400">${margin}</div>
-                            <div class="text-sm text-gray-400 mt-2">
-                                ${parseFloat(margin) >= 30 ? '✅ Отличный показатель' : 
-                                  parseFloat(margin) >= 20 ? '️ Средний показатель' : 
-                                  '❌ Низкий показатель'}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            openDetailsModal(titles[type], content);
+
         }
 
-        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
-            openDetailsModal('Загрузка...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка товаров чека...</div>');
-            
-            try {
-                const headers = getAuthHeaders();
-                // Согласно документации: expand=positions.assortment + fields=stock + limit<=100
-                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock&limit=100`;
-                
-                const response = await proxyFetch(url, headers);
-                const checkData = await response.json();
-                const positions = checkData.positions?.rows || [];
-                
-                let totalCalculated = 0;
-                const itemsHtml = positions.map(p => {
-                    const productName = p.assortment?.name || 'Товар без названия';
-                    const quantity = p.quantity || 0;
-                    const price = (p.price || 0) / 100;
-                    const sum = (p.sum || 0) / 100;
-                    totalCalculated += sum;
-                    
-                    return `
-                        <div class="flex justify-between items-start p-4 bg-slate-900 rounded-lg border border-slate-800 mb-2">
-                            <div class="flex-1 pr-4">
-                                <div class="font-medium text-white mb-1">${productName}</div>
-                                <div class="text-sm text-gray-400">
-                                    ${formatNumber(quantity)} шт × ${formatMoney(price)}
-                                </div>
+
+        if (
+            type === 'avgCheck'
+        ) {
+
+            content =
+                `
+
+                    <div class="grid grid-cols-2 gap-4">
+
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-yellow-500">
+
+                            <div class="text-sm text-gray-400 mb-2">
+                                Средний чек
                             </div>
-                            <div class="text-right flex-shrink-0">
-                                <div class="font-bold text-green-400 text-lg">${formatMoney(sum)}</div>
+
+                            <div class="text-3xl font-bold text-yellow-400">
+                                ${formatMoney(current.averageCheck)}
                             </div>
+
                         </div>
-                    `;
-                }).join('');
-                
-                const html = `
+
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-purple-500">
+
+                            <div class="text-sm text-gray-400 mb-2">
+                                Всего чеков
+                            </div>
+
+                            <div class="text-3xl font-bold text-purple-400">
+                                ${formatNumber(current.checkCount)}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+        }
+
+
+        if (
+            type === 'margin'
+        ) {
+
+            content =
+                `
+
+                    <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-emerald-500">
+
+                        <div class="text-sm text-gray-400 mb-2">
+                            Маржинальность
+                        </div>
+
+                        <div class="text-4xl font-bold text-emerald-400">
+                            ${formatPercent(current.margin)}
+                        </div>
+
+                        <div class="text-sm text-gray-400 mt-2">
+
+                            ${
+                                current.margin >= 30
+                                    ? '✅ Отличный показатель'
+                                    : current.margin >= 20
+                                        ? '⚠️ Средний показатель'
+                                        : '❌ Низкий показатель'
+                            }
+
+                        </div>
+
+                    </div>
+
+                `;
+
+        }
+
+
+        openDetailsModal(
+            titles[type],
+            content
+        );
+
+    }
+
+
+    /*
+    ============================================================
+    CHECK DETAILS
+    ============================================================
+    */
+
+    async function showCheckDetails(
+        checkId
+    ) {
+
+        openDetailsModal(
+
+            'Загрузка...',
+
+            `
+                <div class="text-center py-8">
+
+                    <div class="spinner mx-auto mb-4"></div>
+
+                    Загрузка товаров чека...
+
+                </div>
+            `
+
+        );
+
+        try {
+
+            const check =
+                dashboardCache
+                    .current
+                    ?.checks
+                    ?.find(
+                        item =>
+                            item.id === checkId
+                    );
+
+            const headers =
+                getAuthHeaders();
+
+            const data =
+                await loadCheckById(
+                    headers,
+                    checkId
+                );
+
+            const positions =
+                data.positions?.rows ||
+                [];
+
+            const name =
+                check?.name ||
+                data.name ||
+                'Чек';
+
+            const sum =
+                getMoneyValue(
+                    check?.sum ??
+                    data.sum
+                );
+
+            const moment =
+                formatDateTime(
+                    check?.moment ??
+                    data.moment
+                );
+
+            let total =
+                0;
+
+            const items =
+                positions
+                    .map(
+                        position => {
+
+                            const productName =
+                                escapeHtml(
+                                    position.assortment?.name ||
+                                    'Товар без названия'
+                                );
+
+                            const quantity =
+                                Number(
+                                    position.quantity
+                                ) || 0;
+
+                            const price =
+                                getMoneyValue(
+                                    position.price
+                                );
+
+                            const positionSum =
+                                getMoneyValue(
+                                    position.sum
+                                );
+
+                            total +=
+                                positionSum;
+
+                            const stockCost =
+                                position.stock?.cost !== undefined
+                                    ? getMoneyValue(
+                                        position.stock.cost
+                                    )
+                                    : null;
+
+                            return `
+
+                                <div class="p-4 bg-slate-900 rounded-lg border border-slate-800">
+
+                                    <div class="flex justify-between items-start gap-4">
+
+                                        <div class="flex-1">
+
+                                            <div class="font-medium text-white mb-1">
+                                                ${productName}
+                                            </div>
+
+                                            <div class="text-sm text-gray-400">
+                                                ${formatNumber(quantity)}
+                                                шт ×
+                                                ${formatMoney(price)}
+                                            </div>
+
+                                            ${
+                                                stockCost !== null
+                                                    ? `
+
+                                                        <div class="text-xs text-gray-500 mt-1">
+
+                                                            Себестоимость:
+                                                            ${formatMoney(stockCost)}
+
+                                                        </div>
+
+                                                    `
+                                                    : ''
+
+                                            }
+
+                                        </div>
+
+                                        <div class="font-bold text-green-400 text-lg">
+
+                                            ${formatMoney(positionSum)}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            `;
+
+                        }
+                    )
+                    .join('');
+
+
+            openDetailsModal(
+
+                `Чек: ${name}`,
+
+                `
+
                     <div class="space-y-4">
+
                         <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+
                             <div class="flex justify-between items-start">
+
                                 <div>
-                                    <div class="text-sm text-gray-400 mb-1">Чек</div>
-                                    <div class="text-2xl font-bold text-white">${checkName}</div>
+
+                                    <div class="text-sm text-gray-400 mb-1">
+                                        Чек
+                                    </div>
+
+                                    <div class="text-2xl font-bold text-white">
+                                        ${escapeHtml(name)}
+                                    </div>
+
                                 </div>
+
                                 <div class="text-right">
-                                    <div class="text-sm text-gray-400 mb-1">Сумма</div>
-                                    <div class="text-3xl font-bold text-green-400">${formatMoney(checkSum)}</div>
+
+                                    <div class="text-sm text-gray-400 mb-1">
+                                        Сумма
+                                    </div>
+
+                                    <div class="text-3xl font-bold text-green-400">
+                                        ${formatMoney(sum)}
+                                    </div>
+
                                 </div>
+
                             </div>
-                            <div class="text-sm text-gray-500 mt-3 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                ${checkMoment}
+
+                            <div class="text-sm text-gray-500 mt-3">
+                                ${moment}
                             </div>
+
                         </div>
+
 
                         <div class="bg-slate-800 p-6 rounded-lg">
-                            <h4 class="font-bold mb-4 flex items-center gap-2 text-white text-lg">
-                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                                </svg>
-                                Товары в чеке (${positions.length})
+
+                            <h4 class="font-bold mb-4 text-white text-lg">
+
+                                Товары в чеке
+                                (${positions.length})
+
                             </h4>
-                            <div class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto pr-2">
-                                ${itemsHtml || '<div class="text-gray-500 text-center py-8">В чеке нет позиций</div>'}
+
+                            <div class="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
+
+                                ${
+                                    items ||
+                                    '<div class="text-gray-500 text-center py-8">В чеке нет позиций</div>'
+                                }
+
                             </div>
-                            ${positions.length > 0 ? `
-                                <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between items-center">
-                                    <span class="font-bold text-gray-300 text-lg">Итого по позициям:</span>
-                                    <span class="font-bold text-green-400 text-2xl">${formatMoney(totalCalculated)}</span>
-                                </div>
-                            ` : ''}
+
+                            ${
+                                positions.length
+                                    ? `
+
+                                        <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between items-center">
+
+                                            <span class="font-bold text-gray-300 text-lg">
+                                                Итого по позициям:
+                                            </span>
+
+                                            <span class="font-bold text-green-400 text-2xl">
+                                                ${formatMoney(total)}
+                                            </span>
+
+                                        </div>
+
+                                    `
+                                    : ''
+                            }
+
                         </div>
 
-                        <button onclick="showChecksList()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 mt-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                            </svg>
-                            Вернуться к списку чеков
+                        <button
+                            onclick="showChecksList()"
+                            class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition"
+                        >
+                            ← Вернуться к списку чеков
                         </button>
+
                     </div>
-                `;
-                
-                openDetailsModal(`Чек: ${checkName}`, html);
-                
-            } catch (error) {
-                openDetailsModal('Ошибка', `
+
+                `
+
+            );
+
+        } catch (error) {
+
+            openDetailsModal(
+
+                'Ошибка',
+
+                `
+
                     <div class="text-red-400 text-center py-8">
-                        <svg class="w-16 h-16 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                        <div class="text-lg font-bold mb-2">Не удалось загрузить чек</div>
-                        <div class="text-sm">${error.message}</div>
+
+                        <div class="text-lg font-bold mb-2">
+                            Не удалось загрузить чек
+                        </div>
+
+                        <div class="text-sm">
+                            ${escapeHtml(error.message)}
+                        </div>
+
                     </div>
-                    <button onclick="showChecksList()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition">
+
+                    <button
+                        onclick="showChecksList()"
+                        class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg"
+                    >
                         Назад к списку
                     </button>
-                `);
-            }
+
+                `
+
+            );
+
         }
 
-        async function showChecksList() {
-            openDetailsModal('Загрузка...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
-            
-            try {
-                const dateFrom = document.getElementById('date-from').value;
-                const dateTo = document.getElementById('date-to').value;
-                const momentFrom = `${dateFrom} 00:00:00`;
-                const momentTo = `${dateTo} 23:59:59`;
-                const headers = getAuthHeaders();
-                
-                const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
-                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?filter=${filter}&limit=100&order=moment,desc`;
-                
-                const response = await proxyFetch(url, headers);
-                const data = await response.json();
-                const checks = data.rows || [];
-                const totalSum = checks.reduce((sum, c) => sum + (c.sum || 0) / 100, 0);
-                
-                const html = `
+    }
+
+
+    /*
+    ============================================================
+    ALL CHECKS
+    ============================================================
+    */
+
+    async function showChecksList() {
+
+        openDetailsModal(
+
+            'Загрузка...',
+
+            `
+
+                <div class="text-center py-8">
+
+                    <div class="spinner mx-auto mb-4"></div>
+
+                    Загрузка списка чеков...
+
+                </div>
+
+            `
+
+        );
+
+        try {
+
+            const current =
+                dashboardCache.current;
+
+            if (
+                !current
+            ) {
+
+                throw new Error(
+                    'Данные еще не загружены.'
+                );
+
+            }
+
+            const checks =
+                current.checks;
+
+            const total =
+                getRevenueFromChecks(
+                    checks
+                );
+
+            const html =
+                `
+
                     <div class="space-y-4">
+
                         <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-purple-500">
+
                             <div class="flex justify-between items-center">
+
                                 <div>
-                                    <div class="text-sm text-gray-400 mb-1">Всего чеков за период</div>
-                                    <div class="text-3xl font-bold text-purple-400">${formatNumber(checks.length)}</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm text-gray-400 mb-1">На сумму</div>
-                                    <div class="text-2xl font-bold text-green-400">${formatMoney(totalSum)}</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-2 custom-scroll max-h-[500px] overflow-y-auto pr-2">
-                            ${checks.length === 0 ? '<div class="text-center text-gray-500 py-8">Проведенных чеков за этот период не найдено</div>' : ''}
-                            ${checks.map(c => {
-                                const sum = (c.sum || 0) / 100;
-                                const moment = c.moment ? formatDateTime(c.moment) : '-';
-                                const name = c.name || 'Чек';
-                                return `
-                                    <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${c.id}', '${name}', ${sum}, '${moment}')">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <div class="font-medium text-white">${name}</div>
-                                                    <div class="text-xs text-gray-400">${moment}</div>
-                                                </div>
-                                            </div>
-                                            <div class="text-right">
-                                                <div class="font-bold text-green-400 text-lg">${formatMoney(sum)}</div>
-                                                <div class="text-xs text-blue-400 flex items-center gap-1 justify-end">
-                                                    Подробнее
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
+
+                                    <div class="text-sm text-gray-400 mb-1">
+                                        Всего чеков за период
                                     </div>
-                                `;
-                            }).join('')}
+
+                                    <div class="text-3xl font-bold text-purple-400">
+                                        ${formatNumber(checks.length)}
+                                    </div>
+
+                                </div>
+
+                                <div class="text-right">
+
+                                    <div class="text-sm text-gray-400 mb-1">
+                                        На сумму
+                                    </div>
+
+                                    <div class="text-2xl font-bold text-green-400">
+                                        ${formatMoney(total)}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
                         </div>
+
+
+                        <div class="space-y-2 max-h-[500px] overflow-y-auto scrollbar-thin">
+
+                            ${
+                                checks.length
+                                    ? checks
+                                        .map(
+                                            check => `
+
+                                                <div
+                                                    class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50"
+                                                    data-check-id="${escapeHtml(check.id)}"
+                                                >
+
+                                                    <div class="flex items-center justify-between">
+
+                                                        <div>
+
+                                                            <div class="font-medium text-white">
+                                                                ${escapeHtml(check.name || 'Чек')}
+                                                            </div>
+
+                                                            <div class="text-xs text-gray-400">
+                                                                ${formatDateTime(check.moment)}
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="font-bold text-green-400">
+                                                            ${formatMoney(getMoneyValue(check.sum))}
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            `
+                                        )
+                                        .join('')
+                                    : `
+                                        <div class="text-center text-gray-500 py-8">
+                                            Проведенных чеков за этот период не найдено
+                                        </div>
+                                    `
+                            }
+
+                        </div>
+
                     </div>
+
                 `;
-                
-                openDetailsModal(`Все чеки (${checks.length})`, html);
-                
-            } catch (error) {
-                openDetailsModal('Ошибка', `
+
+            openDetailsModal(
+                `Все чеки (${checks.length})`,
+                html
+            );
+
+            document
+                .querySelectorAll(
+                    '#details-content [data-check-id]'
+                )
+                .forEach(
+                    element => {
+
+                        element.addEventListener(
+                            'click',
+                            () =>
+                                showCheckDetails(
+                                    element.dataset.checkId
+                                )
+                        );
+
+                    }
+                );
+
+        } catch (error) {
+
+            openDetailsModal(
+
+                'Ошибка',
+
+                `
+
                     <div class="text-red-400 text-center py-8">
-                        <div class="text-lg font-bold mb-2">Не удалось загрузить чеки</div>
-                        <div class="text-sm">${error.message}</div>
+
+                        <div class="text-lg font-bold mb-2">
+                            Не удалось загрузить чеки
+                        </div>
+
+                        <div class="text-sm">
+                            ${escapeHtml(error.message)}
+                        </div>
+
                     </div>
-                `);
-            }
+
+                `
+
+            );
+
         }
 
-        // ==========================================
-        // ИНИЦИАЛИЗАЦИЯ
-        // ==========================================
-        window.addEventListener('load', () => {
-            const dates = getPeriodDates('week');
-            document.getElementById('date-from').value = dates.from;
-            document.getElementById('date-to').value = dates.to;
-            
-            if (apiToken) {
+    }
+
+
+    /*
+    ============================================================
+    INIT
+    ============================================================
+    */
+
+    window.addEventListener(
+        'load',
+        () => {
+
+            const dates =
+                getPeriodDates(
+                    currentPeriod
+                );
+
+            document
+                .getElementById(
+                    'date-from'
+                )
+                .value =
+                dates.from;
+
+            document
+                .getElementById(
+                    'date-to'
+                )
+                .value =
+                dates.to;
+
+            if (
+                apiToken
+            ) {
+
                 loadDashboard();
+
             } else {
+
                 showConnectionModal();
+
             }
-        });
-    </script>
+
+        }
+    );
+
+</script>
+
 </body>
 </html>
