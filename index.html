@@ -455,44 +455,127 @@
         }
 
         // Детализация чеков (НОВОЕ!)
-        async function showChecksDetails() {
-            openDetailsModal('Загрузка чеков...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
+        // Исправленная функция получения списка чеков
+async function showChecksDetails() {
+    openDetailsModal('Загрузка чеков...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
+    
+    try {
+        const headers = getAuthHeaders();
+        const dateFrom = document.getElementById('date-from').value;
+        const dateTo = document.getElementById('date-to').value;
+        const momentFrom = dateFrom + ' 00:00:00';
+        const momentTo = dateTo + ' 23:59:59';
+        
+        // Запрашиваем чеки с фильтрацией по периоду и ограничением
+        const response = await proxyFetch(
+            `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=100&expand=positions.assortment`,
+            headers
+        );
+        const data = await response.json();
+        const checks = data.rows || [];
+
+        const html = `
+            <div class="space-y-4">
+                <div class="bg-slate-800 p-4 rounded-lg">
+                    <div class="text-sm text-gray-400">Всего чеков за период</div>
+                    <div class="text-2xl font-bold text-purple-400">${checks.length}</div>
+                </div>
+                <div class="space-y-2 max-h-96 overflow-y-auto">
+                    ${checks.map(c => {
+                        const sum = (c.sum || 0) / 100;
+                        return `
+                            <div class="bg-slate-800 p-3 rounded-lg cursor-pointer hover:bg-slate-700 transition" onclick="showCheckPositions('${c.id}', '${c.name || 'Без номера'}', ${sum}, '${c.moment || ''}')">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">${c.name || 'Без номера'}</span>
+                                    <span class="font-bold text-green-400">${formatMoney(sum)}</span>
+                                </div>
+                                <div class="text-xs text-gray-400">${c.moment || '-'}</div>
+                                <div class="text-xs text-blue-400 mt-1">Нажмите для детализации товаров →</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        openDetailsModal('Список чеков', html);
+    } catch (error) {
+        openDetailsModal('Ошибка', '<div class="text-red-400">Не удалось загрузить чеки: ' + error.message + '</div>');
+    }
+}
+
+// Исправленная функция получения позиций чека
+        async function showCheckPositions(checkId, checkName, checkSum, checkMoment) {
+            const modal = document.getElementById('details-modal');
+            const title = document.getElementById('details-title');
+            const content = document.getElementById('details-content');
             
+            title.textContent = 'Загрузка позиций...';
+            content.innerHTML = '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка товаров чека...</div>';
+            modal.classList.remove('hidden');
+        
             try {
                 const headers = getAuthHeaders();
-                const momentFrom = dashboardData.momentFrom;
-                const momentTo = dashboardData.momentTo;
-                
+                // Запрашиваем чек с развернутыми позициями и товарами
                 const response = await proxyFetch(
-                    'https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?moment>=' + encodeURIComponent(momentFrom) + '&moment<=' + encodeURIComponent(momentTo) + '&limit=1000',
+                    `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment`,
                     headers
                 );
                 const data = await response.json();
-                const checks = data.rows || [];
-
+                const positions = data.positions?.rows || [];
+        
+                let totalItems = 0;
+                const itemsHtml = positions.map(p => {
+                    const productName = p.assortment?.name || 'Без названия';
+                    const quantity = p.quantity || 0;
+                    const price = (p.price || 0) / 100;
+                    const sum = (p.sum || 0) / 100;
+                    totalItems += sum;
+                    
+                    return `
+                        <div class="flex justify-between items-center p-3 bg-slate-900 rounded">
+                            <div class="flex-1">
+                                <div class="font-medium">${productName}</div>
+                                <div class="text-xs text-gray-400">${quantity} шт × ${formatMoney(price)}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-green-400">${formatMoney(sum)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+        
                 const html = `
                     <div class="space-y-4">
                         <div class="bg-slate-800 p-4 rounded-lg">
-                            <div class="text-sm text-gray-400">Всего чеков за период</div>
-                            <div class="text-2xl font-bold text-purple-400">${checks.length}</div>
+                            <div class="text-sm text-gray-400">Чек: ${checkName}</div>
+                            <div class="text-2xl font-bold text-green-400 mt-2">${formatMoney(checkSum)}</div>
+                            <div class="text-xs text-gray-400 mt-1">${checkMoment || '-'}</div>
+                            <div class="text-xs text-blue-400 mt-1">Товаров в чеке: ${positions.length}</div>
                         </div>
-                        <div class="space-y-2 max-h-96 overflow-y-auto">
-                            ${checks.map(c => `
-                                <div class="bg-slate-800 p-3 rounded-lg cursor-pointer hover:bg-slate-700 transition" onclick="showCheckPositions('${c.id}', '${c.name || 'Без номера'}')">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="font-medium">${c.name || 'Без номера'}</span>
-                                        <span class="font-bold text-green-400">${formatMoney((c.sum || 0) / 100)}</span>
+                        <div class="bg-slate-800 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3">Товары в чеке (${positions.length})</h4>
+                            <div class="space-y-2">
+                                ${itemsHtml || '<div class="text-gray-500 text-center py-4">Нет товаров</div>'}
+                            </div>
+                            ${positions.length > 0 ? `
+                                <div class="mt-4 pt-4 border-t border-slate-700">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold">Итого:</span>
+                                        <span class="font-bold text-green-400 text-lg">${formatMoney(totalItems)}</span>
                                     </div>
-                                    <div class="text-xs text-gray-400">${c.moment || '-'}</div>
-                                    <div class="text-xs text-blue-400 mt-1">Нажмите для детализации товаров →</div>
                                 </div>
-                            `).join('')}
+                            ` : ''}
                         </div>
+                        <button onclick="showChecksDetails()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition">
+                            ← Вернуться к списку чеков
+                        </button>
                     </div>
                 `;
-                openDetailsModal('Список чеков', html);
+                title.textContent = `Товары в чеке (${positions.length})`;
+                content.innerHTML = html;
             } catch (error) {
-                openDetailsModal('Ошибка', '<div class="text-red-400">Не удалось загрузить чеки: ' + error.message + '</div>');
+                title.textContent = 'Ошибка';
+                content.innerHTML = '<div class="text-red-400">Не удалось загрузить позиции: ' + error.message + '</div>';
             }
         }
 
