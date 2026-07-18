@@ -15,7 +15,7 @@
         .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
         .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
         .kpi-card { transition: all 0.3s; cursor: pointer; }
-        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
         .modal-content { background: #1e293b; border-radius: 16px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
         .chart-container { position: relative; height: 300px; }
@@ -84,28 +84,23 @@
 
     <!-- Основной контент -->
     <main class="flex-1 flex flex-col overflow-hidden">
-        
-        <!-- Верхняя панель -->
         <div class="bg-slate-900/50 border-b border-slate-800 p-4">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-3">
                     <h2 id="page-title" class="text-2xl font-bold">Главная</h2>
                     <span class="text-xs text-gray-500">Обновлено: <span id="last-update">-</span></span>
                 </div>
-                
                 <div class="flex items-center gap-3 flex-wrap">
                     <div class="flex gap-2">
                         <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Сегодня</button>
                         <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white transition">Неделя</button>
                         <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Месяц</button>
                     </div>
-                    
                     <div class="flex gap-2">
                         <input type="date" id="date-from" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
                         <span class="text-gray-500">—</span>
                         <input type="date" id="date-to" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
                     </div>
-                    
                     <button onclick="loadDashboard()" class="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2">
                         <span>🔄</span> Обновить
                     </button>
@@ -113,10 +108,7 @@
             </div>
         </div>
 
-        <!-- Контент -->
         <div class="flex-1 overflow-y-auto p-6 scrollbar-thin">
-            
-            <!-- ГЛАВНАЯ СТРАНИЦА -->
             <div id="view-dashboard" class="view-section space-y-6">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="kpi-card glass p-6" onclick="showRevenueDetails()">
@@ -191,7 +183,6 @@
     <script>
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
         let currentView = 'dashboard';
-        let currentPeriod = 'week';
         let charts = {};
         let apiToken = localStorage.getItem('moysklad_token') || '';
         let dashboardData = {};
@@ -215,7 +206,6 @@
         }
 
         function setPeriod(period) {
-            currentPeriod = period;
             document.querySelectorAll('.period-btn').forEach(btn => {
                 btn.classList.remove('bg-blue-600', 'text-white');
                 btn.classList.add('bg-slate-800');
@@ -273,7 +263,7 @@
                 return await fetch(url + separator + '_t=' + Date.now(), options);
             } catch (error) {
                 if (retries > 0) {
-                    await new Promise(r => setTimeout(r, 2000));
+                    await new Promise(r => setTimeout(r, 2500));
                     return fetchWithRetry(url, options, retries - 1);
                 }
                 throw new Error('Сеть сбрасывает соединение');
@@ -286,7 +276,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
-            if (response.status === 429) throw new Error('Превышен лимит запросов (429). Подождите минуту.');
+            if (response.status === 429) throw new Error('Превышен лимит запросов (429). Подождите 1 минуту.');
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error('Ошибка API ' + response.status + ': ' + errorText);
@@ -406,16 +396,15 @@
         // === ИСПРАВЛЕННАЯ ФУНКЦИЯ: Список чеков ===
         async function showChecksDetails() {
             openDetailsModal('Загрузка чеков...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
-            
             try {
                 const headers = getAuthHeaders();
-                const dateFrom = document.getElementById('date-from').value;
-                const dateTo = document.getElementById('date-to').value;
-                const momentFrom = dateFrom + ' 00:00:00';
-                const momentTo = dateTo + ' 23:59:59';
+                const momentFrom = dashboardData.momentFrom;
+                const momentTo = dashboardData.momentTo;
+
+                // ИСПРАВЛЕНИЕ 1: Добавлен filter=applicable=true, чтобы получать только проведенные чеки, 
+                // которые учитываются в отчетах. Это решает проблему "1000 чеков вместо 29".
+                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&filter=applicable=true&limit=1000&order=moment,desc`;
                 
-                // Строгая фильтрация по датам + сортировка по убыванию + лимит 1000
-                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000&order=moment,desc`;
                 const response = await proxyFetch(url, headers);
                 const data = await response.json();
                 const checks = data.rows || [];
@@ -435,12 +424,12 @@
                             </div>
                         </div>
                         <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
-                            ${checks.length === 0 ? '<div class="text-center text-gray-500 py-8">Чеков за этот период не найдено</div>' : ''}
+                            ${checks.length === 0 ? '<div class="text-center text-gray-500 py-8">Проведенных чеков за этот период не найдено</div>' : ''}
                             ${checks.map(c => {
                                 const sum = (c.sum || 0) / 100;
                                 const date = c.moment ? new Date(c.moment).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
                                 return `
-                                    <div class="bg-slate-800 p-4 rounded-lg cursor-pointer hover:bg-slate-700 transition border border-transparent hover:border-blue-500/50" onclick="showCheckPositions('${c.id}', '${c.name || 'Без номера'}', ${sum}, '${date}')">
+                                    <div class="bg-slate-800 p-4 rounded-lg cursor-pointer hover:bg-slate-700 transition border border-transparent hover:border-blue-500/50" onclick="showCheckPositions('${c.id}', '${c.name || 'Чек'}', ${sum}, '${date}')">
                                         <div class="flex justify-between items-center mb-2">
                                             <span class="font-bold text-lg">${c.name || 'Чек'}</span>
                                             <span class="font-bold text-green-400 text-lg">${formatMoney(sum)}</span>
@@ -455,45 +444,50 @@
                         </div>
                     </div>
                 `;
-                openDetailsModal('Список чеков', html);
+                openDetailsModal(`Список чеков (${checks.length})`, html);
             } catch (error) {
                 openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-4">Не удалось загрузить чеки:<br>${error.message}</div>`);
             }
         }
 
-        // === ИСПРАВЛЕННАЯ ФУНКЦИЯ: Детализация чека (с expand=positions.assortment) ===
+        // === ИСПРАВЛЕННАЯ ФУНКЦИЯ: Детализация чека с товарами ===
         async function showCheckPositions(checkId, checkName, checkSum, checkMoment) {
             const modal = document.getElementById('details-modal');
             const title = document.getElementById('details-title');
             const content = document.getElementById('details-content');
-            
-            title.textContent = 'Загрузка позиций...';
-            content.innerHTML = '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка товаров чека...</div>';
+
+            title.textContent = 'Загрузка товаров...';
+            content.innerHTML = '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка позиций чека...</div>';
             modal.classList.remove('hidden');
-        
+
             try {
                 const headers = getAuthHeaders();
-                // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: expand=positions.assortment гарантирует получение имен товаров
-                const response = await proxyFetch(
-                    `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment`,
-                    headers
-                );
-                const data = await response.json();
-                const positions = data.positions?.rows || [];
-        
+                
+                // ИСПРАВЛЕНИЕ 2: Согласно документации МойСклад, для получения названий товаров 
+                // внутри позиций необходимо использовать expand=positions.assortment
+                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment`;
+                
+                const response = await proxyFetch(url, headers);
+                const checkData = await response.json();
+
+                const positions = checkData.positions?.rows || [];
+
                 let totalCalculated = 0;
                 const itemsHtml = positions.map(p => {
-                    const productName = p.assortment?.name || 'Товар удален или без названия';
+                    // Теперь название гарантированно будет получено из p.assortment.name
+                    const productName = p.assortment?.name || 'Товар без названия';
                     const quantity = p.quantity || 0;
                     const price = (p.price || 0) / 100;
                     const sum = (p.sum || 0) / 100;
                     totalCalculated += sum;
-                    
+
                     return `
-                        <div class="flex justify-between items-start p-3 bg-slate-900 rounded border border-slate-800">
+                        <div class="flex justify-between items-start p-3 bg-slate-900 rounded mb-2 border border-slate-800">
                             <div class="flex-1 pr-4">
                                 <div class="font-medium text-white">${productName}</div>
-                                <div class="text-sm text-gray-400 mt-1">${quantity} шт × ${formatMoney(price)}</div>
+                                <div class="text-sm text-gray-400 mt-1">
+                                    ${quantity} шт × ${formatMoney(price)}
+                                </div>
                             </div>
                             <div class="text-right flex-shrink-0">
                                 <div class="font-bold text-green-400">${formatMoney(sum)}</div>
@@ -501,7 +495,7 @@
                         </div>
                     `;
                 }).join('');
-        
+
                 const html = `
                     <div class="space-y-4">
                         <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-green-500">
@@ -520,7 +514,7 @@
                                 ${checkMoment}
                             </div>
                         </div>
-        
+
                         <div class="bg-slate-800 p-4 rounded-lg">
                             <h4 class="font-bold mb-3 flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
@@ -536,19 +530,19 @@
                                 </div>
                             ` : ''}
                         </div>
-        
+
                         <button onclick="showChecksDetails()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                             Вернуться к списку чеков
                         </button>
                     </div>
                 `;
-                title.textContent = 'Детализация чека';
+                title.textContent = `Детализация чека: ${checkName}`;
                 content.innerHTML = html;
             } catch (error) {
                 title.textContent = 'Ошибка';
                 content.innerHTML = `<div class="text-red-400 text-center py-4">Не удалось загрузить позиции:<br>${error.message}</div>
-                <button onclick="showChecksDetails()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition">Назад</button>`;
+                <button onclick="showChecksDetails()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition">Назад к списку</button>`;
             }
         }
 
