@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro - ERP для ИП</title>
+    <title>Profit Analyzer Pro - МойСклад</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; min-height: 100vh; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
@@ -21,8 +21,6 @@
         .metric-card { transition: transform 0.2s, box-shadow 0.2s; }
         .metric-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
         input[type="date"] { color-scheme: dark; }
-        .tab-btn { transition: all 0.2s; }
-        .tab-btn.active { background: rgba(59, 130, 246, 0.3); color: #60a5fa; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -30,15 +28,15 @@
     <!-- Боковое меню -->
     <aside class="w-64 bg-slate-900/80 border-r border-slate-800 flex flex-col hidden md:flex">
         <div class="p-6 border-b border-slate-800">
-            <h1 class="text-xl font-bold text-blue-400">Profit DNMRK</h1>
-            <p class="text-xs text-gray-500 mt-1">ERP для ИП</p>
+            <h1 class="text-xl font-bold text-blue-400">Profit Analyzer</h1>
+            <p class="text-xs text-gray-500 mt-1">Управленческий учет</p>
         </div>
         <nav class="flex-1 py-4 space-y-1 overflow-y-auto">
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn active w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📊 Дашборд</button>
-            <button onclick="switchView('profit')" id="nav-profit" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">💰 Прибыльность</button>
-            <button onclick="switchView('sales')" id="nav-sales" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📈 Продажи</button>
-            <button onclick="switchView('money')" id="nav-money" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">💵 Деньги</button>
-            <button onclick="switchView('stock')" id="nav-stock" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📦 Склад</button>
+            <button onclick="switchView('profit')" id="nav-profit" class="nav-btn active w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📊 Прибыльность</button>
+            <button onclick="switchView('money')" id="nav-money" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">💰 Движение денег</button>
+            <button onclick="switchView('turnover')" id="nav-turnover" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📦 Оборачиваемость</button>
+            <button onclick="switchView('sales')" id="nav-sales" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800"> Продажи</button>
+            <button onclick="switchView('stock')" id="nav-stock" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800"> Остатки</button>
             <button onclick="switchView('clients')" id="nav-clients" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">👥 Клиенты</button>
         </nav>
         <div class="p-4 border-t border-slate-800">
@@ -48,17 +46,15 @@
 
     <!-- Мобильное меню -->
     <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto backdrop-blur-md">
-        <button onclick="switchView('dashboard')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Дашборд</button>
-        <button onclick="switchView('profit')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Прибыль</button>
+        <button onclick="switchView('profit')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Прибыль</button>
+        <button onclick="switchView('money')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Деньги</button>
+        <button onclick="switchView('turnover')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Оборот</button>
         <button onclick="switchView('sales')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📈</span>Продажи</button>
-        <button onclick="switchView('money')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💵</span>Деньги</button>
-        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Склад</button>
+        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">🏪</span>Склад</button>
     </div>
 
     <!-- Основной контент -->
     <main class="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
-        
-        <!-- Глобальные настройки -->
         <div class="max-w-7xl mx-auto mb-6">
             <div class="glass p-4">
                 <div class="flex flex-wrap gap-4 items-end">
@@ -75,291 +71,98 @@
                         <input type="date" id="date-to" class="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <button onclick="loadCurrentView()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition shadow-lg shadow-blue-500/20">
-                        Загрузить данные
+                        Загрузить
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- 1. ДАШБОРД -->
-        <div id="view-dashboard" class="view-section active max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4"> Дашборд - Быстрый обзор бизнеса</h2>
-            
-            <!-- Показатели за период -->
+        <!-- 1. ПРИБЫЛЬНОСТЬ -->
+        <div id="view-profit" class="view-section active max-w-7xl mx-auto space-y-6">
+            <h2 class="text-2xl font-bold mb-4">📊 Прибыльность по товарам</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Выручка</div>
-                    <div id="dash-revenue" class="text-2xl font-bold text-green-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Прибыль</div>
-                    <div id="dash-profit" class="text-2xl font-bold text-blue-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Маржа</div>
-                    <div id="dash-margin" class="text-2xl font-bold text-yellow-400">0%</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Количество продаж</div>
-                    <div id="dash-sales-count" class="text-2xl font-bold text-purple-400">0</div>
-                </div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Выручка</div><div id="profit-revenue" class="text-2xl font-bold text-green-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Себестоимость</div><div id="profit-cost" class="text-2xl font-bold text-red-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Прибыль</div><div id="profit-value" class="text-2xl font-bold text-blue-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Маржа</div><div id="profit-margin" class="text-2xl font-bold text-yellow-400">0%</div></div>
             </div>
-
-            <!-- Графики -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">📈 Динамика выручки и прибыли</h3>
-                    <canvas id="dash-profit-chart" height="200"></canvas>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">💰 Движение денег</h3>
-                    <canvas id="dash-money-chart" height="200"></canvas>
-                </div>
-            </div>
-
-            <!-- Топ товаров и критические остатки -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">🏆 Топ-10 товаров по прибыли</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                                <tr><th class="py-2 text-left">Товар</th><th class="py-2 text-right">Прибыль</th><th class="py-2 text-right">Маржа</th></tr>
-                            </thead>
-                            <tbody id="dash-top-products" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4 text-red-400">⚠️ Критические остатки</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                                <tr><th class="py-2 text-left">Товар</th><th class="py-2 text-right">Остаток</th><th class="py-2 text-right">Сумма</th></tr>
-                            </thead>
-                            <tbody id="dash-low-stock" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. ПРИБЫЛЬНОСТЬ -->
-        <div id="view-profit" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4"> Прибыльность - Полный анализ</h2>
-            
-            <!-- Общая прибыльность -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Выручка</div>
-                    <div id="profit-revenue" class="text-2xl font-bold text-green-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Себестоимость</div>
-                    <div id="profit-cost" class="text-2xl font-bold text-red-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Прибыль</div>
-                    <div id="profit-value" class="text-2xl font-bold text-blue-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Рентабельность</div>
-                    <div id="profit-margin" class="text-2xl font-bold text-yellow-400">0%</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Рент. продаж</div>
-                    <div id="profit-sales-margin" class="text-2xl font-bold text-purple-400">0%</div>
-                </div>
-            </div>
-
-            <!-- Вкладки анализа -->
-            <div class="glass p-4">
-                <div class="flex gap-2 mb-4 flex-wrap">
-                    <button onclick="switchProfitTab('products')" id="tab-products" class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium">По товарам</button>
-                    <button onclick="switchProfitTab('employees')" id="tab-employees" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-800">По сотрудникам</button>
-                    <button onclick="switchProfitTab('clients')" id="tab-clients" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-800">По клиентам</button>
-                    <button onclick="switchProfitTab('channels')" id="tab-channels" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-800">По каналам</button>
-                </div>
-
-                <div id="profit-content">
-                    <!-- Контент загружается динамически -->
-                </div>
-            </div>
-
-            <!-- ABC-анализ -->
             <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">📊 ABC-анализ товаров</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div class="bg-green-900/20 border border-green-700 rounded-lg p-4">
-                        <div class="text-green-400 font-bold mb-2">Группа A (80% прибыли)</div>
-                        <div id="abc-a-count" class="text-2xl font-bold">0 товаров</div>
-                        <div id="abc-a-sum" class="text-sm text-gray-400">0 ₽</div>
-                    </div>
-                    <div class="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4">
-                        <div class="text-yellow-400 font-bold mb-2">Группа B (15% прибыли)</div>
-                        <div id="abc-b-count" class="text-2xl font-bold">0 товаров</div>
-                        <div id="abc-b-sum" class="text-sm text-gray-400">0 ₽</div>
-                    </div>
-                    <div class="bg-red-900/20 border border-red-700 rounded-lg p-4">
-                        <div class="text-red-400 font-bold mb-2">Группа C (5% прибыли)</div>
-                        <div id="abc-c-count" class="text-2xl font-bold">0 товаров</div>
-                        <div id="abc-c-sum" class="text-sm text-gray-400">0 ₽</div>
-                    </div>
-                </div>
-                <canvas id="abc-chart" height="100"></canvas>
-            </div>
-        </div>
-
-        <!-- 3. ПРОДАЖИ -->
-        <div id="view-sales" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4">📈 Анализ продаж</h2>
-            
-            <!-- Показатели продаж -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Количество продаж</div>
-                    <div id="sales-count" class="text-2xl font-bold text-blue-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Сумма продаж</div>
-                    <div id="sales-sum" class="text-2xl font-bold text-green-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Средний чек</div>
-                    <div id="sales-avg" class="text-2xl font-bold text-purple-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Количество заказов</div>
-                    <div id="orders-count" class="text-2xl font-bold text-yellow-400">0</div>
-                </div>
-            </div>
-
-            <!-- Графики -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">📊 Динамика продаж</h3>
-                    <canvas id="sales-chart" height="200"></canvas>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">📦 Динамика заказов</h3>
-                    <canvas id="orders-chart" height="200"></canvas>
-                </div>
-            </div>
-
-            <!-- Интервалы -->
-            <div class="glass p-4">
-                <h3 class="text-lg font-bold mb-4"> Анализ по периодам</h3>
-                <div class="flex gap-2 mb-4">
-                    <button onclick="setSalesInterval('hour')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-800">По часам</button>
-                    <button onclick="setSalesInterval('day')" id="interval-day" class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium">По дням</button>
-                    <button onclick="setSalesInterval('month')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-800">По месяцам</button>
-                </div>
-                <div id="sales-interval-content"></div>
-            </div>
-        </div>
-
-        <!-- 4. ДЕНЬГИ -->
-        <div id="view-money" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4">💵 Движение денежных средств</h2>
-            
-            <!-- Основные показатели -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Приход</div>
-                    <div id="money-income" class="text-2xl font-bold text-green-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Расход</div>
-                    <div id="money-outcome" class="text-2xl font-bold text-red-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Сальдо</div>
-                    <div id="money-balance" class="text-2xl font-bold text-blue-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Остаток на счетах</div>
-                    <div id="money-accounts" class="text-2xl font-bold text-purple-400">0</div>
-                </div>
-            </div>
-
-            <!-- График движения денег -->
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">📊 Движение денег по дням</h3>
-                <canvas id="money-chart" height="200"></canvas>
-            </div>
-
-            <!-- Остатки по счетам -->
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4"> Остатки по счетам и кассам</h3>
+                <h3 class="text-lg font-bold mb-4">Топ-10 товаров по прибыли</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                            <tr><th class="py-2 text-left">Организация</th><th class="py-2 text-left">Счет</th><th class="py-2 text-right">Остаток</th></tr>
+                            <tr><th class="py-2 text-left">Товар</th><th class="py-2 text-right">Выручка</th><th class="py-2 text-right">Прибыль</th><th class="py-2 text-right">Маржа</th></tr>
                         </thead>
-                        <tbody id="money-accounts-table" class="divide-y divide-slate-800"></tbody>
+                        <tbody id="profit-top-table" class="divide-y divide-slate-800"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- 5. СКЛАД -->
-        <div id="view-stock" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4"> Склад и оборачиваемость</h2>
-            
-            <!-- Основные показатели склада -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Всего товаров</div>
-                    <div id="stock-total-items" class="text-2xl font-bold text-blue-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Стоимость остатков</div>
-                    <div id="stock-total-value" class="text-2xl font-bold text-green-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">С нулевым остатком</div>
-                    <div id="stock-zero" class="text-2xl font-bold text-red-400">0</div>
-                </div>
-                <div class="glass p-6 metric-card text-center">
-                    <div class="text-gray-400 text-xs mb-2 uppercase tracking-wider">Средний день оборота</div>
-                    <div id="stock-turnover-days" class="text-2xl font-bold text-yellow-400">0</div>
-                </div>
+        <!-- 2. ДВИЖЕНИЕ ДЕНЕГ -->
+        <div id="view-money" class="view-section max-w-7xl mx-auto space-y-6">
+            <h2 class="text-2xl font-bold mb-4">💰 Движение денежных средств</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Приход</div><div id="money-income" class="text-2xl font-bold text-green-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Расход</div><div id="money-outcome" class="text-2xl font-bold text-red-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Сальдо</div><div id="money-balance" class="text-2xl font-bold text-blue-400">0</div></div>
             </div>
-
-            <!-- Обороты по товарам -->
             <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">🔄 Обороты по товарам</h3>
+                <h3 class="text-lg font-bold mb-4">График движения денег по дням</h3>
+                <canvas id="money-chart" height="100"></canvas>
+            </div>
+        </div>
+
+        <!-- 3. ОБОРАЧИВАЕМОСТЬ -->
+        <div id="view-turnover" class="view-section max-w-7xl mx-auto space-y-6">
+            <h2 class="text-2xl font-bold mb-4"> Оборачиваемость товаров</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Приход (кол-во)</div><div id="turnover-income" class="text-2xl font-bold text-purple-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Расход (кол-во)</div><div id="turnover-outcome" class="text-2xl font-bold text-red-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Остаток на конец</div><div id="turnover-end" class="text-2xl font-bold text-blue-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Стоимость остатка</div><div id="turnover-end-sum" class="text-2xl font-bold text-yellow-400">0</div></div>
+            </div>
+            <div class="glass p-6">
+                <h3 class="text-lg font-bold mb-4 text-red-400">⚠️ Товары с движением (Топ-15)</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                            <tr>
-                                <th class="py-2 text-left">Товар</th>
-                                <th class="py-2 text-right">Остаток на начало</th>
-                                <th class="py-2 text-right">Приход</th>
-                                <th class="py-2 text-right">Расход</th>
-                                <th class="py-2 text-right">Остаток на конец</th>
-                            </tr>
+                            <tr><th class="py-2 text-left">Товар</th><th class="py-2 text-right">Приход</th><th class="py-2 text-right">Расход</th><th class="py-2 text-right">Остаток</th></tr>
                         </thead>
                         <tbody id="turnover-table" class="divide-y divide-slate-800"></tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- Расширенный отчет об остатках -->
+        <!-- 4. ПРОДАЖИ -->
+        <div id="view-sales" class="view-section max-w-7xl mx-auto space-y-6">
+            <h2 class="text-2xl font-bold mb-4">📈 Показатели продаж</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Количество</div><div id="sales-count" class="text-2xl font-bold text-blue-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Сумма</div><div id="sales-sum" class="text-2xl font-bold text-green-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Средний чек</div><div id="sales-avg" class="text-2xl font-bold text-purple-400">0</div></div>
+            </div>
             <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">📋 Расширенный отчет об остатках</h3>
+                <h3 class="text-lg font-bold mb-4">Динамика продаж по дням</h3>
+                <canvas id="sales-chart" height="100"></canvas>
+            </div>
+        </div>
+
+        <!-- 5. ОСТАТКИ -->
+        <div id="view-stock" class="view-section max-w-7xl mx-auto space-y-6">
+            <h2 class="text-2xl font-bold mb-4"> Расширенный отчет об остатках</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Всего позиций</div><div id="stock-total-items" class="text-2xl font-bold text-blue-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Общая стоимость</div><div id="stock-total-value" class="text-2xl font-bold text-green-400">0</div></div>
+                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">С остатком > 0</div><div id="stock-positive" class="text-2xl font-bold text-yellow-400">0</div></div>
+            </div>
+            <div class="glass p-6">
+                <h3 class="text-lg font-bold mb-4">Остатки по товарам (Топ-100 по стоимости)</h3>
                 <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                     <table class="w-full text-sm">
                         <thead class="text-xs text-gray-400 uppercase border-b border-slate-700 sticky top-0 bg-slate-900 z-10">
-                            <tr>
-                                <th class="py-2 text-left">Товар</th>
-                                <th class="py-2 text-right">Остаток</th>
-                                <th class="py-2 text-right">Резерв</th>
-                                <th class="py-2 text-right">Доступно</th>
-                                <th class="py-2 text-right">Себестоимость</th>
-                                <th class="py-2 text-right">Цена продажи</th>
-                                <th class="py-2 text-right">Сумма</th>
-                            </tr>
+                            <tr><th class="py-2 text-left">Товар</th><th class="py-2 text-right">Остаток</th><th class="py-2 text-right">Себестоимость</th><th class="py-2 text-right">Сумма</th></tr>
                         </thead>
                         <tbody id="stock-table" class="divide-y divide-slate-800"></tbody>
                     </table>
@@ -369,56 +172,35 @@
 
         <!-- 6. КЛИЕНТЫ -->
         <div id="view-clients" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4"> Клиенты и контрагенты</h2>
-            
-            <!-- Показатели контрагентов -->
+            <h2 class="text-2xl font-bold mb-4"> Показатели контрагентов</h2>
             <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">📊 Показатели контрагентов</h3>
+                <h3 class="text-lg font-bold mb-4">Топ-20 клиентов по сумме продаж</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                            <tr>
-                                <th class="py-2 text-left">Клиент</th>
-                                <th class="py-2 text-right">Продаж</th>
-                                <th class="py-2 text-right">Сумма</th>
-                                <th class="py-2 text-right">Средний чек</th>
-                                <th class="py-2 text-right">Прибыль</th>
-                                <th class="py-2 text-right">Баланс</th>
-                            </tr>
+                            <tr><th class="py-2 text-left">Клиент</th><th class="py-2 text-right">Продаж</th><th class="py-2 text-right">Сумма</th><th class="py-2 text-right">Прибыль</th><th class="py-2 text-right">Баланс</th></tr>
                         </thead>
                         <tbody id="clients-table" class="divide-y divide-slate-800"></tbody>
                     </table>
                 </div>
             </div>
-
-            <!-- Топ клиентов -->
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">🏆 Топ-20 клиентов по сумме продаж</h3>
-                <canvas id="clients-chart" height="200"></canvas>
-            </div>
         </div>
-
     </main>
 
     <!-- Экран загрузки -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="glass p-8 max-w-md w-full text-center mx-4">
             <div class="spinner mx-auto mb-4"></div>
-            <div id="loading-text" class="text-lg font-medium mb-1">Загрузка данных...</div>
+            <div id="loading-text" class="text-lg font-medium mb-1">Загрузка...</div>
             <div id="loading-details" class="text-sm text-gray-400 mb-4"></div>
-            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-            </div>
         </div>
     </div>
 
     <script>
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-        let currentView = 'dashboard';
+        let currentView = 'profit';
         let charts = {};
-        let salesInterval = 'day';
 
-        // ================= УТИЛИТЫ =================
         function formatMoney(amount) { 
             return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount || 0); 
         }
@@ -429,38 +211,28 @@
             const d = new Date(); d.setDate(d.getDate() - days); return d.toISOString().split('T')[0]; 
         }
         function clearCache() { 
-            if(confirm('Очистить все сохраненные данные и перезагрузить страницу?')) {
-                localStorage.clear(); location.reload(); 
-            }
+            if(confirm('Очистить кэш?')) { localStorage.clear(); location.reload(); }
         }
         
         function switchView(view) {
             currentView = view;
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${view}`).classList.add('active');
+            document.getElementById('view-' + view).classList.add('active');
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            const navBtn = document.getElementById(`nav-${view}`);
+            const navBtn = document.getElementById('nav-' + view);
             if (navBtn) navBtn.classList.add('active');
         }
 
-        function updateProgress(percent, text, details = '') {
-            if (percent !== null) document.getElementById('progress-bar').style.width = `${percent}%`;
-            if (text) document.getElementById('loading-text').textContent = text;
-            if (details) document.getElementById('loading-details').textContent = details;
-        }
-
-        // ================= СЕТЬ И API =================
         async function fetchWithRetry(url, options, retries = 3) {
             try {
                 const separator = url.includes('?') ? '&' : '?';
-                return await fetch(`${url}${separator}_t=${Date.now()}`, options);
+                return await fetch(url + separator + '_t=' + Date.now(), options);
             } catch (error) {
                 if (retries > 0) {
-                    updateProgress(null, 'Нестабильная сеть, переподключение...', `Попытка ${4 - retries} из 4`);
                     await new Promise(r => setTimeout(r, 2500));
                     return fetchWithRetry(url, options, retries - 1);
                 }
-                throw new Error('Сеть принудительно сбрасывает соединение. Попробуйте переключиться с Wi-Fi на мобильный интернет.');
+                throw new Error('Сеть сбрасывает соединение');
             }
         }
 
@@ -470,12 +242,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
-            
-            if (response.status === 429) throw new Error('Превышен лимит запросов (429). Подождите 1 минуту.');
+            if (response.status === 429) throw new Error('Лимит запросов (429). Подождите 1 минуту.');
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Ошибка от МойСклад:', response.status, errorText);
-                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
+                throw new Error('Ошибка API ' + response.status + ': ' + errorText);
             }
             return response;
         }
@@ -493,59 +263,50 @@
             };
         }
 
-        // ================= ЗАГРУЗКА ДАННЫХ =================
         async function loadCurrentView() {
             const token = document.getElementById('token-input').value.trim();
             const dateFrom = document.getElementById('date-from').value || getDaysAgo(30);
             const dateTo = document.getElementById('date-to').value || new Date().toISOString().split('T')[0];
 
-            if (!token) return alert('Пожалуйста, введите токен API МойСклад');
+            if (!token) return alert('Введите токен');
             localStorage.setItem('moysklad_token', token);
 
             const loadingOverlay = document.getElementById('loading-overlay');
             loadingOverlay.classList.remove('hidden');
-            updateProgress(10, 'Проверка подключения...', 'Запрос информации об организации');
+            document.getElementById('loading-text').textContent = 'Загрузка...';
 
             try {
                 const headers = getSafeHeaders(token);
-                
-                // Проверка токена
                 await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', headers);
-                
-                // Маршрутизация по вкладкам
-                if (currentView === 'dashboard') await loadDashboard(headers, dateFrom, dateTo);
-                else if (currentView === 'profit') await loadProfit(headers, dateFrom, dateTo);
-                else if (currentView === 'sales') await loadSales(headers, dateFrom, dateTo);
-                else if (currentView === 'money') await loadMoney(headers, dateFrom, dateTo);
-                else if (currentView === 'stock') await loadStock(headers, dateFrom, dateTo);
-                else if (currentView === 'clients') await loadClients(headers, dateFrom, dateTo);
 
-                updateProgress(100, 'Готово!', 'Данные успешно загружены');
-                setTimeout(() => loadingOverlay.classList.add('hidden'), 500);
+                if (currentView === 'profit') await loadProfit(headers, dateFrom, dateTo);
+                else if (currentView === 'money') await loadMoney(headers, dateFrom, dateTo);
+                else if (currentView === 'turnover') await loadTurnover(headers, dateFrom, dateTo);
+                else if (currentView === 'sales') await loadSales(headers, dateFrom, dateTo);
+                else if (currentView === 'stock') await loadStock(headers);
+                else if (currentView === 'clients') await loadClients(headers);
+
+                loadingOverlay.classList.add('hidden');
             } catch (error) {
                 loadingOverlay.classList.add('hidden');
-                console.error('Критическая ошибка:', error);
                 alert('Ошибка: ' + error.message);
             }
         }
 
-        // ================= 1. ДАШБОРД =================
-        async function loadDashboard(headers, dateFrom, dateTo) {
-            updateProgress(20, 'Загрузка показателей...', 'Запрос данных за период');
+        // 1. Прибыльность по товарам: /report/profit/byproduct
+        async function loadProfit(headers, dateFrom, dateTo) {
+            const momentFrom = dateFrom + ' 00:00:00';
+            const momentTo = dateTo + ' 23:59:59';
+            const url = 'https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&limit=1000';
             
-            const momentFrom = `${dateFrom} 00:00:00`;
-            const momentTo = `${dateTo} 23:59:59`;
-
-            // Загружаем прибыльность по товарам
-            const profitUrl = `https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
-            const profitRes = await proxyFetch(profitUrl, headers);
-            const profitData = await profitRes.json();
-            const profitRows = profitData.rows || [];
+            const response = await proxyFetch(url, headers);
+            const resultData = await response.json();
+            const rows = resultData.rows || [];
 
             let totalRevenue = 0, totalCost = 0, totalProfit = 0;
             const byProduct = [];
 
-            for (const row of profitRows) {
+            for (const row of rows) {
                 const revenue = (row.sellSum || 0) / 100;
                 const cost = (row.sellCostSum || 0) / 100;
                 const profit = (row.profit || 0) / 100;
@@ -561,326 +322,43 @@
 
             byProduct.sort((a, b) => b.profit - a.profit);
 
-            // Загружаем движение денег
-            updateProgress(50, 'Загрузка движения денег...', 'Запрос данных по счетам');
-            const moneyUrl = `https://api.moysklad.ru/api/remap/1.2/report/money/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`;
-            const moneyRes = await proxyFetch(moneyUrl, headers);
-            const moneyData = await moneyRes.json();
-            const moneySeries = moneyData.series || [];
-
-            // Загружаем остатки
-            updateProgress(70, 'Загрузка остатков...', 'Запрос данных со склада');
-            const stockUrl = `https://api.moysklad.ru/api/remap/1.2/report/stock/all?limit=1000`;
-            const stockRes = await proxyFetch(stockUrl, headers);
-            const stockData = await stockRes.json();
-            const stockRows = stockData.rows || [];
-
-            // Обновляем показатели
-            const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
-            document.getElementById('dash-revenue').textContent = formatMoney(totalRevenue);
-            document.getElementById('dash-profit').textContent = formatMoney(totalProfit);
-            document.getElementById('dash-margin').textContent = margin.toFixed(1) + '%';
-            document.getElementById('dash-sales-count').textContent = formatNumber(profitRows.length);
-
-            // График прибыльности
-            const dates = moneySeries.map(s => s.date.split(' ')[0].slice(5));
-            const revenueData = moneySeries.map(s => (s.credit || 0) / 100);
-            const profitData = moneySeries.map(s => ((s.credit || 0) - (s.debit || 0)) / 100);
-            
-            renderChart('dash-profit-chart', dates, [
-                { label: 'Приход', data: revenueData, color: '#4ade80' },
-                { label: 'Прибыль', data: profitData, color: '#60a5fa' }
-            ]);
-
-            // График денег
-            const incomeData = moneySeries.map(s => (s.credit || 0) / 100);
-            const outcomeData = moneySeries.map(s => (s.debit || 0) / 100);
-            
-            renderChart('dash-money-chart', dates, [
-                { label: 'Приход', data: incomeData, color: '#4ade80' },
-                { label: 'Расход', data: outcomeData, color: '#f87171' }
-            ]);
-
-            // Топ товаров
-            document.getElementById('dash-top-products').innerHTML = byProduct.slice(0, 10).map(p => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2 font-medium">${p.name}</td>
-                    <td class="py-2 text-right text-blue-400">${formatMoney(p.profit)}</td>
-                    <td class="py-2 text-right text-yellow-400">${(p.margin * 100).toFixed(1)}%</td>
-                </tr>
-            `).join('') || '<tr><td colspan="3" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
-
-            // Критические остатки
-            const lowStock = stockRows
-                .filter(r => r.stock < 10 && r.stock > 0)
-                .sort((a, b) => a.stock - b.stock)
-                .slice(0, 10);
-            
-            document.getElementById('dash-low-stock').innerHTML = lowStock.map(r => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2 font-medium">${r.name}</td>
-                    <td class="py-2 text-right text-red-400">${formatNumber(r.stock)} шт</td>
-                    <td class="py-2 text-right text-yellow-400">${formatMoney((r.price || 0) / 100 * r.stock)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="3" class="py-4 text-center text-green-400">Критических остатков нет</td></tr>';
-        }
-
-        // ================= 2. ПРИБЫЛЬНОСТЬ =================
-        async function loadProfit(headers, dateFrom, dateTo) {
-            updateProgress(20, 'Загрузка прибыльности...', 'Запрос отчета по товарам');
-            
-            const momentFrom = `${dateFrom} 00:00:00`;
-            const momentTo = `${dateTo} 23:59:59`;
-
-            const profitUrl = `https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
-            const profitRes = await proxyFetch(profitUrl, headers);
-            const profitData = await profitRes.json();
-            const profitRows = profitData.rows || [];
-
-            let totalRevenue = 0, totalCost = 0, totalProfit = 0;
-            const byProduct = [];
-
-            for (const row of profitRows) {
-                const revenue = (row.sellSum || 0) / 100;
-                const cost = (row.sellCostSum || 0) / 100;
-                const profit = (row.profit || 0) / 100;
-                const name = row.assortment?.name || 'Без названия';
-                const margin = row.margin || 0;
-                const salesMargin = row.salesMargin || 0;
-                
-                totalRevenue += revenue;
-                totalCost += cost;
-                totalProfit += profit;
-                
-                byProduct.push({ name, revenue, cost, profit, margin, salesMargin });
-            }
-
-            byProduct.sort((a, b) => b.profit - a.profit);
-
-            // Обновляем показатели
-            const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) : 0;
+            const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
             document.getElementById('profit-revenue').textContent = formatMoney(totalRevenue);
             document.getElementById('profit-cost').textContent = formatMoney(totalCost);
             document.getElementById('profit-value').textContent = formatMoney(totalProfit);
-            document.getElementById('profit-margin').textContent = (avgMargin * 100).toFixed(1) + '%';
-            document.getElementById('profit-sales-margin').textContent = (avgMargin * 100).toFixed(1) + '%';
+            document.getElementById('profit-margin').textContent = avgMargin.toFixed(1) + '%';
 
-            // ABC-анализ
-            calculateABC(byProduct);
-
-            // По умолчанию показываем по товарам
-            switchProfitTab('products');
+            document.getElementById('profit-top-table').innerHTML = byProduct.slice(0, 10).map(p => `
+                <tr class="hover:bg-slate-800/50 transition">
+                    <td class="py-2 font-medium">${p.name}</td>
+                    <td class="py-2 text-right text-green-400">${formatMoney(p.revenue)}</td>
+                    <td class="py-2 text-right text-blue-400">${formatMoney(p.profit)}</td>
+                    <td class="py-2 text-right text-yellow-400">${(p.margin * 100).toFixed(1)}%</td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
         }
 
-        function switchProfitTab(tab) {
-            document.querySelectorAll('#view-profit .tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.classList.add('bg-slate-800');
-            });
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            document.getElementById(`tab-${tab}`).classList.remove('bg-slate-800');
-
-            const content = document.getElementById('profit-content');
-            
-            if (tab === 'products') {
-                content.innerHTML = `
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                                <tr>
-                                    <th class="py-2 text-left">Товар</th>
-                                    <th class="py-2 text-right">Выручка</th>
-                                    <th class="py-2 text-right">Себестоимость</th>
-                                    <th class="py-2 text-right">Прибыль</th>
-                                    <th class="py-2 text-right">Рентабельность</th>
-                                </tr>
-                            </thead>
-                            <tbody id="profit-products-table" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                `;
-                // Данные уже загружены, заполняем таблицу
-                const rows = JSON.parse(localStorage.getItem('profit_products') || '[]');
-                document.getElementById('profit-products-table').innerHTML = rows.map(p => `
-                    <tr class="hover:bg-slate-800/50 transition">
-                        <td class="py-2 font-medium">${p.name}</td>
-                        <td class="py-2 text-right text-green-400">${formatMoney(p.revenue)}</td>
-                        <td class="py-2 text-right text-red-400">${formatMoney(p.cost)}</td>
-                        <td class="py-2 text-right text-blue-400">${formatMoney(p.profit)}</td>
-                        <td class="py-2 text-right text-yellow-400">${(p.salesMargin * 100).toFixed(1)}%</td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        function calculateABC(products) {
-            localStorage.setItem('profit_products', JSON.stringify(products));
-            
-            const totalProfit = products.reduce((sum, p) => sum + p.profit, 0);
-            let cumulativeProfit = 0;
-            
-            const groupA = [];
-            const groupB = [];
-            const groupC = [];
-
-            for (const p of products) {
-                cumulativeProfit += p.profit;
-                const percentage = cumulativeProfit / totalProfit;
-                
-                if (percentage <= 0.8) groupA.push(p);
-                else if (percentage <= 0.95) groupB.push(p);
-                else groupC.push(p);
-            }
-
-            document.getElementById('abc-a-count').textContent = `${groupA.length} товаров`;
-            document.getElementById('abc-a-sum').textContent = formatMoney(groupA.reduce((sum, p) => sum + p.profit, 0));
-            document.getElementById('abc-b-count').textContent = `${groupB.length} товаров`;
-            document.getElementById('abc-b-sum').textContent = formatMoney(groupB.reduce((sum, p) => sum + p.profit, 0));
-            document.getElementById('abc-c-count').textContent = `${groupC.length} товаров`;
-            document.getElementById('abc-c-sum').textContent = formatMoney(groupC.reduce((sum, p) => sum + p.profit, 0));
-
-            // График ABC
-            if (charts['abc-chart']) charts['abc-chart'].destroy();
-            charts['abc-chart'] = new Chart(document.getElementById('abc-chart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Группа A', 'Группа B', 'Группа C'],
-                    datasets: [{
-                        label: 'Прибыль',
-                        data: [
-                            groupA.reduce((sum, p) => sum + p.profit, 0),
-                            groupB.reduce((sum, p) => sum + p.profit, 0),
-                            groupC.reduce((sum, p) => sum + p.profit, 0)
-                        ],
-                        backgroundColor: ['#4ade80', '#facc15', '#f87171']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { labels: { color: '#94a3b8' } } },
-                    scales: {
-                        y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
-                        x: { ticks: { color: '#64748b' }, grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // ================= 3. ПРОДАЖИ =================
-        async function loadSales(headers, dateFrom, dateTo) {
-            updateProgress(20, 'Загрузка показателей продаж...', 'Запрос данных');
-            
-            const momentFrom = `${dateFrom} 00:00:00`;
-            const momentTo = `${dateTo} 23:59:59`;
-
-            // Показатели продаж
-            const salesUrl = `https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${salesInterval}`;
-            const salesRes = await proxyFetch(salesUrl, headers);
-            const salesData = await salesRes.json();
-            const salesSeries = salesData.series || [];
-
-            // Показатели заказов
-            const ordersUrl = `https://api.moysklad.ru/api/remap/1.2/report/orders/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${salesInterval}`;
-            const ordersRes = await proxyFetch(ordersUrl, headers);
-            const ordersData = await ordersRes.json();
-            const ordersSeries = ordersData.series || [];
-
-            let totalSalesCount = 0, totalSalesSum = 0;
-            let totalOrdersCount = 0;
-
-            for (const s of salesSeries) {
-                totalSalesCount += s.quantity || 0;
-                totalSalesSum += (s.sum || 0) / 100;
-            }
-
-            for (const o of ordersSeries) {
-                totalOrdersCount += o.quantity || 0;
-            }
-
-            const avgCheck = totalSalesCount > 0 ? totalSalesSum / totalSalesCount : 0;
-
-            document.getElementById('sales-count').textContent = formatNumber(totalSalesCount);
-            document.getElementById('sales-sum').textContent = formatMoney(totalSalesSum);
-            document.getElementById('sales-avg').textContent = formatMoney(avgCheck);
-            document.getElementById('orders-count').textContent = formatNumber(totalOrdersCount);
-
-            // Графики
-            const dates = salesSeries.map(s => s.date.split(' ')[0].slice(5));
-            const salesData_arr = salesSeries.map(s => (s.sum || 0) / 100);
-            const ordersData_arr = ordersSeries.map(o => o.quantity || 0);
-
-            renderChart('sales-chart', dates, [
-                { label: 'Сумма продаж', data: salesData_arr, color: '#4ade80' }
-            ]);
-
-            renderChart('orders-chart', dates, [
-                { label: 'Количество заказов', data: ordersData_arr, color: '#60a5fa' }
-            ]);
-        }
-
-        function setSalesInterval(interval) {
-            salesInterval = interval;
-            document.querySelectorAll('#view-sales .tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.classList.add('bg-slate-800');
-            });
-            event.target.classList.add('active');
-            event.target.classList.remove('bg-slate-800');
-            loadCurrentView();
-        }
-
-        // ================= 4. ДЕНЬГИ =================
+        // 2. Движение денег: /report/money/plotseries
         async function loadMoney(headers, dateFrom, dateTo) {
-            updateProgress(20, 'Загрузка движения денег...', 'Запрос данных');
+            const momentFrom = dateFrom + ' 00:00:00';
+            const momentTo = dateTo + ' 23:59:59';
+            const url = 'https://api.moysklad.ru/api/remap/1.2/report/money/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day';
             
-            const momentFrom = `${dateFrom} 00:00:00`;
-            const momentTo = `${dateTo} 23:59:59`;
-
-            // Движение денег
-            const moneyUrl = `https://api.moysklad.ru/api/remap/1.2/report/money/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`;
-            const moneyRes = await proxyFetch(moneyUrl, headers);
-            const moneyData = await moneyRes.json();
-            const moneySeries = moneyData.series || [];
-
-            let totalIncome = 0, totalOutcome = 0;
-            for (const s of moneySeries) {
-                totalIncome += (s.credit || 0) / 100;
-                totalOutcome += (s.debit || 0) / 100;
-            }
-
+            const response = await proxyFetch(url, headers);
+            const resultData = await response.json();
+            
+            const totalIncome = (resultData.credit || 0) / 100;
+            const totalOutcome = (resultData.debit || 0) / 100;
             const balance = totalIncome - totalOutcome;
 
             document.getElementById('money-income').textContent = formatMoney(totalIncome);
             document.getElementById('money-outcome').textContent = formatMoney(totalOutcome);
             document.getElementById('money-balance').textContent = formatMoney(balance);
 
-            // Остатки по счетам
-            updateProgress(60, 'Загрузка остатков по счетам...', 'Запрос данных');
-            const accountsUrl = `https://api.moysklad.ru/api/remap/1.2/report/money/byaccount`;
-            const accountsRes = await proxyFetch(accountsUrl, headers);
-            const accountsData = await accountsRes.json();
-            const accountsRows = accountsData.rows || [];
-
-            let totalAccountsBalance = 0;
-            for (const r of accountsRows) {
-                totalAccountsBalance += (r.balance || 0) / 100;
-            }
-
-            document.getElementById('money-accounts').textContent = formatMoney(totalAccountsBalance);
-
-            // Таблица счетов
-            document.getElementById('money-accounts-table').innerHTML = accountsRows.map(r => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2">${r.organization?.name || '-'}</td>
-                    <td class="py-2">${r.account?.name || 'Касса'}</td>
-                    <td class="py-2 text-right text-green-400">${formatMoney((r.balance || 0) / 100)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="3" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
-
-            // График
-            const dates = moneySeries.map(s => s.date.split(' ')[0].slice(5));
-            const incomeData = moneySeries.map(s => (s.credit || 0) / 100);
-            const outcomeData = moneySeries.map(s => (s.debit || 0) / 100);
+            const series = resultData.series || [];
+            const dates = series.map(s => s.date.split(' ')[0].slice(5));
+            const incomeData = series.map(s => (s.credit || 0) / 100);
+            const outcomeData = series.map(s => (s.debit || 0) / 100);
 
             renderChart('money-chart', dates, [
                 { label: 'Приход', data: incomeData, color: '#4ade80' },
@@ -888,135 +366,153 @@
             ]);
         }
 
-        // ================= 5. СКЛАД =================
-        async function loadStock(headers, dateFrom, dateTo) {
-            updateProgress(20, 'Загрузка остатков...', 'Запрос расширенного отчета');
+        // 3. Оборачиваемость: /report/turnover/all
+        async function loadTurnover(headers, dateFrom, dateTo) {
+            const momentFrom = dateFrom + ' 00:00:00';
+            const momentTo = dateTo + ' 23:59:59';
+            const url = 'https://api.moysklad.ru/api/remap/1.2/report/turnover/all?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&limit=1000';
             
-            const momentFrom = `${dateFrom} 00:00:00`;
-            const momentTo = `${dateTo} 23:59:59`;
+            const response = await proxyFetch(url, headers);
+            const resultData = await response.json();
+            const rows = resultData.rows || [];
 
-            // Расширенный отчет об остатках
-            const stockUrl = `https://api.moysklad.ru/api/remap/1.2/report/stock/all?limit=1000`;
-            const stockRes = await proxyFetch(stockUrl, headers);
-            const stockData = await stockRes.json();
-            const stockRows = stockData.rows || [];
+            let totalIncomeQty = 0, totalOutcomeQty = 0, totalEndQty = 0, totalEndSum = 0;
+            const turnoverData = [];
 
-            let totalItems = 0, totalValue = 0, zeroCount = 0;
+            for (const row of rows) {
+                const incomeQty = row.income?.quantity || 0;
+                const outcomeQty = Math.abs(row.outcome?.quantity || 0);
+                const endQty = row.onPeriodEnd?.quantity || 0;
+                const endSum = (row.onPeriodEnd?.sum || 0) / 100;
+                const name = row.assortment?.name || 'Без названия';
+
+                if (incomeQty > 0 || outcomeQty > 0) {
+                    totalIncomeQty += incomeQty;
+                    totalOutcomeQty += outcomeQty;
+                    totalEndQty += endQty;
+                    totalEndSum += endSum;
+                    turnoverData.push({ name, incomeQty, outcomeQty, endQty });
+                }
+            }
+
+            turnoverData.sort((a, b) => b.outcomeQty - a.outcomeQty);
+
+            document.getElementById('turnover-income').textContent = formatNumber(totalIncomeQty);
+            document.getElementById('turnover-outcome').textContent = formatNumber(totalOutcomeQty);
+            document.getElementById('turnover-end').textContent = formatNumber(totalEndQty);
+            document.getElementById('turnover-end-sum').textContent = formatMoney(totalEndSum);
+
+            document.getElementById('turnover-table').innerHTML = turnoverData.slice(0, 15).map(item => `
+                <tr class="hover:bg-slate-800/50 transition">
+                    <td class="py-2 font-medium">${item.name}</td>
+                    <td class="py-2 text-right text-green-400">${formatNumber(item.incomeQty)}</td>
+                    <td class="py-2 text-right text-red-400">${formatNumber(item.outcomeQty)}</td>
+                    <td class="py-2 text-right text-blue-400">${formatNumber(item.endQty)}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
+        }
+
+        // 4. Продажи: /report/sales/plotseries
+        async function loadSales(headers, dateFrom, dateTo) {
+            const momentFrom = dateFrom + ' 00:00:00';
+            const momentTo = dateTo + ' 23:59:59';
+            const url = 'https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day';
+            
+            const response = await proxyFetch(url, headers);
+            const resultData = await response.json();
+            const series = resultData.series || [];
+
+            let totalCount = 0, totalSum = 0;
+            const dates = [];
+            const sumData = [];
+            const countData = [];
+
+            for (const s of series) {
+                const count = s.quantity || 0;
+                const sum = (s.sum || 0) / 100;
+                totalCount += count;
+                totalSum += sum;
+                dates.push(s.date.split(' ')[0].slice(5));
+                sumData.push(sum);
+                countData.push(count);
+            }
+
+            const avgCheck = totalCount > 0 ? totalSum / totalCount : 0;
+
+            document.getElementById('sales-count').textContent = formatNumber(totalCount);
+            document.getElementById('sales-sum').textContent = formatMoney(totalSum);
+            document.getElementById('sales-avg').textContent = formatMoney(avgCheck);
+
+            renderChart('sales-chart', dates, [
+                { label: 'Сумма', data: sumData, color: '#4ade80' },
+                { label: 'Количество', data: countData, color: '#60a5fa' }
+            ]);
+        }
+
+        // 5. Остатки: /report/stock/all
+        async function loadStock(headers) {
+            const url = 'https://api.moysklad.ru/api/remap/1.2/report/stock/all?limit=1000';
+            
+            const response = await proxyFetch(url, headers);
+            const resultData = await response.json();
+            const rows = resultData.rows || [];
+
+            let totalItems = 0, totalValue = 0, positiveCount = 0;
             const stockList = [];
 
-            for (const r of stockRows) {
-                const qty = r.stock || 0;
-                const costPerUnit = (r.price || 0) / 100;
-                const salePrice = (r.salePrice || 0) / 100;
+            for (const row of rows) {
+                const qty = row.stock || 0;
+                const costPerUnit = (row.price || 0) / 100;
+                const name = row.name || 'Без названия';
                 const value = qty * costPerUnit;
-                
+
                 totalItems++;
                 totalValue += value;
-                if (qty === 0) zeroCount++;
+                if (qty > 0) positiveCount++;
 
-                stockList.push({
-                    name: r.name,
-                    stock: qty,
-                    reserve: r.reserve || 0,
-                    quantity: r.quantity || 0,
-                    costPerUnit,
-                    salePrice,
-                    value
-                });
+                stockList.push({ name, qty, costPerUnit, value });
             }
 
             stockList.sort((a, b) => b.value - a.value);
 
-            document.getElementById('stock-total-items').textContent = formatNumber(totalItems);
+            document.getElementById('stock-total-items').textContent = totalItems;
             document.getElementById('stock-total-value').textContent = formatMoney(totalValue);
-            document.getElementById('stock-zero').textContent = formatNumber(zeroCount);
+            document.getElementById('stock-positive').textContent = positiveCount;
 
-            // Таблица остатков
-            document.getElementById('stock-table').innerHTML = stockList.slice(0, 100).map(r => `
+            document.getElementById('stock-table').innerHTML = stockList.slice(0, 100).map(item => `
                 <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2 font-medium">${r.name}</td>
-                    <td class="py-2 text-right ${r.stock === 0 ? 'text-red-400' : 'text-green-400'}">${formatNumber(r.stock)}</td>
-                    <td class="py-2 text-right text-yellow-400">${formatNumber(r.reserve)}</td>
-                    <td class="py-2 text-right text-blue-400">${formatNumber(r.quantity)}</td>
-                    <td class="py-2 text-right text-gray-400">${formatMoney(r.costPerUnit)}</td>
-                    <td class="py-2 text-right text-purple-400">${formatMoney(r.salePrice)}</td>
-                    <td class="py-2 text-right font-semibold">${formatMoney(r.value)}</td>
+                    <td class="py-2 font-medium">${item.name}</td>
+                    <td class="py-2 text-right ${item.qty === 0 ? 'text-red-400' : 'text-green-400'}">${formatNumber(item.qty)}</td>
+                    <td class="py-2 text-right text-gray-400">${formatMoney(item.costPerUnit)}</td>
+                    <td class="py-2 text-right font-semibold">${formatMoney(item.value)}</td>
                 </tr>
             `).join('');
-
-            // Обороты по товарам
-            updateProgress(60, 'Загрузка оборотов...', 'Запрос данных');
-            const turnoverUrl = `https://api.moysklad.ru/api/remap/1.2/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
-            const turnoverRes = await proxyFetch(turnoverUrl, headers);
-            const turnoverData = await turnoverRes.json();
-            const turnoverRows = turnoverData.rows || [];
-
-            document.getElementById('turnover-table').innerHTML = turnoverRows.slice(0, 50).map(r => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2 font-medium">${r.assortment?.name || '-'}</td>
-                    <td class="py-2 text-right">${formatNumber(r.onPeriodStart?.quantity || 0)}</td>
-                    <td class="py-2 text-right text-green-400">${formatNumber(r.income?.quantity || 0)}</td>
-                    <td class="py-2 text-right text-red-400">${formatNumber(r.outcome?.quantity || 0)}</td>
-                    <td class="py-2 text-right text-blue-400">${formatNumber(r.onPeriodEnd?.quantity || 0)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="5" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
         }
 
-        // ================= 6. КЛИЕНТЫ =================
-        async function loadClients(headers, dateFrom, dateTo) {
-            updateProgress(20, 'Загрузка показателей контрагентов...', 'Запрос данных');
+        // 6. Клиенты: /report/counterparty
+        async function loadClients(headers) {
+            const url = 'https://api.moysklad.ru/api/remap/1.2/report/counterparty?limit=1000';
             
-            const clientsUrl = `https://api.moysklad.ru/api/remap/1.2/report/counterparty?limit=1000`;
-            const clientsRes = await proxyFetch(clientsUrl, headers);
-            const clientsData = await clientsRes.json();
-            const clientsRows = clientsData.rows || [];
+            const response = await proxyFetch(url, headers);
+            const resultData = await response.json();
+            const rows = resultData.rows || [];
 
-            // Таблица клиентов
-            document.getElementById('clients-table').innerHTML = clientsRows
-                .filter(c => c.demandsCount > 0)
-                .sort((a, b) => b.demandsSum - a.demandsSum)
-                .slice(0, 50)
-                .map(c => `
-                    <tr class="hover:bg-slate-800/50 transition">
-                        <td class="py-2 font-medium">${c.counterparty?.name || '-'}</td>
-                        <td class="py-2 text-right">${formatNumber(c.demandsCount)}</td>
-                        <td class="py-2 text-right text-green-400">${formatMoney((c.demandsSum || 0) / 100)}</td>
-                        <td class="py-2 text-right text-purple-400">${formatMoney((c.averageReceipt || 0) / 100)}</td>
-                        <td class="py-2 text-right text-blue-400">${formatMoney((c.profit || 0) / 100)}</td>
-                        <td class="py-2 text-right ${c.balance < 0 ? 'text-red-400' : 'text-yellow-400'}">${formatMoney((c.balance || 0) / 100)}</td>
-                    </tr>
-                `).join('') || '<tr><td colspan="6" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
-
-            // График топ клиентов
-            const topClients = clientsRows
+            const clientsData = rows
                 .filter(c => c.demandsCount > 0)
                 .sort((a, b) => b.demandsSum - a.demandsSum)
                 .slice(0, 20);
 
-            if (charts['clients-chart']) charts['clients-chart'].destroy();
-            charts['clients-chart'] = new Chart(document.getElementById('clients-chart'), {
-                type: 'bar',
-                data: {
-                    labels: topClients.map(c => c.counterparty?.name || '-'),
-                    datasets: [{
-                        label: 'Сумма продаж',
-                        data: topClients.map(c => (c.demandsSum || 0) / 100),
-                        backgroundColor: '#60a5fa'
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    plugins: { legend: { labels: { color: '#94a3b8' } } },
-                    scales: {
-                        x: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
-                        y: { ticks: { color: '#64748b' }, grid: { display: false } }
-                    }
-                }
-            });
+            document.getElementById('clients-table').innerHTML = clientsData.map(c => `
+                <tr class="hover:bg-slate-800/50 transition">
+                    <td class="py-2 font-medium">${c.counterparty?.name || '-'}</td>
+                    <td class="py-2 text-right">${formatNumber(c.demandsCount)}</td>
+                    <td class="py-2 text-right text-green-400">${formatMoney((c.demandsSum || 0) / 100)}</td>
+                    <td class="py-2 text-right text-blue-400">${formatMoney((c.profit || 0) / 100)}</td>
+                    <td class="py-2 text-right ${c.balance < 0 ? 'text-red-400' : 'text-yellow-400'}">${formatMoney((c.balance || 0) / 100)}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
         }
 
-        // ================= ВИЗУАЛИЗАЦИЯ =================
         function renderChart(canvasId, labels, datasets) {
             if (charts[canvasId]) charts[canvasId].destroy();
             const ctx = document.getElementById(canvasId);
@@ -1042,7 +538,7 @@
                     interaction: { mode: 'index', intersect: false },
                     plugins: { 
                         legend: { labels: { color: '#94a3b8' } },
-                        tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` } }
+                        tooltip: { callbacks: { label: (context) => context.dataset.label + ': ' + formatMoney(context.parsed.y) } }
                     },
                     scales: { 
                         y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, 
@@ -1052,7 +548,6 @@
             });
         }
 
-        // ================= ИНИЦИАЛИЗАЦИЯ =================
         window.addEventListener('load', () => {
             const savedToken = localStorage.getItem('moysklad_token');
             if (savedToken) document.getElementById('token-input').value = savedToken;
