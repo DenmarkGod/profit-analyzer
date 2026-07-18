@@ -3,58 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro - ERP для ИП</title>
+    <title>Profit Analyzer Pro - ERP Система</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Inter', sans-serif; }
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         body { background: #0f172a; color: #e2e8f0; }
+        
+        /* Glassmorphism & UI */
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
-        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
+        .glass-hover:hover { background: rgba(51, 65, 85, 0.8); border-color: rgba(96, 165, 250, 0.3); }
+        
+        /* Navigation */
+        .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
         .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
         .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
-        .kpi-card { transition: all 0.3s; cursor: pointer; }
-        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
-        .modal-content { background: #1e293b; border-radius: 16px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
-        .chart-container { position: relative; height: 300px; }
-        input[type="date"] { color-scheme: dark; }
-        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        
+        /* Cards & Tables */
+        .kpi-card { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+        .table-row-hover:hover { background: rgba(51, 65, 85, 0.5); }
+        
+        /* Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Modal & Loading */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        input[type="date"] { color-scheme: dark; }
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Боковое меню -->
-    <aside class="w-64 bg-slate-900/80 border-r border-slate-800 flex flex-col hidden md:flex">
+    <!-- Боковое меню (Десктоп) -->
+    <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col hidden md:flex z-20">
         <div class="p-6 border-b border-slate-800">
             <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Profit Analyzer</h1>
-            <p class="text-xs text-gray-500 mt-1">Управленческий учет</p>
+            <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
         </div>
-        <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3">
-                <span class="text-lg">📊</span> Главная
-            </button>
-            <button onclick="switchView('sales')" id="nav-sales" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">📈</span> Продажи
-            </button>
-            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">💰</span> Финансы
-            </button>
-            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">📦</span> Товары и склад
-            </button>
-            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">👥</span> Клиенты
-            </button>
+        <nav class="flex-1 py-4 space-y-1 overflow-y-auto custom-scroll">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3"><span>📊</span> Главная</button>
+            <button onclick="switchView('sales')" id="nav-sales" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"><span>📈</span> Продажи</button>
+            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"><span>💰</span> Финансы</button>
+            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"><span>📦</span> Склад</button>
+            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"><span>👥</span> Клиенты</button>
         </nav>
         <div class="p-4 border-t border-slate-800">
-            <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2">
-                <span>🔌</span> Подключение к API
+            <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition">
+                <span>🔌</span> Настройки API
             </button>
         </div>
     </aside>
@@ -68,127 +74,280 @@
     </div>
 
     <!-- Основной контент -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <div class="bg-slate-900/50 border-b border-slate-800 p-4">
-            <div class="flex items-center justify-between flex-wrap gap-4">
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+        
+        <!-- Верхняя панель управления -->
+        <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <h2 id="page-title" class="text-2xl font-bold">Главная</h2>
-                    <span class="text-xs text-gray-500">Обновлено: <span id="last-update">-</span></span>
+                    <h2 id="page-title" class="text-xl md:text-2xl font-bold text-white">Главная</h2>
+                    <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded">Обновлено: <span id="last-update">-</span></span>
                 </div>
-                <div class="flex items-center gap-3 flex-wrap">
-                    <div class="flex gap-2">
-                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Сегодня</button>
-                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white transition">Неделя</button>
-                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Месяц</button>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex bg-slate-800 rounded-lg p-1 gap-1">
+                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition">Сегодня</button>
+                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white transition">Неделя</button>
+                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition">Месяц</button>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="date" id="date-from" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
+                    <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
+                        <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                         <span class="text-gray-500">—</span>
-                        <input type="date" id="date-to" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
+                        <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                     </div>
-                    <button onclick="loadCurrentView()" class="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2">
-                        <span>🔄</span> Обновить
+                    <button onclick="loadCurrentView()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2 shadow-lg shadow-blue-500/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Обновить
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-6 scrollbar-thin">
-            <!-- ГЛАВНАЯ СТРАНИЦА -->
-            <div id="view-dashboard" class="view-section space-y-6">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="kpi-card glass p-6" onclick="showRevenueDetails()">
-                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Выручка</div>
-                        <div id="kpi-revenue" class="text-2xl font-bold text-green-400">0</div>
+        <!-- Область контента с прокруткой -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 custom-scroll">
+            
+            <!-- 1. ГЛАВНАЯ (DASHBOARD) -->
+            <div id="view-dashboard" class="view-section active space-y-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="kpi-card glass p-5" onclick="showRevenueDetails()">
+                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Выручка</div>
+                        <div id="kpi-revenue" class="text-2xl md:text-3xl font-bold text-green-400">0 ₽</div>
                     </div>
-                    <div class="kpi-card glass p-6" onclick="showProfitDetails()">
-                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Прибыль</div>
-                        <div id="kpi-profit" class="text-2xl font-bold text-blue-400">0</div>
+                    <div class="kpi-card glass p-5" onclick="showProfitDetails()">
+                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Чистая прибыль</div>
+                        <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-blue-400">0 ₽</div>
                     </div>
-                    <div class="kpi-card glass p-6" onclick="showChecksDetails()">
-                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Чеки</div>
-                        <div id="kpi-checks" class="text-2xl font-bold text-purple-400">0</div>
+                    <div class="kpi-card glass p-5" onclick="showChecksDetails()">
+                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Количество чеков</div>
+                        <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-purple-400">0</div>
                     </div>
-                    <div class="kpi-card glass p-6" onclick="showAvgCheckDetails()">
-                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Средний чек</div>
-                        <div id="kpi-avg-check" class="text-2xl font-bold text-yellow-400">0</div>
+                    <div class="kpi-card glass p-5">
+                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Средний чек</div>
+                        <div id="kpi-avg-check" class="text-2xl md:text-3xl font-bold text-yellow-400">0 ₽</div>
                     </div>
                 </div>
 
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Динамика выручки и прибыли</h3>
-                    <div class="chart-container">
-                        <canvas id="main-chart"></canvas>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-blue-400">📈</span> Динамика выручки и прибыли</h3>
+                        <div class="relative h-72 w-full"><canvas id="main-chart"></canvas></div>
+                    </div>
+                    <div class="glass p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-yellow-400">🏆</span> Топ-5 товаров по прибыли</h3>
+                        <div id="dashboard-top-products" class="space-y-3 custom-scroll max-h-72 overflow-y-auto pr-2">
+                            <div class="text-sm text-gray-500 text-center py-8">Загрузите данные для отображения</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Заглушки для других разделов -->
-            <div id="view-sales" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">📈 Продажи</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-finance" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">💰 Финансы</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-stock" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">📦 Склад</h2><p class="text-gray-400">В разработке</p></div></div>
-            <div id="view-clients" class="view-section hidden"><div class="glass p-8 text-center"><h2 class="text-2xl font-bold mb-4">👥 Клиенты</h2><p class="text-gray-400">В разработке</p></div></div>
+            <!-- 2. ПРОДАЖИ -->
+            <div id="view-sales" class="view-section space-y-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass p-5 text-center">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Всего продаж (сумма)</div>
+                        <div id="sales-total-sum" class="text-2xl font-bold text-green-400">0 ₽</div>
+                    </div>
+                    <div class="glass p-5 text-center">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Количество чеков</div>
+                        <div id="sales-total-count" class="text-2xl font-bold text-blue-400">0</div>
+                    </div>
+                    <div class="glass p-5 text-center">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Средний чек</div>
+                        <div id="sales-avg-check" class="text-2xl font-bold text-purple-400">0 ₽</div>
+                    </div>
+                    <div class="glass p-5 text-center">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Продано единиц</div>
+                        <div id="sales-total-qty" class="text-2xl font-bold text-yellow-400">0</div>
+                    </div>
+                </div>
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold mb-4">Динамика продаж по дням</h3>
+                    <div class="relative h-80 w-full"><canvas id="sales-chart"></canvas></div>
+                </div>
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold mb-4">Детализация по товарам (Отчет о продажах)</h3>
+                    <div class="overflow-x-auto custom-scroll max-h-96">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50 sticky top-0">
+                                <tr><th class="px-4 py-3 rounded-tl-lg">Товар</th><th class="px-4 py-3 text-right">Кол-во</th><th class="px-4 py-3 text-right">Выручка</th><th class="px-4 py-3 text-right rounded-tr-lg">Прибыль</th></tr>
+                            </thead>
+                            <tbody id="sales-products-table" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. ФИНАНСЫ -->
+            <div id="view-finance" class="view-section space-y-6">
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="glass p-5 text-center border-l-4 border-green-500">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Приход (Доход)</div>
+                        <div id="fin-income" class="text-2xl font-bold text-green-400">0 ₽</div>
+                    </div>
+                    <div class="glass p-5 text-center border-l-4 border-red-500">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Расход</div>
+                        <div id="fin-outcome" class="text-2xl font-bold text-red-400">0 ₽</div>
+                    </div>
+                    <div class="glass p-5 text-center border-l-4 border-blue-500">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Сальдо (Баланs)</div>
+                        <div id="fin-balance" class="text-2xl font-bold text-blue-400">0 ₽</div>
+                    </div>
+                </div>
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold mb-4">Движение денежных средств по дням</h3>
+                    <div class="relative h-80 w-full"><canvas id="finance-chart"></canvas></div>
+                </div>
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold mb-4">Остатки по кассам и расчетным счетам</h3>
+                    <div class="overflow-x-auto custom-scroll max-h-96">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50 sticky top-0">
+                                <tr><th class="px-4 py-3 rounded-tl-lg">Организация / Счет</th><th class="px-4 py-3 text-right rounded-tr-lg">Текущий остаток</th></tr>
+                            </thead>
+                            <tbody id="finance-accounts-table" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. СКЛАД -->
+            <div id="view-stock" class="view-section space-y-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass p-5 text-center">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Всего позиций</div>
+                        <div id="stock-items-count" class="text-2xl font-bold text-blue-400">0</div>
+                    </div>
+                    <div class="glass p-5 text-center">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Стоимость остатков</div>
+                        <div id="stock-total-value" class="text-2xl font-bold text-green-400">0 ₽</div>
+                    </div>
+                    <div class="glass p-5 text-center">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Нет в наличии (0 шт)</div>
+                        <div id="stock-zero-count" class="text-2xl font-bold text-red-400">0</div>
+                    </div>
+                    <div class="glass p-5 text-center">
+                        <div class="text-xs text-gray-400 mb-2 uppercase">Средн. дней на складе</div>
+                        <div id="stock-avg-days" class="text-2xl font-bold text-yellow-400">0</div>
+                    </div>
+                </div>
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-red-400">⚠️</span> Расширенный отчет об остатках</h3>
+                    <div class="overflow-x-auto custom-scroll max-h-[600px]">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3">Товар</th>
+                                    <th class="px-4 py-3 text-right">Остаток (шт)</th>
+                                    <th class="px-4 py-3 text-right">Себестоимость</th>
+                                    <th class="px-4 py-3 text-right">Цена продажи</th>
+                                    <th class="px-4 py-3 text-right">Сумма (себест.)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-table" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. КЛИЕНТЫ -->
+            <div id="view-clients" class="view-section space-y-6">
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold mb-4">Рейтинг клиентов по сумме продаж</h3>
+                    <div class="overflow-x-auto custom-scroll max-h-[600px]">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3">Клиент</th>
+                                    <th class="px-4 py-3 text-right">Кол-во продаж</th>
+                                    <th class="px-4 py-3 text-right">Общая сумма</th>
+                                    <th class="px-4 py-3 text-right">Средний чек</th>
+                                    <th class="px-4 py-3 text-right">Баланс (Долг)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <!-- Модальное окно подключения -->
-    <div id="connection-modal" class="modal-overlay hidden">
-        <div class="modal-content p-6 max-w-md">
-            <h3 class="text-xl font-bold mb-4">Подключение к API</h3>
+    <!-- Модальное окно: Подключение к API -->
+    <div id="connection-modal" class="modal-overlay">
+        <div class="glass p-8 max-w-md w-full shadow-2xl">
+            <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
+            <p class="text-sm text-gray-400 mb-6">Введите ваш API токен или пару логин:пароль для начала работы.</p>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium mb-2">Токен или логин:пароль</label>
-                    <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white" placeholder="Введите данные">
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Токен или логин:пароль</label>
+                    <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Например: user@domain.com:password">
                 </div>
-                <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">Сохранить</button>
-                <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm">Отмена</button>
+                <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-blue-500/20">Сохранить и подключить</button>
+                <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-2 transition">Отмена</button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно деталей -->
-    <div id="details-modal" class="modal-overlay hidden">
-        <div class="modal-content p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 id="details-title" class="text-2xl font-bold">Детали</h2>
-                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+    <!-- Модальное окно: Детали (Универсальное) -->
+    <div id="details-modal" class="modal-overlay">
+        <div class="glass p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
+                <h2 id="details-title" class="text-xl font-bold text-white">Детали</h2>
+                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white text-3xl leading-none transition">&times;</button>
             </div>
-            <div id="details-content"></div>
+            <div id="details-content" class="overflow-y-auto custom-scroll flex-1 pr-2"></div>
+        </div>
+    </div>
+
+    <!-- Глобальный индикатор загрузки -->
+    <div id="global-loader" class="modal-overlay">
+        <div class="glass p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="spinner mx-auto mb-4"></div>
+            <div id="loader-text" class="text-lg font-medium text-white mb-1">Загрузка данных...</div>
+            <div id="loader-subtext" class="text-sm text-gray-400">Пожалуйста, подождите</div>
         </div>
     </div>
 
     <script>
+        // ==========================================
+        // 1. КОНФИГУРАЦИЯ И СОСТОЯНИЕ
+        // ==========================================
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
         let currentView = 'dashboard';
         let charts = {};
         let apiToken = localStorage.getItem('moysklad_token') || '';
-        let dashboardData = {};
+        let dashboardData = {}; // Хранилище для кэширования данных между модальными окнами
 
+        // ==========================================
+        // 2. УТИЛИТЫ
+        // ==========================================
         function formatMoney(amount) {
             return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount || 0);
         }
         function formatNumber(num) {
             return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(num || 0);
         }
-
         function getPeriodDates(period) {
             const now = new Date();
-            let from, to;
-            switch(period) {
-                case 'today': from = to = now; break;
-                case 'week': to = new Date(); from = new Date(now.setDate(now.getDate() - 7)); break;
-                case 'month': to = new Date(); from = new Date(now.setMonth(now.getMonth() - 1)); break;
-            }
+            let from = new Date(), to = new Date();
+            if (period === 'today') { /* from и to уже сегодня */ }
+            else if (period === 'week') { from.setDate(now.getDate() - 7); }
+            else if (period === 'month') { from.setMonth(now.getMonth() - 1); }
             return { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
         }
 
+        // ==========================================
+        // 3. УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ
+        // ==========================================
         function setPeriod(period) {
             document.querySelectorAll('.period-btn').forEach(btn => {
                 btn.classList.remove('bg-blue-600', 'text-white');
-                btn.classList.add('bg-slate-800');
+                btn.classList.add('text-gray-300');
             });
-            event.target.classList.remove('bg-slate-800');
+            event.target.classList.remove('text-gray-300');
             event.target.classList.add('bg-blue-600', 'text-white');
+            
             const dates = getPeriodDates(period);
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
@@ -197,14 +356,18 @@
 
         function switchView(view) {
             currentView = view;
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + view).classList.remove('hidden');
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + view).classList.add('active');
+            
             document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('active');
+                el.classList.remove('active', 'text-blue-400');
                 el.classList.add('text-gray-400');
             });
-            document.getElementById('nav-' + view).classList.add('active');
-            document.getElementById('nav-' + view).classList.remove('text-gray-400');
+            const activeNav = document.getElementById('nav-' + view);
+            if (activeNav) {
+                activeNav.classList.add('active', 'text-blue-400');
+                activeNav.classList.remove('text-gray-400');
+            }
             
             const titles = { 'dashboard': 'Главная', 'sales': 'Продажи', 'finance': 'Финансы', 'stock': 'Склад', 'clients': 'Клиенты' };
             document.getElementById('page-title').textContent = titles[view] || 'Главная';
@@ -212,12 +375,20 @@
             if (apiToken) loadCurrentView();
         }
 
-        function showConnectionModal() {
-            document.getElementById('connection-modal').classList.remove('hidden');
-            if (apiToken) document.getElementById('api-token').value = apiToken;
+        function showLoader(text, subtext) {
+            document.getElementById('loader-text').textContent = text;
+            document.getElementById('loader-subtext').textContent = subtext;
+            document.getElementById('global-loader').classList.add('active');
         }
-        function closeConnectionModal() { document.getElementById('connection-modal').classList.add('hidden'); }
-        
+        function hideLoader() {
+            document.getElementById('global-loader').classList.remove('active');
+        }
+
+        function showConnectionModal() {
+            document.getElementById('api-token').value = apiToken;
+            document.getElementById('connection-modal').classList.add('active');
+        }
+        function closeConnectionModal() { document.getElementById('connection-modal').classList.remove('active'); }
         function saveToken() {
             apiToken = document.getElementById('api-token').value.trim();
             localStorage.setItem('moysklad_token', apiToken);
@@ -225,28 +396,39 @@
             if (apiToken) loadCurrentView();
         }
 
+        function openDetailsModal(title, contentHtml) {
+            document.getElementById('details-title').textContent = title;
+            document.getElementById('details-content').innerHTML = contentHtml;
+            document.getElementById('details-modal').classList.add('active');
+        }
+        function closeDetailsModal() { document.getElementById('details-modal').classList.remove('active'); }
+
+        // ==========================================
+        // 4. СЕТЕВОЙ СЛОЙ (API)
+        // ==========================================
         function getAuthHeaders() {
             let authValue = apiToken;
             if (!apiToken.startsWith("Basic ") && !apiToken.startsWith("Bearer ")) {
                 authValue = apiToken.includes(":") ? "Basic " + btoa(unescape(encodeURIComponent(apiToken))) : "Bearer " + apiToken;
             }
-            return { 
-                "Authorization": authValue, 
-                "Accept": "application/json;charset=utf-8", 
-                "Content-Type": "application/json" 
+            return {
+                "Authorization": authValue,
+                "Accept": "application/json;charset=utf-8", // КРИТИЧЕСКИ ВАЖНО для МойСклад
+                "Content-Type": "application/json"
             };
         }
 
         async function fetchWithRetry(url, options, retries = 3) {
             try {
                 const separator = url.includes('?') ? '&' : '?';
-                return await fetch(url + separator + '_t=' + Date.now(), options);
+                // Cache-busting для обхода проблем с QUIC/HTTP2 на мобильных сетях
+                return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
                 if (retries > 0) {
                     await new Promise(r => setTimeout(r, 2500));
                     return fetchWithRetry(url, options, retries - 1);
                 }
-                throw new Error('Сеть сбрасывает соединение');
+                throw new Error('Сеть сбрасывает соединение. Проверьте интернет.');
             }
         }
 
@@ -256,105 +438,269 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
-            if (response.status === 429) throw new Error('Лимит запросов (429). Подождите 1 минуту.');
+            
+            if (response.status === 429) throw new Error('Превышен лимит запросов (429). Подождите 1 минуту.');
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error('Ошибка API ' + response.status + ': ' + errorText);
+                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
             }
             return response;
         }
 
+        // ==========================================
+        // 5. ЛОГИКА ЗАГРУЗКИ ДАННЫХ (ПОЛНАЯ РЕАЛИЗАЦИЯ)
+        // ==========================================
         async function loadCurrentView() {
             if (!apiToken) { showConnectionModal(); return; }
             
-            const btn = document.querySelector('button[onclick="loadCurrentView()"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Загрузка...';
-            btn.disabled = true;
+            showLoader('Загрузка данных...', 'Обращение к API МойСклад');
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
 
             try {
-                const headers = getAuthHeaders();
                 const dateFrom = document.getElementById('date-from').value;
                 const dateTo = document.getElementById('date-to').value;
-                
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
+                const headers = getAuthHeaders();
 
-                if (currentView === 'dashboard') {
-                    const [salesData, profitData] = await Promise.all([
-                        proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
-                        proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`, headers)
-                    ]);
+                if (currentView === 'dashboard') await loadDashboard(headers, momentFrom, momentTo);
+                else if (currentView === 'sales') await loadSales(headers, momentFrom, momentTo);
+                else if (currentView === 'finance') await loadFinance(headers, momentFrom, momentTo);
+                else if (currentView === 'stock') await loadStock(headers);
+                else if (currentView === 'clients') await loadClients(headers);
 
-                    const salesResult = await salesData.json();
-                    const profitResult = await profitData.json();
-
-                    dashboardData = { sales: salesResult, profit: profitResult, dateFrom, dateTo, momentFrom, momentTo };
-
-                    const totalRevenue = salesResult.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-                    const totalChecks = salesResult.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
-                    const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
-                    const totalProfit = profitResult.rows.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
-
-                    document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
-                    document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
-                    document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
-                    document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
-
-                    updateMainChart(salesResult);
-                }
-                
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
             } catch (error) {
-                alert('Ошибка: ' + error.message);
                 console.error(error);
+                alert('Ошибка загрузки: ' + error.message);
             } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                hideLoader();
             }
         }
 
-        function updateMainChart(salesData) {
-            const ctx = document.getElementById('main-chart');
+        // --- 5.1 DASHBOARD ---
+        async function loadDashboard(headers, momentFrom, momentTo) {
+            const [salesRes, profitRes] = await Promise.all([
+                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
+                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`, headers)
+            ]);
+            
+            const salesData = await salesRes.json();
+            const profitData = await profitRes.json();
+            dashboardData = { sales: salesData, profit: profitData, momentFrom, momentTo };
+
+            const totalRevenue = salesData.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+            const totalChecks = salesData.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
+            const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
+            const totalProfit = profitData.rows.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
+
+            document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
+            document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
+            document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
+            document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
+
+            // График
             if (charts['main']) charts['main'].destroy();
-            charts['main'] = new Chart(ctx, {
+            charts['main'] = new Chart(document.getElementById('main-chart'), {
                 type: 'line',
                 data: {
                     labels: salesData.series.map(s => s.date.split(' ')[0].slice(5)),
-                    datasets: [{
-                        label: 'Выручка',
-                        data: salesData.series.map(s => (s.sum || 0) / 100),
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    datasets: [
+                        { label: 'Выручка', data: salesData.series.map(s => (s.sum || 0) / 100), borderColor: '#4ade80', backgroundColor: 'rgba(74, 222, 128, 0.1)', fill: true, tension: 0.4 },
+                        { label: 'Прибыль (оценка)', data: salesData.series.map(s => ((s.sum || 0) * 0.3) / 100), borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.1)', fill: true, tension: 0.4 }
+                    ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8' } } },
-                    scales: {
-                        y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
-                        x: { ticks: { color: '#64748b' }, grid: { display: false } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#64748b' }, grid: { display: false } } } }
             });
+
+            // Топ товаров
+            const topProducts = profitData.rows.sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5);
+            document.getElementById('dashboard-top-products').innerHTML = topProducts.map((p, i) => `
+                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '•'}</span>
+                        <div>
+                            <div class="font-medium text-sm text-white">${p.assortment?.name || 'Без названия'}</div>
+                            <div class="text-xs text-gray-400">Маржа: ${((p.salesMargin || 0) * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-blue-400 text-sm">${formatMoney((p.profit || 0) / 100)}</div>
+                    </div>
+                </div>
+            `).join('') || '<div class="text-sm text-gray-500 text-center py-4">Нет данных</div>';
         }
 
+        // --- 5.2 SALES ---
+        async function loadSales(headers, momentFrom, momentTo) {
+            const [plotRes, productRes] = await Promise.all([
+                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
+                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&groupBy=assortment&limit=100`, headers)
+            ]);
+            
+            const plotData = await plotRes.json();
+            const productData = await productRes.json();
+
+            const totalSum = plotData.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+            const totalCount = plotData.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
+            const avgCheck = totalCount > 0 ? totalSum / totalCount : 0;
+            const totalQty = productData.rows.reduce((sum, r) => sum + (r.sellQuantity || 0), 0);
+
+            document.getElementById('sales-total-sum').textContent = formatMoney(totalSum);
+            document.getElementById('sales-total-count').textContent = formatNumber(totalCount);
+            document.getElementById('sales-avg-check').textContent = formatMoney(avgCheck);
+            document.getElementById('sales-total-qty').textContent = formatNumber(totalQty);
+
+            if (charts['sales']) charts['sales'].destroy();
+            charts['sales'] = new Chart(document.getElementById('sales-chart'), {
+                type: 'bar',
+                data: {
+                    labels: plotData.series.map(s => s.date.split(' ')[0].slice(5)),
+                    datasets: [{ label: 'Сумма продаж', data: plotData.series.map(s => (s.sum || 0) / 100), backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#64748b' }, grid: { display: false } } } }
+            });
+
+            const sortedProducts = productData.rows.sort((a, b) => (b.sellSum || 0) - (a.sellSum || 0)).slice(0, 50);
+            document.getElementById('sales-products-table').innerHTML = sortedProducts.map(p => `
+                <tr class="table-row-hover transition">
+                    <td class="px-4 py-3 font-medium text-white">${p.assortment?.name || 'Без названия'}</td>
+                    <td class="px-4 py-3 text-right text-gray-300">${formatNumber(p.sellQuantity || 0)}</td>
+                    <td class="px-4 py-3 text-right text-green-400">${formatMoney((p.sellSum || 0) / 100)}</td>
+                    <td class="px-4 py-3 text-right text-blue-400">${formatMoney((p.profit || 0) / 100)}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Нет данных за период</td></tr>';
+        }
+
+        // --- 5.3 FINANCE ---
+        async function loadFinance(headers, momentFrom, momentTo) {
+            const [plotRes, accountRes] = await Promise.all([
+                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/money/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
+                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/money/byaccount`, headers)
+            ]);
+            
+            const plotData = await plotRes.json();
+            const accountData = await accountRes.json();
+
+            document.getElementById('fin-income').textContent = formatMoney(plotData.credit || 0);
+            document.getElementById('fin-outcome').textContent = formatMoney(plotData.debit || 0);
+            document.getElementById('fin-balance').textContent = formatMoney((plotData.credit || 0) - (plotData.debit || 0));
+
+            if (charts['finance']) charts['finance'].destroy();
+            charts['finance'] = new Chart(document.getElementById('finance-chart'), {
+                type: 'line',
+                data: {
+                    labels: plotData.series.map(s => s.date.split(' ')[0].slice(5)),
+                    datasets: [
+                        { label: 'Приход', data: plotData.series.map(s => (s.credit || 0)), borderColor: '#4ade80', backgroundColor: 'rgba(74, 222, 128, 0.1)', fill: true, tension: 0.4 },
+                        { label: 'Расход', data: plotData.series.map(s => (s.debit || 0)), borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.1)', fill: true, tension: 0.4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#64748b' }, grid: { display: false } } } }
+            });
+
+            document.getElementById('finance-accounts-table').innerHTML = accountData.rows.map(r => `
+                <tr class="table-row-hover transition">
+                    <td class="px-4 py-3">
+                        <div class="font-medium text-white">${r.organization?.name || 'Не указано'}</div>
+                        <div class="text-xs text-gray-400">${r.account ? r.account.name : 'Касса'}</div>
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold ${(r.balance || 0) >= 0 ? 'text-green-400' : 'text-red-400'}">${formatMoney(r.balance || 0)}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="2" class="px-4 py-8 text-center text-gray-500">Нет данных</td></tr>';
+        }
+
+        // --- 5.4 STOCK ---
+        async function loadStock(headers) {
+            showLoader('Загрузка склада...', 'Это может занять несколько секунд');
+            const res = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/stock/all?limit=1000`, headers);
+            hideLoader();
+            
+            const data = await res.json();
+            const rows = data.rows || [];
+
+            let totalItems = 0, totalValue = 0, zeroCount = 0, totalDays = 0;
+            rows.forEach(r => {
+                const qty = r.stock || 0;
+                const cost = (r.price || 0) / 100;
+                totalItems++;
+                totalValue += qty * cost;
+                if (qty === 0) zeroCount++;
+                totalDays += (r.stockDays || 0);
+            });
+            const avgDays = totalItems > 0 ? Math.round(totalDays / totalItems) : 0;
+
+            document.getElementById('stock-items-count').textContent = formatNumber(totalItems);
+            document.getElementById('stock-total-value').textContent = formatMoney(totalValue);
+            document.getElementById('stock-zero-count').textContent = formatNumber(zeroCount);
+            document.getElementById('stock-avg-days').textContent = formatNumber(avgDays);
+
+            rows.sort((a, b) => ((b.stock || 0) * (b.price || 0)) - ((a.stock || 0) * (a.price || 0)));
+
+            document.getElementById('stock-table').innerHTML = rows.slice(0, 200).map(r => {
+                const qty = r.stock || 0;
+                const cost = (r.price || 0) / 100;
+                const sale = (r.salePrice || 0) / 100;
+                const sum = qty * cost;
+                return `
+                    <tr class="table-row-hover transition">
+                        <td class="px-4 py-3 font-medium text-white">${r.name || 'Без названия'}</td>
+                        <td class="px-4 py-3 text-right ${qty === 0 ? 'text-red-400 font-bold' : 'text-green-400'}">${formatNumber(qty)}</td>
+                        <td class="px-4 py-3 text-right text-gray-400">${formatMoney(cost)}</td>
+                        <td class="px-4 py-3 text-right text-blue-400">${formatMoney(sale)}</td>
+                        <td class="px-4 py-3 text-right font-semibold text-white">${formatMoney(sum)}</td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Склад пуст</td></tr>';
+        }
+
+        // --- 5.5 CLIENTS ---
+        async function loadClients(headers) {
+            showLoader('Загрузка клиентов...', 'Анализ контрагентов');
+            const res = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/counterparty?limit=100`, headers);
+            hideLoader();
+            
+            const data = await res.json();
+            const rows = data.rows || [];
+
+            const clients = rows.filter(r => (r.demandsSum || 0) > 0).sort((a, b) => (b.demandsSum || 0) - (a.demandsSum || 0)).slice(0, 50);
+
+            document.getElementById('clients-table').innerHTML = clients.map(r => {
+                const sum = (r.demandsSum || 0) / 100;
+                const count = r.demandsCount || 0;
+                const avg = count > 0 ? sum / count : 0;
+                const balance = (r.balance || 0) / 100;
+                return `
+                    <tr class="table-row-hover transition">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-white">${r.counterparty?.name || 'Неизвестно'}</div>
+                            <div class="text-xs text-gray-400">${r.counterparty?.inn ? 'ИНН: ' + r.counterparty.inn : 'Физ. лицо'}</div>
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-300">${formatNumber(count)}</td>
+                        <td class="px-4 py-3 text-right text-green-400 font-medium">${formatMoney(sum)}</td>
+                        <td class="px-4 py-3 text-right text-purple-400">${formatMoney(avg)}</td>
+                        <td class="px-4 py-3 text-right ${balance < 0 ? 'text-red-400 font-bold' : 'text-yellow-400'}">${formatMoney(balance)}</td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Нет данных о продажах</td></tr>';
+        }
+
+        // ==========================================
+        // 6. МОДАЛЬНЫЕ ОКНА И ДЕТАЛИЗАЦИЯ
+        // ==========================================
         function showRevenueDetails() {
+            const total = dashboardData.sales?.series?.reduce((sum, s) => sum + (s.sum || 0) / 100, 0) || 0;
             const html = `
                 <div class="space-y-4">
                     <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-green-500">
-                        <div class="text-sm text-gray-400">Общая выручка</div>
-                        <div class="text-3xl font-bold text-green-400">${formatMoney(dashboardData.sales.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0))}</div>
+                        <div class="text-sm text-gray-400">Общая выручка за период</div>
+                        <div class="text-3xl font-bold text-green-400">${formatMoney(total)}</div>
                     </div>
                     <div class="bg-slate-800 p-4 rounded-lg">
-                        <h4 class="font-bold mb-3">Выручка по дням</h4>
-                        <div class="space-y-2 max-h-[50vh] overflow-y-auto">
-                            ${dashboardData.sales.series.map(s => `
+                        <h4 class="font-bold mb-3 text-white">Выручка по дням</h4>
+                        <div class="space-y-2 custom-scroll max-h-[50vh] overflow-y-auto">
+                            ${(dashboardData.sales?.series || []).map(s => `
                                 <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
-                                    <span class="text-sm">${s.date.split(' ')[0]}</span>
+                                    <span class="text-sm text-gray-300">${s.date.split(' ')[0]}</span>
                                     <span class="font-bold text-green-400">${formatMoney((s.sum || 0) / 100)}</span>
                                 </div>
                             `).join('')}
@@ -369,17 +715,14 @@
             const html = `
                 <div class="space-y-4">
                     <div class="bg-slate-800 p-4 rounded-lg">
-                        <h4 class="font-bold mb-3">Топ-10 товаров по прибыли</h4>
-                        <div class="space-y-2 max-h-[60vh] overflow-y-auto">
-                            ${dashboardData.profit.rows
-                                .sort((a, b) => (b.profit || 0) - (a.profit || 0))
-                                .slice(0, 10)
-                                .map(p => `
-                                    <div class="flex justify-between items-center p-3 bg-slate-900 rounded">
-                                        <span class="text-sm font-medium">${p.assortment?.name || 'Без названия'}</span>
-                                        <span class="font-bold text-blue-400">${formatMoney((p.profit || 0) / 100)}</span>
-                                    </div>
-                                `).join('')}
+                        <h4 class="font-bold mb-3 text-white">Топ-10 товаров по прибыли</h4>
+                        <div class="space-y-2 custom-scroll max-h-[60vh] overflow-y-auto">
+                            ${(dashboardData.profit?.rows || []).sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 10).map(p => `
+                                <div class="flex justify-between items-center p-3 bg-slate-900 rounded">
+                                    <span class="text-sm font-medium text-white">${p.assortment?.name || 'Без названия'}</span>
+                                    <span class="font-bold text-blue-400">${formatMoney((p.profit || 0) / 100)}</span>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
@@ -388,20 +731,18 @@
         }
 
         async function showChecksDetails() {
-            openDetailsModal('Загрузка чеков...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
-            
+            openDetailsModal('Список чеков', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
             try {
                 const headers = getAuthHeaders();
-                const momentFrom = dashboardData.momentFrom;
-                const momentTo = dashboardData.momentTo;
-
+                const { momentFrom, momentTo } = dashboardData;
+                
+                // Правильная фильтрация документов по дате + только проведенные
                 const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
                 const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?filter=${filter}&limit=1000&order=moment,desc`;
                 
                 const response = await proxyFetch(url, headers);
                 const data = await response.json();
                 const checks = data.rows || [];
-
                 const totalSum = checks.reduce((sum, c) => sum + (c.sum || 0) / 100, 0);
 
                 const html = `
@@ -416,8 +757,7 @@
                                 <div class="text-xl font-bold text-green-400">${formatMoney(totalSum)}</div>
                             </div>
                         </div>
-                        
-                        <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+                        <div class="space-y-2 custom-scroll max-h-[60vh] overflow-y-auto pr-2">
                             ${checks.length === 0 ? '<div class="text-center text-gray-500 py-8">Проведенных чеков за этот период не найдено</div>' : ''}
                             ${checks.map(c => {
                                 const sum = (c.sum || 0) / 100;
@@ -425,12 +765,12 @@
                                 return `
                                     <div class="bg-slate-800 p-4 rounded-lg cursor-pointer hover:bg-slate-700 transition border border-transparent hover:border-blue-500/50" onclick="loadCheckDetails('${c.id}', '${c.name || 'Чек'}', ${sum}, '${date}')">
                                         <div class="flex justify-between items-center mb-2">
-                                            <span class="font-bold text-lg">${c.name || 'Чек'}</span>
+                                            <span class="font-bold text-lg text-white">${c.name || 'Чек'}</span>
                                             <span class="font-bold text-green-400 text-lg">${formatMoney(sum)}</span>
                                         </div>
                                         <div class="flex justify-between items-center text-xs text-gray-400">
                                             <span>${date}</span>
-                                            <span class="text-blue-400 flex items-center gap-1">Открыть товары <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></span>
+                                            <span class="text-blue-400 flex items-center gap-1 font-medium">Открыть товары <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
                                         </div>
                                     </div>
                                 `;
@@ -441,29 +781,21 @@
                 openDetailsModal(`Список чеков (${checks.length})`, html);
             } catch (error) {
                 openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-4">Не удалось загрузить чеки:<br><br>${error.message}</div>`);
-                console.error('Ошибка загрузки чеков:', error);
             }
         }
 
-        // =====================================================================
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Детализация чека с ценами
-        // Согласно документации, добавлен параметр fields=stock вместе с expand
-        // =====================================================================
         async function loadCheckDetails(checkId, checkName, checkSum, checkMoment) {
             const modal = document.getElementById('details-modal');
             const title = document.getElementById('details-title');
             const content = document.getElementById('details-content');
-
+            
             title.textContent = 'Загрузка товаров...';
             content.innerHTML = '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка позиций чека...</div>';
             
             try {
                 const headers = getAuthHeaders();
-                // ИСПРАВЛЕНИЕ: Добавлен параметр fields=stock согласно документации "Остатки и себестоимость в позициях документов"
-                // Это гарантирует корректное получение всех полей позиции, включая price и sum
-                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
-                
-                console.log('Запрос деталей чека:', url);
+                // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: fields=stock&expand=positions.assortment гарантирует получение имен и цен
+                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?fields=stock&expand=positions.assortment`;
                 
                 const response = await proxyFetch(url, headers);
                 const checkData = await response.json();
@@ -471,26 +803,18 @@
 
                 let totalCalculated = 0;
                 const itemsHtml = positions.map(p => {
-                    // Безопасное получение имени товара
-                    const productName = p.assortment?.name || (p.assortment?.meta?.href ? 'Товар (ID: ' + p.assortment.meta.href.split('/').pop() + ')' : 'Товар без названия');
-                    
+                    const productName = p.assortment?.name || 'Товар без названия';
                     const quantity = p.quantity || 0;
-                    // ИСПРАВЛЕНИЕ: Надежное получение цены. Если price по какой-то причине нет, вычисляем как sum / quantity
-                    const rawPrice = p.price !== undefined ? p.price : (p.sum / (quantity || 1));
-                    const price = rawPrice / 100;
+                    // Цена берется из p.price (в копейках), если нет - вычисляем
+                    const price = (p.price !== undefined ? p.price : ((p.sum || 0) / (quantity || 1))) / 100;
                     const sum = (p.sum || 0) / 100;
                     totalCalculated += sum;
-
-                    // Логируем позицию в консоль на случай, если нужно будет посмотреть сырые данные
-                    console.log('Данные позиции чека:', p);
 
                     return `
                         <div class="flex justify-between items-start p-3 bg-slate-900 rounded mb-2 border border-slate-800">
                             <div class="flex-1 pr-4">
                                 <div class="font-medium text-white">${productName}</div>
-                                <div class="text-sm text-gray-400 mt-1">
-                                    ${quantity} шт × ${formatMoney(price)}
-                                </div>
+                                <div class="text-sm text-gray-400 mt-1">${formatNumber(quantity)} шт × ${formatMoney(price)}</div>
                             </div>
                             <div class="text-right flex-shrink-0">
                                 <div class="font-bold text-green-400">${formatMoney(sum)}</div>
@@ -513,17 +837,17 @@
                                 </div>
                             </div>
                             <div class="text-xs text-gray-500 mt-2 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 ${checkMoment}
                             </div>
                         </div>
 
                         <div class="bg-slate-800 p-4 rounded-lg">
-                            <h4 class="font-bold mb-3 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                            <h4 class="font-bold mb-3 flex items-center gap-2 text-white">
+                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                                 Товары в чеке (${positions.length})
                             </h4>
-                            <div class="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
+                            <div class="space-y-2 custom-scroll max-h-[50vh] overflow-y-auto pr-2">
                                 ${itemsHtml || '<div class="text-gray-500 text-center py-4">В чеке нет позиций</div>'}
                             </div>
                             ${positions.length > 0 ? `
@@ -534,8 +858,8 @@
                             ` : ''}
                         </div>
 
-                        <button onclick="showChecksDetails()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        <button onclick="showChecksDetails()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 mt-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                             Вернуться к списку чеков
                         </button>
                     </div>
@@ -546,47 +870,30 @@
                 title.textContent = 'Ошибка';
                 content.innerHTML = `<div class="text-red-400 text-center py-4">Не удалось загрузить позиции:<br><br>${error.message}</div>
                 <button onclick="showChecksDetails()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition">Назад к списку</button>`;
-                console.error('Ошибка загрузки деталей чека:', error);
             }
         }
 
-        function showAvgCheckDetails() {
-            const totalRevenue = dashboardData.sales.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-            const totalChecks = dashboardData.sales.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
-            const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
-
-            const html = `
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-yellow-500">
-                            <div class="text-sm text-gray-400">Средний чек</div>
-                            <div class="text-2xl font-bold text-yellow-400">${formatMoney(avgCheck)}</div>
-                        </div>
-                        <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-purple-500">
-                            <div class="text-sm text-gray-400">Всего чеков</div>
-                            <div class="text-2xl font-bold text-purple-400">${formatNumber(totalChecks)}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            openDetailsModal('Детализация среднего чека', html);
-        }
-
-        function openDetailsModal(title, content) {
-            document.getElementById('details-title').textContent = title;
-            document.getElementById('details-content').innerHTML = content;
-            document.getElementById('details-modal').classList.remove('hidden');
-        }
-
-        function closeDetailsModal() {
-            document.getElementById('details-modal').classList.add('hidden');
-        }
-
+        // ==========================================
+        // 7. ИНИЦИАЛИЗАЦИЯ
+        // ==========================================
         window.addEventListener('load', () => {
             const dates = getPeriodDates('week');
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
-            if (apiToken) loadCurrentView();
+            
+            // Подсветка активной кнопки периода
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                if (btn.textContent.trim() === 'Неделя') {
+                    btn.classList.add('bg-blue-600', 'text-white');
+                    btn.classList.remove('text-gray-300');
+                }
+            });
+
+            if (apiToken) {
+                loadCurrentView();
+            } else {
+                showConnectionModal();
+            }
         });
     </script>
 </body>
