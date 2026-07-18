@@ -3,60 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro - ERP Система</title>
+    <title>Profit Analyzer Pro - Главная</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         body { background: #0f172a; color: #e2e8f0; }
         
-        /* Glassmorphism & UI */
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
-        .glass-hover:hover { background: rgba(51, 65, 85, 0.8); border-color: rgba(96, 165, 250, 0.3); }
+        .glass { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 16px; 
+        }
         
-        /* Navigation */
         .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
         .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
-        .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
+        .nav-item.active { 
+            background: rgba(59, 130, 246, 0.15); 
+            border-left-color: #3b82f6; 
+            color: #60a5fa; 
+        }
         
-        /* Cards & Tables */
-        .kpi-card { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
-        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
-        .table-row-hover:hover { background: rgba(51, 65, 85, 0.5); }
+        .kpi-card { 
+            transition: all 0.3s ease; 
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .kpi-card:hover::before { opacity: 1; }
         
-        /* Scrollbar */
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-        /* Modal & Loading */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .trend-up { color: #4ade80; }
+        .trend-down { color: #f87171; }
+        .trend-neutral { color: #94a3b8; }
+        
+        .check-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .check-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateX(4px);
+        }
+        
+        .modal-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.85); 
+            z-index: 100; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+            backdrop-filter: blur(4px); 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 0.3s ease; 
+        }
+        .modal-overlay.active { 
+            opacity: 1; 
+            pointer-events: auto; 
+        }
+        
+        .spinner { 
+            width: 40px; 
+            height: 40px; 
+            border: 3px solid rgba(59, 130, 246, 0.2); 
+            border-top-color: #3b82f6; 
+            border-radius: 50%; 
+            animation: spin 0.8s linear infinite; 
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
         
         input[type="date"] { color-scheme: dark; }
-        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        .chart-container { position: relative; height: 320px; }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Боковое меню (Десктоп) -->
+    <!-- Боковое меню -->
     <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col hidden md:flex z-20">
         <div class="p-6 border-b border-slate-800">
-            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Profit Analyzer</h1>
+            <h1 class="text-xl font-bold gradient-text">Profit Analyzer</h1>
             <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
         </div>
-        <nav class="flex-1 py-4 space-y-1 overflow-y-auto custom-scroll">
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3"><span>📊</span> Главная</button>
-            <button onclick="switchView('sales')" id="nav-sales" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"><span>📈</span> Продажи</button>
-            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"><span>💰</span> Финансы</button>
-            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"><span>📦</span> Склад</button>
-            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3"><span>👥</span> Клиенты</button>
+        <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3">
+                <span class="text-lg">📊</span> Главная
+            </button>
+            <button onclick="switchView('sales')" id="nav-sales" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg"></span> Продажи
+            </button>
+            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">💰</span> Финансы
+            </button>
+            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">📦</span> Склад
+            </button>
+            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">👥</span> Клиенты
+            </button>
         </nav>
         <div class="p-4 border-t border-slate-800">
             <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition">
@@ -67,209 +156,212 @@
 
     <!-- Мобильное меню -->
     <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto backdrop-blur-md">
-        <button onclick="switchView('dashboard')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Главная</button>
-        <button onclick="switchView('sales')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📈</span>Продажи</button>
-        <button onclick="switchView('finance')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Финансы</button>
-        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Склад</button>
+        <button onclick="switchView('dashboard')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]">
+            <span class="text-lg">📊</span>Главная
+        </button>
+        <button onclick="switchView('sales')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+            <span class="text-lg">📈</span>Продажи
+        </button>
+        <button onclick="switchView('finance')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+            <span class="text-lg">💰</span>Финансы
+        </button>
+        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+            <span class="text-lg">📦</span>Склад
+        </button>
     </div>
 
     <!-- Основной контент -->
-    <main class="flex-1 flex flex-col overflow-hidden relative">
+    <main class="flex-1 flex flex-col overflow-hidden">
         
-        <!-- Верхняя панель управления -->
+        <!-- Верхняя панель -->
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
+                    <div class="pulse-dot"></div>
                     <h2 id="page-title" class="text-xl md:text-2xl font-bold text-white">Главная</h2>
-                    <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded">Обновлено: <span id="last-update">-</span></span>
+                    <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
+                        Обновлено: <span id="last-update">-</span>
+                    </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="flex bg-slate-800 rounded-lg p-1 gap-1">
-                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition">Сегодня</button>
-                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white transition">Неделя</button>
-                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition">Месяц</button>
+                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Сегодня</button>
+                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition bg-blue-600 text-white">Неделя</button>
+                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Месяц</button>
                     </div>
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
                         <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                         <span class="text-gray-500">—</span>
                         <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                     </div>
-                    <button onclick="loadCurrentView()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2 shadow-lg shadow-blue-500/20">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <button onclick="loadDashboard()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2 shadow-lg shadow-blue-500/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
                         Обновить
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Область контента с прокруткой -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 custom-scroll">
+        <!-- Область контента -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
             
-            <!-- 1. ГЛАВНАЯ (DASHBOARD) -->
+            <!-- ГЛАВНАЯ СТРАНИЦА -->
             <div id="view-dashboard" class="view-section active space-y-6">
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="kpi-card glass p-5" onclick="showRevenueDetails()">
-                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Выручка</div>
-                        <div id="kpi-revenue" class="text-2xl md:text-3xl font-bold text-green-400">0 ₽</div>
+                
+                <!-- KPI Карточки -->
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="kpi-card glass p-5" onclick="showKpiDetail('revenue')" style="color: #4ade80;">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Выручка</div>
+                            <span class="text-lg"></span>
+                        </div>
+                        <div id="kpi-revenue" class="text-2xl md:text-3xl font-bold text-white mb-2">0 ₽</div>
+                        <div id="kpi-revenue-trend" class="text-xs flex items-center gap-1 trend-neutral">
+                            <span>—</span> <span>0%</span>
+                        </div>
                     </div>
-                    <div class="kpi-card glass p-5" onclick="showProfitDetails()">
-                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Чистая прибыль</div>
-                        <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-blue-400">0 ₽</div>
+                    
+                    <div class="kpi-card glass p-5" onclick="showKpiDetail('profit')" style="color: #60a5fa;">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Прибыль</div>
+                            <span class="text-lg"></span>
+                        </div>
+                        <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mb-2">0 ₽</div>
+                        <div id="kpi-profit-trend" class="text-xs flex items-center gap-1 trend-neutral">
+                            <span>—</span> <span>0%</span>
+                        </div>
                     </div>
-                    <div class="kpi-card glass p-5" onclick="showChecksDetails()">
-                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Количество чеков</div>
-                        <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-purple-400">0</div>
+                    
+                    <div class="kpi-card glass p-5" onclick="showChecksList()" style="color: #c084fc;">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Чеки</div>
+                            <span class="text-lg">🧾</span>
+                        </div>
+                        <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mb-2">0</div>
+                        <div id="kpi-checks-trend" class="text-xs flex items-center gap-1 trend-neutral">
+                            <span>—</span> <span>0%</span>
+                        </div>
                     </div>
-                    <div class="kpi-card glass p-5">
-                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Средний чек</div>
-                        <div id="kpi-avg-check" class="text-2xl md:text-3xl font-bold text-yellow-400">0 ₽</div>
+                    
+                    <div class="kpi-card glass p-5" onclick="showKpiDetail('avgCheck')" style="color: #fbbf24;">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Средний чек</div>
+                            <span class="text-lg">🎯</span>
+                        </div>
+                        <div id="kpi-avg-check" class="text-2xl md:text-3xl font-bold text-white mb-2">0 ₽</div>
+                        <div id="kpi-avg-check-trend" class="text-xs flex items-center gap-1 trend-neutral">
+                            <span>—</span> <span>0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card glass p-5 col-span-2 lg:col-span-1" onclick="showKpiDetail('margin')" style="color: #34d399;">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Маржа</div>
+                            <span class="text-lg">📊</span>
+                        </div>
+                        <div id="kpi-margin" class="text-2xl md:text-3xl font-bold text-white mb-2">0%</div>
+                        <div id="kpi-margin-trend" class="text-xs flex items-center gap-1 trend-neutral">
+                            <span>—</span> <span>0%</span>
+                        </div>
                     </div>
                 </div>
 
+                <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-blue-400">📈</span> Динамика выручки и прибыли</h3>
-                        <div class="relative h-72 w-full"><canvas id="main-chart"></canvas></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <span class="text-blue-400">📈</span> Динамика выручки и прибыли
+                            </h3>
+                            <div class="flex gap-2 text-xs">
+                                <span class="flex items-center gap-1 text-green-400">
+                                    <span class="w-3 h-3 rounded-full bg-green-400"></span> Выручка
+                                </span>
+                                <span class="flex items-center gap-1 text-blue-400">
+                                    <span class="w-3 h-3 rounded-full bg-blue-400"></span> Прибыль
+                                </span>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="main-chart"></canvas>
+                        </div>
                     </div>
+                    
                     <div class="glass p-6">
-                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-yellow-400">🏆</span> Топ-5 товаров по прибыли</h3>
-                        <div id="dashboard-top-products" class="space-y-3 custom-scroll max-h-72 overflow-y-auto pr-2">
-                            <div class="text-sm text-gray-500 text-center py-8">Загрузите данные для отображения</div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
+                            <span class="text-yellow-400">🏆</span> Топ-5 товаров по прибыли
+                        </h3>
+                        <div id="top-products-list" class="space-y-3 custom-scroll max-h-[320px] overflow-y-auto pr-2">
+                            <div class="text-sm text-gray-500 text-center py-8">
+                                <div class="spinner mx-auto mb-3" style="width: 24px; height: 24px; border-width: 2px;"></div>
+                                Загрузка данных...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Последние чеки -->
+                <div class="glass p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span class="text-purple-400"></span> Последние чеки за период
+                        </h3>
+                        <button onclick="showChecksList()" class="text-xs text-blue-400 hover:text-blue-300 transition flex items-center gap-1">
+                            Показать все
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="recent-checks-list" class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto pr-2">
+                        <div class="text-sm text-gray-500 text-center py-8">
+                            <div class="spinner mx-auto mb-3" style="width: 24px; height: 24px; border-width: 2px;"></div>
+                            Загрузка чеков...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Интеллектуальные рекомендации -->
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
+                        <span class="text-cyan-400">🧠</span> Анализ и рекомендации
+                    </h3>
+                    <div id="ai-insights" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="text-sm text-gray-500 text-center py-8 md:col-span-2">
+                            <div class="spinner mx-auto mb-3" style="width: 24px; height: 24px; border-width: 2px;"></div>
+                            Анализ данных...
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. ПРОДАЖИ -->
-            <div id="view-sales" class="view-section space-y-6">
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="glass p-5 text-center">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Всего продаж (сумма)</div>
-                        <div id="sales-total-sum" class="text-2xl font-bold text-green-400">0 ₽</div>
-                    </div>
-                    <div class="glass p-5 text-center">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Количество чеков</div>
-                        <div id="sales-total-count" class="text-2xl font-bold text-blue-400">0</div>
-                    </div>
-                    <div class="glass p-5 text-center">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Средний чек</div>
-                        <div id="sales-avg-check" class="text-2xl font-bold text-purple-400">0 ₽</div>
-                    </div>
-                    <div class="glass p-5 text-center">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Продано единиц</div>
-                        <div id="sales-total-qty" class="text-2xl font-bold text-yellow-400">0</div>
-                    </div>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Динамика продаж по дням</h3>
-                    <div class="relative h-80 w-full"><canvas id="sales-chart"></canvas></div>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Детализация по товарам (Отчет о продажах)</h3>
-                    <div class="overflow-x-auto custom-scroll max-h-96">
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50 sticky top-0">
-                                <tr><th class="px-4 py-3 rounded-tl-lg">Товар</th><th class="px-4 py-3 text-right">Кол-во</th><th class="px-4 py-3 text-right">Выручка</th><th class="px-4 py-3 text-right rounded-tr-lg">Прибыль</th></tr>
-                            </thead>
-                            <tbody id="sales-products-table" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
+            <!-- Заглушки для других разделов -->
+            <div id="view-sales" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text"> Раздел "Продажи"</h2>
+                    <p class="text-gray-400">В разработке. Скоро здесь появится полный анализ продаж.</p>
                 </div>
             </div>
-
-            <!-- 3. ФИНАНСЫ -->
-            <div id="view-finance" class="view-section space-y-6">
-                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div class="glass p-5 text-center border-l-4 border-green-500">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Приход (Доход)</div>
-                        <div id="fin-income" class="text-2xl font-bold text-green-400">0 ₽</div>
-                    </div>
-                    <div class="glass p-5 text-center border-l-4 border-red-500">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Расход</div>
-                        <div id="fin-outcome" class="text-2xl font-bold text-red-400">0 ₽</div>
-                    </div>
-                    <div class="glass p-5 text-center border-l-4 border-blue-500">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Сальдо (Баланs)</div>
-                        <div id="fin-balance" class="text-2xl font-bold text-blue-400">0 ₽</div>
-                    </div>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Движение денежных средств по дням</h3>
-                    <div class="relative h-80 w-full"><canvas id="finance-chart"></canvas></div>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Остатки по кассам и расчетным счетам</h3>
-                    <div class="overflow-x-auto custom-scroll max-h-96">
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50 sticky top-0">
-                                <tr><th class="px-4 py-3 rounded-tl-lg">Организация / Счет</th><th class="px-4 py-3 text-right rounded-tr-lg">Текущий остаток</th></tr>
-                            </thead>
-                            <tbody id="finance-accounts-table" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
+            <div id="view-finance" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">💰 Раздел "Финансы"</h2>
+                    <p class="text-gray-400">В разработке. Скоро здесь появится анализ денежных потоков.</p>
                 </div>
             </div>
-
-            <!-- 4. СКЛАД -->
-            <div id="view-stock" class="view-section space-y-6">
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="glass p-5 text-center">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Всего позиций</div>
-                        <div id="stock-items-count" class="text-2xl font-bold text-blue-400">0</div>
-                    </div>
-                    <div class="glass p-5 text-center">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Стоимость остатков</div>
-                        <div id="stock-total-value" class="text-2xl font-bold text-green-400">0 ₽</div>
-                    </div>
-                    <div class="glass p-5 text-center">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Нет в наличии (0 шт)</div>
-                        <div id="stock-zero-count" class="text-2xl font-bold text-red-400">0</div>
-                    </div>
-                    <div class="glass p-5 text-center">
-                        <div class="text-xs text-gray-400 mb-2 uppercase">Средн. дней на складе</div>
-                        <div id="stock-avg-days" class="text-2xl font-bold text-yellow-400">0</div>
-                    </div>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-red-400">⚠️</span> Расширенный отчет об остатках</h3>
-                    <div class="overflow-x-auto custom-scroll max-h-[600px]">
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50 sticky top-0 z-10">
-                                <tr>
-                                    <th class="px-4 py-3">Товар</th>
-                                    <th class="px-4 py-3 text-right">Остаток (шт)</th>
-                                    <th class="px-4 py-3 text-right">Себестоимость</th>
-                                    <th class="px-4 py-3 text-right">Цена продажи</th>
-                                    <th class="px-4 py-3 text-right">Сумма (себест.)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="stock-table" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
+            <div id="view-stock" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">📦 Раздел "Склад"</h2>
+                    <p class="text-gray-400">В разработке. Скоро здесь появится управление остатками.</p>
                 </div>
             </div>
-
-            <!-- 5. КЛИЕНТЫ -->
-            <div id="view-clients" class="view-section space-y-6">
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Рейтинг клиентов по сумме продаж</h3>
-                    <div class="overflow-x-auto custom-scroll max-h-[600px]">
-                        <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50 sticky top-0 z-10">
-                                <tr>
-                                    <th class="px-4 py-3">Клиент</th>
-                                    <th class="px-4 py-3 text-right">Кол-во продаж</th>
-                                    <th class="px-4 py-3 text-right">Общая сумма</th>
-                                    <th class="px-4 py-3 text-right">Средний чек</th>
-                                    <th class="px-4 py-3 text-right">Баланс (Долг)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="clients-table" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
+            <div id="view-clients" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">👥 Раздел "Клиенты"</h2>
+                    <p class="text-gray-400">В разработке. Скоро здесь появится анализ клиентской базы.</p>
                 </div>
             </div>
-
         </div>
     </main>
 
@@ -283,13 +375,17 @@
                     <label class="block text-xs font-medium text-gray-400 mb-1">Токен или логин:пароль</label>
                     <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Например: user@domain.com:password">
                 </div>
-                <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-blue-500/20">Сохранить и подключить</button>
-                <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-2 transition">Отмена</button>
+                <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition shadow-lg shadow-blue-500/20">
+                    Сохранить и подключить
+                </button>
+                <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-2 transition">
+                    Отмена
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно: Детали (Универсальное) -->
+    <!-- Модальное окно: Детали -->
     <div id="details-modal" class="modal-overlay">
         <div class="glass p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
@@ -311,36 +407,84 @@
 
     <script>
         // ==========================================
-        // 1. КОНФИГУРАЦИЯ И СОСТОЯНИЕ
+        // КОНФИГУРАЦИЯ И СОСТОЯНИЕ
         // ==========================================
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-        let currentView = 'dashboard';
+        let currentPeriod = 'week';
         let charts = {};
         let apiToken = localStorage.getItem('moysklad_token') || '';
-        let dashboardData = {}; // Хранилище для кэширования данных между модальными окнами
+        let dashboardCache = {};
 
         // ==========================================
-        // 2. УТИЛИТЫ
+        // УТИЛИТЫ
         // ==========================================
         function formatMoney(amount) {
-            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount || 0);
+            return new Intl.NumberFormat('ru-RU', { 
+                style: 'currency', 
+                currency: 'RUB', 
+                maximumFractionDigits: 0 
+            }).format(amount || 0);
         }
+        
         function formatNumber(num) {
-            return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(num || 0);
+            return new Intl.NumberFormat('ru-RU', { 
+                maximumFractionDigits: 0 
+            }).format(num || 0);
         }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ru-RU', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+        }
+        
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString('ru-RU', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
         function getPeriodDates(period) {
             const now = new Date();
             let from = new Date(), to = new Date();
-            if (period === 'today') { /* from и to уже сегодня */ }
-            else if (period === 'week') { from.setDate(now.getDate() - 7); }
-            else if (period === 'month') { from.setMonth(now.getMonth() - 1); }
-            return { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
+            
+            if (period === 'today') {
+                // Сегодня
+            } else if (period === 'week') {
+                from.setDate(now.getDate() - 7);
+            } else if (period === 'month') {
+                from.setMonth(now.getMonth() - 1);
+            }
+            
+            return { 
+                from: from.toISOString().split('T')[0], 
+                to: to.toISOString().split('T')[0] 
+            };
+        }
+
+        function getDashboardEndpoint(period) {
+            if (period === 'today') return 'day';
+            if (period === 'week') return 'week';
+            if (period === 'month') return 'month';
+            return 'week';
         }
 
         // ==========================================
-        // 3. УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ
+        // УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ
         // ==========================================
         function setPeriod(period) {
+            currentPeriod = period;
+            
             document.querySelectorAll('.period-btn').forEach(btn => {
                 btn.classList.remove('bg-blue-600', 'text-white');
                 btn.classList.add('text-gray-300');
@@ -351,13 +495,13 @@
             const dates = getPeriodDates(period);
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
-            if (apiToken) loadCurrentView();
+            
+            if (apiToken) loadDashboard();
         }
 
         function switchView(view) {
-            currentView = view;
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + view).classList.add('active');
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + view).classList.remove('hidden');
             
             document.querySelectorAll('.nav-item').forEach(el => {
                 el.classList.remove('active', 'text-blue-400');
@@ -369,10 +513,14 @@
                 activeNav.classList.remove('text-gray-400');
             }
             
-            const titles = { 'dashboard': 'Главная', 'sales': 'Продажи', 'finance': 'Финансы', 'stock': 'Склад', 'clients': 'Клиенты' };
+            const titles = { 
+                'dashboard': 'Главная', 
+                'sales': 'Продажи', 
+                'finance': 'Финансы', 
+                'stock': 'Склад', 
+                'clients': 'Клиенты' 
+            };
             document.getElementById('page-title').textContent = titles[view] || 'Главная';
-            
-            if (apiToken) loadCurrentView();
         }
 
         function showLoader(text, subtext) {
@@ -380,6 +528,7 @@
             document.getElementById('loader-subtext').textContent = subtext;
             document.getElementById('global-loader').classList.add('active');
         }
+        
         function hideLoader() {
             document.getElementById('global-loader').classList.remove('active');
         }
@@ -388,12 +537,16 @@
             document.getElementById('api-token').value = apiToken;
             document.getElementById('connection-modal').classList.add('active');
         }
-        function closeConnectionModal() { document.getElementById('connection-modal').classList.remove('active'); }
+        
+        function closeConnectionModal() { 
+            document.getElementById('connection-modal').classList.remove('active'); 
+        }
+        
         function saveToken() {
             apiToken = document.getElementById('api-token').value.trim();
             localStorage.setItem('moysklad_token', apiToken);
             closeConnectionModal();
-            if (apiToken) loadCurrentView();
+            if (apiToken) loadDashboard();
         }
 
         function openDetailsModal(title, contentHtml) {
@@ -401,19 +554,24 @@
             document.getElementById('details-content').innerHTML = contentHtml;
             document.getElementById('details-modal').classList.add('active');
         }
-        function closeDetailsModal() { document.getElementById('details-modal').classList.remove('active'); }
+        
+        function closeDetailsModal() { 
+            document.getElementById('details-modal').classList.remove('active'); 
+        }
 
         // ==========================================
-        // 4. СЕТЕВОЙ СЛОЙ (API)
+        // СЕТЕВОЙ СЛОЙ
         // ==========================================
         function getAuthHeaders() {
             let authValue = apiToken;
             if (!apiToken.startsWith("Basic ") && !apiToken.startsWith("Bearer ")) {
-                authValue = apiToken.includes(":") ? "Basic " + btoa(unescape(encodeURIComponent(apiToken))) : "Bearer " + apiToken;
+                authValue = apiToken.includes(":") 
+                    ? "Basic " + btoa(unescape(encodeURIComponent(apiToken))) 
+                    : "Bearer " + apiToken;
             }
             return {
                 "Authorization": authValue,
-                "Accept": "application/json;charset=utf-8", // КРИТИЧЕСКИ ВАЖНО для МойСклад
+                "Accept": "application/json;charset=utf-8",
                 "Content-Type": "application/json"
             };
         }
@@ -421,7 +579,6 @@
         async function fetchWithRetry(url, options, retries = 3) {
             try {
                 const separator = url.includes('?') ? '&' : '?';
-                // Cache-busting для обхода проблем с QUIC/HTTP2 на мобильных сетях
                 return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
                 if (retries > 0) {
@@ -436,341 +593,690 @@
             const response = await fetchWithRetry(PROXY_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
+                body: JSON.stringify({ 
+                    url: targetUrl, 
+                    headers: headers, 
+                    method: 'GET' 
+                })
             });
             
-            if (response.status === 429) throw new Error('Превышен лимит запросов (429). Подождите 1 минуту.');
+            if (response.status === 429) {
+                throw new Error('Превышен лимит запросов (429). Подождите 1 минуту.');
+            }
+            
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Ошибка API ${response.status}: ${errorText}`);
             }
+            
             return response;
         }
 
         // ==========================================
-        // 5. ЛОГИКА ЗАГРУЗКИ ДАННЫХ (ПОЛНАЯ РЕАЛИЗАЦИЯ)
+        // ЗАГРУЗКА ДАННЫХ ГЛАВНОЙ СТРАНИЦЫ
         // ==========================================
-        async function loadCurrentView() {
-            if (!apiToken) { showConnectionModal(); return; }
+        async function loadDashboard() {
+            if (!apiToken) { 
+                showConnectionModal(); 
+                return; 
+            }
             
             showLoader('Загрузка данных...', 'Обращение к API МойСклад');
-            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
-
+            
             try {
                 const dateFrom = document.getElementById('date-from').value;
                 const dateTo = document.getElementById('date-to').value;
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
-
-                if (currentView === 'dashboard') await loadDashboard(headers, momentFrom, momentTo);
-                else if (currentView === 'sales') await loadSales(headers, momentFrom, momentTo);
-                else if (currentView === 'finance') await loadFinance(headers, momentFrom, momentTo);
-                else if (currentView === 'stock') await loadStock(headers);
-                else if (currentView === 'clients') await loadClients(headers);
-
+                
+                // Параллельная загрузка всех данных
+                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
+                    loadDashboardMetrics(headers),
+                    loadSalesSeries(headers, momentFrom, momentTo),
+                    loadProfitByProduct(headers, momentFrom, momentTo),
+                    loadRecentChecks(headers, momentFrom, momentTo)
+                ]);
+                
+                // Обновление KPI с трендами
+                updateKPIs(dashboardData, salesSeries, profitData);
+                
+                // Обновление графика
+                updateMainChart(salesSeries);
+                
+                // Обновление топа товаров
+                updateTopProducts(profitData);
+                
+                // Обновление списка чеков
+                updateRecentChecks(checksData);
+                
+                // Генерация рекомендаций
+                generateInsights(dashboardData, salesSeries, profitData, checksData);
+                
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
+                
             } catch (error) {
-                console.error(error);
-                alert('Ошибка загрузки: ' + error.message);
+                console.error('Ошибка загрузки:', error);
+                alert('Ошибка: ' + error.message);
             } finally {
                 hideLoader();
             }
         }
 
-        // --- 5.1 DASHBOARD ---
-        async function loadDashboard(headers, momentFrom, momentTo) {
-            const [salesRes, profitRes] = await Promise.all([
-                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
-                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`, headers)
-            ]);
+        async function loadDashboardMetrics(headers) {
+            const endpoint = getDashboardEndpoint(currentPeriod);
+            const url = `https://api.moysklad.ru/api/remap/1.2/report/dashboard/${endpoint}`;
+            const response = await proxyFetch(url, headers);
+            return await response.json();
+        }
+
+        async function loadSalesSeries(headers, momentFrom, momentTo) {
+            const interval = currentPeriod === 'today' ? 'hour' : 'day';
+            const url = `https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
+            const response = await proxyFetch(url, headers);
+            const data = await response.json();
+            return data.series || [];
+        }
+
+        async function loadProfitByProduct(headers, momentFrom, momentTo) {
+            const url = `https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
+            const response = await proxyFetch(url, headers);
+            const data = await response.json();
+            return data.rows || [];
+        }
+
+        async function loadRecentChecks(headers, momentFrom, momentTo) {
+            const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
+            const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?filter=${filter}&limit=20&order=moment,desc`;
+            const response = await proxyFetch(url, headers);
+            const data = await response.json();
+            return data.rows || [];
+        }
+
+        // ==========================================
+        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
+        // ==========================================
+        function updateKPIs(dashboardData, salesSeries, profitData) {
+            // Выручка
+            const totalRevenue = salesSeries.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+            const revenueMovement = dashboardData.sales?.movementAmount || 0;
+            const revenuePercent = dashboardData.sales?.amount ? (revenueMovement / dashboardData.sales.amount * 100) : 0;
             
-            const salesData = await salesRes.json();
-            const profitData = await profitRes.json();
-            dashboardData = { sales: salesData, profit: profitData, momentFrom, momentTo };
-
-            const totalRevenue = salesData.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-            const totalChecks = salesData.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
-            const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
-            const totalProfit = profitData.rows.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
-
             document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
+            updateTrend('kpi-revenue-trend', revenueMovement, revenuePercent);
+            
+            // Прибыль (из отчета прибыльности)
+            const totalProfit = profitData.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
+            const profitMovement = dashboardData.sales?.amount ? (totalProfit - (dashboardData.sales.amount / 100)) : 0;
+            const profitPercent = dashboardData.sales?.amount ? (profitMovement / (dashboardData.sales.amount / 100) * 100) : 0;
+            
             document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
+            updateTrend('kpi-profit-trend', profitMovement, profitPercent);
+            
+            // Чеки
+            const totalChecks = salesSeries.reduce((sum, s) => sum + (s.quantity || 0), 0);
+            const checksMovement = dashboardData.sales?.count ? (totalChecks - dashboardData.sales.count) : 0;
+            const checksPercent = dashboardData.sales?.count ? (checksMovement / dashboardData.sales.count * 100) : 0;
+            
             document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
+            updateTrend('kpi-checks-trend', checksMovement, checksPercent);
+            
+            // Средний чек
+            const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
+            const prevAvgCheck = dashboardData.sales?.count > 0 ? (dashboardData.sales.amount / 100) / dashboardData.sales.count : 0;
+            const avgCheckMovement = avgCheck - prevAvgCheck;
+            const avgCheckPercent = prevAvgCheck > 0 ? (avgCheckMovement / prevAvgCheck * 100) : 0;
+            
             document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
+            updateTrend('kpi-avg-check-trend', avgCheckMovement, avgCheckPercent);
+            
+            // Маржа
+            const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+            const prevMargin = dashboardData.sales?.amount > 0 ? ((totalProfit - profitMovement) / ((dashboardData.sales.amount / 100) - revenueMovement) * 100) : 0;
+            const marginMovement = margin - prevMargin;
+            
+            document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
+            updateTrend('kpi-margin-trend', marginMovement, marginMovement, true);
+        }
 
-            // График
+        function updateTrend(elementId, movement, percent, isPercent = false) {
+            const element = document.getElementById(elementId);
+            let arrow = '→';
+            let trendClass = 'trend-neutral';
+            let sign = '';
+            
+            if (movement > 0) {
+                arrow = '↑';
+                trendClass = 'trend-up';
+                sign = '+';
+            } else if (movement < 0) {
+                arrow = '↓';
+                trendClass = 'trend-down';
+                sign = '';
+            }
+            
+            const displayValue = isPercent ? `${sign}${movement.toFixed(1)}%` : `${sign}${percent.toFixed(0)}%`;
+            
+            element.className = `text-xs flex items-center gap-1 ${trendClass}`;
+            element.innerHTML = `<span>${arrow}</span> <span>${displayValue}</span>`;
+        }
+
+        function updateMainChart(salesSeries) {
+            const ctx = document.getElementById('main-chart');
             if (charts['main']) charts['main'].destroy();
-            charts['main'] = new Chart(document.getElementById('main-chart'), {
+            
+            const labels = salesSeries.map(s => {
+                const date = new Date(s.date);
+                return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+            });
+            
+            const revenueData = salesSeries.map(s => (s.sum || 0) / 100);
+            const profitData = salesSeries.map(s => ((s.sum || 0) * 0.3) / 100); // Примерная прибыль
+            
+            charts['main'] = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: salesData.series.map(s => s.date.split(' ')[0].slice(5)),
+                    labels: labels,
                     datasets: [
-                        { label: 'Выручка', data: salesData.series.map(s => (s.sum || 0) / 100), borderColor: '#4ade80', backgroundColor: 'rgba(74, 222, 128, 0.1)', fill: true, tension: 0.4 },
-                        { label: 'Прибыль (оценка)', data: salesData.series.map(s => ((s.sum || 0) * 0.3) / 100), borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.1)', fill: true, tension: 0.4 }
+                        {
+                            label: 'Выручка',
+                            data: revenueData,
+                            borderColor: '#4ade80',
+                            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
+                        },
+                        {
+                            label: 'Прибыль (оценка)',
+                            data: profitData,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
+                        }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#64748b' }, grid: { display: false } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', font: { size: 12 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#e2e8f0',
+                            bodyColor: '#e2e8f0',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: (context) => {
+                                    return `${context.dataset.label}: ${formatMoney(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { 
+                                callback: v => formatMoney(v), 
+                                color: '#64748b',
+                                font: { size: 11 }
+                            },
+                            grid: { color: '#1e293b' }
+                        },
+                        x: {
+                            ticks: { 
+                                color: '#64748b',
+                                font: { size: 11 }
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
             });
+        }
 
-            // Топ товаров
-            const topProducts = profitData.rows.sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5);
-            document.getElementById('dashboard-top-products').innerHTML = topProducts.map((p, i) => `
-                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                    <div class="flex items-center gap-3">
-                        <span class="text-lg">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '•'}</span>
-                        <div>
-                            <div class="font-medium text-sm text-white">${p.assortment?.name || 'Без названия'}</div>
-                            <div class="text-xs text-gray-400">Маржа: ${((p.salesMargin || 0) * 100).toFixed(1)}%</div>
+        function updateTopProducts(profitData) {
+            const sorted = profitData
+                .sort((a, b) => (b.profit || 0) - (a.profit || 0))
+                .slice(0, 5);
+            
+            const container = document.getElementById('top-products-list');
+            
+            if (sorted.length === 0) {
+                container.innerHTML = '<div class="text-sm text-gray-500 text-center py-8">Нет данных за период</div>';
+                return;
+            }
+            
+            const medals = ['', '🥈', '🥉', '4️⃣', '5️⃣'];
+            
+            container.innerHTML = sorted.map((product, index) => {
+                const profit = (product.profit || 0) / 100;
+                const revenue = (product.sellSum || 0) / 100;
+                const margin = product.salesMargin ? (product.salesMargin * 100).toFixed(1) : '0.0';
+                
+                return `
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50 hover:border-blue-500/30 transition">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                                <span class="text-lg">${medals[index]}</span>
+                                <div class="font-medium text-sm text-white truncate">${product.assortment?.name || 'Без названия'}</div>
+                            </div>
+                            <div class="text-right ml-2">
+                                <div class="font-bold text-blue-400 text-sm">${formatMoney(profit)}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-gray-400">
+                            <span>Выручка: ${formatMoney(revenue)}</span>
+                            <span class="text-yellow-400">Маржа: ${margin}%</span>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="font-bold text-blue-400 text-sm">${formatMoney((p.profit || 0) / 100)}</div>
+                `;
+            }).join('');
+        }
+
+        function updateRecentChecks(checks) {
+            const container = document.getElementById('recent-checks-list');
+            
+            if (checks.length === 0) {
+                container.innerHTML = '<div class="text-sm text-gray-500 text-center py-8">Нет чеков за период</div>';
+                return;
+            }
+            
+            container.innerHTML = checks.map(check => {
+                const sum = (check.sum || 0) / 100;
+                const moment = check.moment ? formatDateTime(check.moment) : '-';
+                const name = check.name || 'Чек';
+                
+                return `
+                    <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${name}', ${sum}, '${moment}')">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-white">${name}</div>
+                                    <div class="text-xs text-gray-400">${moment}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-green-400">${formatMoney(sum)}</div>
+                                <div class="text-xs text-blue-400 flex items-center gap-1 justify-end">
+                                    Подробнее
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function generateInsights(dashboardData, salesSeries, profitData, checks) {
+            const container = document.getElementById('ai-insights');
+            const insights = [];
+            
+            // Анализ выручки
+            const totalRevenue = salesSeries.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+            const revenueMovement = dashboardData.sales?.movementAmount || 0;
+            
+            if (revenueMovement > 0) {
+                insights.push({
+                    type: 'success',
+                    icon: '📈',
+                    title: 'Выручка растет',
+                    text: `Выручка увеличилась на ${formatMoney(Math.abs(revenueMovement) / 100)} по сравнению с прошлым периодом`
+                });
+            } else if (revenueMovement < 0) {
+                insights.push({
+                    type: 'warning',
+                    icon: '📉',
+                    title: 'Выручка снижается',
+                    text: `Выручка уменьшилась на ${formatMoney(Math.abs(revenueMovement) / 100)}. Проверьте ассортимент и цены`
+                });
+            }
+            
+            // Анализ маржи
+            const totalProfit = profitData.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
+            const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+            
+            if (margin < 20 && totalRevenue > 0) {
+                insights.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    title: 'Низкая маржинальность',
+                    text: `Маржа составляет ${margin.toFixed(1)}%. Рассмотрите повышение цен или оптимизацию затрат`
+                });
+            } else if (margin >= 30) {
+                insights.push({
+                    type: 'success',
+                    icon: '💪',
+                    title: 'Высокая маржинальность',
+                    text: `Отличная маржа ${margin.toFixed(1)}%! Бизнес работает эффективно`
+                });
+            }
+            
+            // Анализ чеков
+            const totalChecks = salesSeries.reduce((sum, s) => sum + (s.quantity || 0), 0);
+            const avgCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
+            
+            if (totalChecks > 0) {
+                insights.push({
+                    type: 'info',
+                    icon: '🧾',
+                    title: 'Статистика чеков',
+                    text: `Всего ${formatNumber(totalChecks)} чеков, средний чек ${formatMoney(avgCheck)}`
+                });
+            }
+            
+            // Топ товар
+            if (profitData.length > 0) {
+                const topProduct = profitData.sort((a, b) => (b.profit || 0) - (a.profit || 0))[0];
+                insights.push({
+                    type: 'info',
+                    icon: '🏆',
+                    title: 'Лидер продаж',
+                    text: `${topProduct.assortment?.name || 'Товар'} приносит больше всего прибыли: ${formatMoney((topProduct.profit || 0) / 100)}`
+                });
+            }
+            
+            // Отображение
+            if (insights.length === 0) {
+                container.innerHTML = '<div class="text-sm text-gray-500 text-center py-8 md:col-span-2">Недостаточно данных для анализа</div>';
+                return;
+            }
+            
+            const colors = {
+                success: 'border-green-500/30 bg-green-500/5',
+                warning: 'border-yellow-500/30 bg-yellow-500/5',
+                info: 'border-blue-500/30 bg-blue-500/5'
+            };
+            
+            container.innerHTML = insights.map(insight => `
+                <div class="border-l-4 ${colors[insight.type]} rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">${insight.icon}</span>
+                        <div class="flex-1">
+                            <div class="font-semibold text-white mb-1">${insight.title}</div>
+                            <div class="text-sm text-gray-400">${insight.text}</div>
+                        </div>
                     </div>
                 </div>
-            `).join('') || '<div class="text-sm text-gray-500 text-center py-4">Нет данных</div>';
-        }
-
-        // --- 5.2 SALES ---
-        async function loadSales(headers, momentFrom, momentTo) {
-            const [plotRes, productRes] = await Promise.all([
-                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
-                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&groupBy=assortment&limit=100`, headers)
-            ]);
-            
-            const plotData = await plotRes.json();
-            const productData = await productRes.json();
-
-            const totalSum = plotData.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-            const totalCount = plotData.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
-            const avgCheck = totalCount > 0 ? totalSum / totalCount : 0;
-            const totalQty = productData.rows.reduce((sum, r) => sum + (r.sellQuantity || 0), 0);
-
-            document.getElementById('sales-total-sum').textContent = formatMoney(totalSum);
-            document.getElementById('sales-total-count').textContent = formatNumber(totalCount);
-            document.getElementById('sales-avg-check').textContent = formatMoney(avgCheck);
-            document.getElementById('sales-total-qty').textContent = formatNumber(totalQty);
-
-            if (charts['sales']) charts['sales'].destroy();
-            charts['sales'] = new Chart(document.getElementById('sales-chart'), {
-                type: 'bar',
-                data: {
-                    labels: plotData.series.map(s => s.date.split(' ')[0].slice(5)),
-                    datasets: [{ label: 'Сумма продаж', data: plotData.series.map(s => (s.sum || 0) / 100), backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#64748b' }, grid: { display: false } } } }
-            });
-
-            const sortedProducts = productData.rows.sort((a, b) => (b.sellSum || 0) - (a.sellSum || 0)).slice(0, 50);
-            document.getElementById('sales-products-table').innerHTML = sortedProducts.map(p => `
-                <tr class="table-row-hover transition">
-                    <td class="px-4 py-3 font-medium text-white">${p.assortment?.name || 'Без названия'}</td>
-                    <td class="px-4 py-3 text-right text-gray-300">${formatNumber(p.sellQuantity || 0)}</td>
-                    <td class="px-4 py-3 text-right text-green-400">${formatMoney((p.sellSum || 0) / 100)}</td>
-                    <td class="px-4 py-3 text-right text-blue-400">${formatMoney((p.profit || 0) / 100)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Нет данных за период</td></tr>';
-        }
-
-        // --- 5.3 FINANCE ---
-        async function loadFinance(headers, momentFrom, momentTo) {
-            const [plotRes, accountRes] = await Promise.all([
-                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/money/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
-                proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/money/byaccount`, headers)
-            ]);
-            
-            const plotData = await plotRes.json();
-            const accountData = await accountRes.json();
-
-            document.getElementById('fin-income').textContent = formatMoney(plotData.credit || 0);
-            document.getElementById('fin-outcome').textContent = formatMoney(plotData.debit || 0);
-            document.getElementById('fin-balance').textContent = formatMoney((plotData.credit || 0) - (plotData.debit || 0));
-
-            if (charts['finance']) charts['finance'].destroy();
-            charts['finance'] = new Chart(document.getElementById('finance-chart'), {
-                type: 'line',
-                data: {
-                    labels: plotData.series.map(s => s.date.split(' ')[0].slice(5)),
-                    datasets: [
-                        { label: 'Приход', data: plotData.series.map(s => (s.credit || 0)), borderColor: '#4ade80', backgroundColor: 'rgba(74, 222, 128, 0.1)', fill: true, tension: 0.4 },
-                        { label: 'Расход', data: plotData.series.map(s => (s.debit || 0)), borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.1)', fill: true, tension: 0.4 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#64748b' }, grid: { display: false } } } }
-            });
-
-            document.getElementById('finance-accounts-table').innerHTML = accountData.rows.map(r => `
-                <tr class="table-row-hover transition">
-                    <td class="px-4 py-3">
-                        <div class="font-medium text-white">${r.organization?.name || 'Не указано'}</div>
-                        <div class="text-xs text-gray-400">${r.account ? r.account.name : 'Касса'}</div>
-                    </td>
-                    <td class="px-4 py-3 text-right font-bold ${(r.balance || 0) >= 0 ? 'text-green-400' : 'text-red-400'}">${formatMoney(r.balance || 0)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="2" class="px-4 py-8 text-center text-gray-500">Нет данных</td></tr>';
-        }
-
-        // --- 5.4 STOCK ---
-        async function loadStock(headers) {
-            showLoader('Загрузка склада...', 'Это может занять несколько секунд');
-            const res = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/stock/all?limit=1000`, headers);
-            hideLoader();
-            
-            const data = await res.json();
-            const rows = data.rows || [];
-
-            let totalItems = 0, totalValue = 0, zeroCount = 0, totalDays = 0;
-            rows.forEach(r => {
-                const qty = r.stock || 0;
-                const cost = (r.price || 0) / 100;
-                totalItems++;
-                totalValue += qty * cost;
-                if (qty === 0) zeroCount++;
-                totalDays += (r.stockDays || 0);
-            });
-            const avgDays = totalItems > 0 ? Math.round(totalDays / totalItems) : 0;
-
-            document.getElementById('stock-items-count').textContent = formatNumber(totalItems);
-            document.getElementById('stock-total-value').textContent = formatMoney(totalValue);
-            document.getElementById('stock-zero-count').textContent = formatNumber(zeroCount);
-            document.getElementById('stock-avg-days').textContent = formatNumber(avgDays);
-
-            rows.sort((a, b) => ((b.stock || 0) * (b.price || 0)) - ((a.stock || 0) * (a.price || 0)));
-
-            document.getElementById('stock-table').innerHTML = rows.slice(0, 200).map(r => {
-                const qty = r.stock || 0;
-                const cost = (r.price || 0) / 100;
-                const sale = (r.salePrice || 0) / 100;
-                const sum = qty * cost;
-                return `
-                    <tr class="table-row-hover transition">
-                        <td class="px-4 py-3 font-medium text-white">${r.name || 'Без названия'}</td>
-                        <td class="px-4 py-3 text-right ${qty === 0 ? 'text-red-400 font-bold' : 'text-green-400'}">${formatNumber(qty)}</td>
-                        <td class="px-4 py-3 text-right text-gray-400">${formatMoney(cost)}</td>
-                        <td class="px-4 py-3 text-right text-blue-400">${formatMoney(sale)}</td>
-                        <td class="px-4 py-3 text-right font-semibold text-white">${formatMoney(sum)}</td>
-                    </tr>
-                `;
-            }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Склад пуст</td></tr>';
-        }
-
-        // --- 5.5 CLIENTS ---
-        async function loadClients(headers) {
-            showLoader('Загрузка клиентов...', 'Анализ контрагентов');
-            const res = await proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/counterparty?limit=100`, headers);
-            hideLoader();
-            
-            const data = await res.json();
-            const rows = data.rows || [];
-
-            const clients = rows.filter(r => (r.demandsSum || 0) > 0).sort((a, b) => (b.demandsSum || 0) - (a.demandsSum || 0)).slice(0, 50);
-
-            document.getElementById('clients-table').innerHTML = clients.map(r => {
-                const sum = (r.demandsSum || 0) / 100;
-                const count = r.demandsCount || 0;
-                const avg = count > 0 ? sum / count : 0;
-                const balance = (r.balance || 0) / 100;
-                return `
-                    <tr class="table-row-hover transition">
-                        <td class="px-4 py-3">
-                            <div class="font-medium text-white">${r.counterparty?.name || 'Неизвестно'}</div>
-                            <div class="text-xs text-gray-400">${r.counterparty?.inn ? 'ИНН: ' + r.counterparty.inn : 'Физ. лицо'}</div>
-                        </td>
-                        <td class="px-4 py-3 text-right text-gray-300">${formatNumber(count)}</td>
-                        <td class="px-4 py-3 text-right text-green-400 font-medium">${formatMoney(sum)}</td>
-                        <td class="px-4 py-3 text-right text-purple-400">${formatMoney(avg)}</td>
-                        <td class="px-4 py-3 text-right ${balance < 0 ? 'text-red-400 font-bold' : 'text-yellow-400'}">${formatMoney(balance)}</td>
-                    </tr>
-                `;
-            }).join('') || '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Нет данных о продажах</td></tr>';
+            `).join('');
         }
 
         // ==========================================
-        // 6. МОДАЛЬНЫЕ ОКНА И ДЕТАЛИЗАЦИЯ
+        // ДЕТАЛИЗАЦИЯ
         // ==========================================
-        function showRevenueDetails() {
-            const total = dashboardData.sales?.series?.reduce((sum, s) => sum + (s.sum || 0) / 100, 0) || 0;
-            const html = `
-                <div class="space-y-4">
-                    <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-green-500">
-                        <div class="text-sm text-gray-400">Общая выручка за период</div>
-                        <div class="text-3xl font-bold text-green-400">${formatMoney(total)}</div>
-                    </div>
-                    <div class="bg-slate-800 p-4 rounded-lg">
-                        <h4 class="font-bold mb-3 text-white">Выручка по дням</h4>
-                        <div class="space-y-2 custom-scroll max-h-[50vh] overflow-y-auto">
-                            ${(dashboardData.sales?.series || []).map(s => `
-                                <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
-                                    <span class="text-sm text-gray-300">${s.date.split(' ')[0]}</span>
-                                    <span class="font-bold text-green-400">${formatMoney((s.sum || 0) / 100)}</span>
-                                </div>
-                            `).join('')}
+        function showKpiDetail(type) {
+            const titles = {
+                revenue: 'Детализация выручки',
+                profit: 'Детализация прибыли',
+                avgCheck: 'Детализация среднего чека',
+                margin: 'Детализация маржи'
+            };
+            
+            let content = '';
+            
+            if (type === 'revenue') {
+                const revenue = document.getElementById('kpi-revenue').textContent;
+                content = `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+                            <div class="text-sm text-gray-400 mb-2">Общая выручка за период</div>
+                            <div class="text-4xl font-bold text-green-400">${revenue}</div>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3 text-white">Выручка по дням</h4>
+                            <div class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto">
+                                ${charts['main']?.data?.labels?.map((label, i) => `
+                                    <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
+                                        <span class="text-sm text-gray-300">${label}</span>
+                                        <span class="font-bold text-green-400">${formatMoney(charts['main'].data.datasets[0].data[i])}</span>
+                                    </div>
+                                `).join('') || '<div class="text-gray-500 text-center">Нет данных</div>'}
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            openDetailsModal('Детализация выручки', html);
-        }
-
-        function showProfitDetails() {
-            const html = `
-                <div class="space-y-4">
-                    <div class="bg-slate-800 p-4 rounded-lg">
-                        <h4 class="font-bold mb-3 text-white">Топ-10 товаров по прибыли</h4>
-                        <div class="space-y-2 custom-scroll max-h-[60vh] overflow-y-auto">
-                            ${(dashboardData.profit?.rows || []).sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 10).map(p => `
-                                <div class="flex justify-between items-center p-3 bg-slate-900 rounded">
-                                    <span class="text-sm font-medium text-white">${p.assortment?.name || 'Без названия'}</span>
-                                    <span class="font-bold text-blue-400">${formatMoney((p.profit || 0) / 100)}</span>
-                                </div>
-                            `).join('')}
+                `;
+            } else if (type === 'profit') {
+                const profit = document.getElementById('kpi-profit').textContent;
+                content = `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-blue-500">
+                            <div class="text-sm text-gray-400 mb-2">Общая прибыль за период</div>
+                            <div class="text-4xl font-bold text-blue-400">${profit}</div>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-lg">
+                            <h4 class="font-bold mb-3 text-white">Топ-10 товаров по прибыли</h4>
+                            <div class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto">
+                                ${dashboardCache.profitData?.sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 10).map(p => `
+                                    <div class="flex justify-between items-center p-3 bg-slate-900 rounded">
+                                        <span class="text-sm font-medium text-white">${p.assortment?.name || 'Без названия'}</span>
+                                        <span class="font-bold text-blue-400">${formatMoney((p.profit || 0) / 100)}</span>
+                                    </div>
+                                `).join('') || '<div class="text-gray-500 text-center">Нет данных</div>'}
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            openDetailsModal('Детализация прибыли', html);
+                `;
+            } else if (type === 'avgCheck') {
+                const avgCheck = document.getElementById('kpi-avg-check').textContent;
+                const checks = document.getElementById('kpi-checks').textContent;
+                content = `
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-yellow-500">
+                                <div class="text-sm text-gray-400 mb-2">Средний чек</div>
+                                <div class="text-3xl font-bold text-yellow-400">${avgCheck}</div>
+                            </div>
+                            <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-purple-500">
+                                <div class="text-sm text-gray-400 mb-2">Всего чеков</div>
+                                <div class="text-3xl font-bold text-purple-400">${checks}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'margin') {
+                const margin = document.getElementById('kpi-margin').textContent;
+                content = `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-emerald-500">
+                            <div class="text-sm text-gray-400 mb-2">Маржинальность</div>
+                            <div class="text-4xl font-bold text-emerald-400">${margin}</div>
+                            <div class="text-sm text-gray-400 mt-2">
+                                ${parseFloat(margin) >= 30 ? '✅ Отличный показатель' : 
+                                  parseFloat(margin) >= 20 ? '️ Средний показатель' : 
+                                  '❌ Низкий показатель'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            openDetailsModal(titles[type], content);
         }
 
-        async function showChecksDetails() {
-            openDetailsModal('Список чеков', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
+        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка товаров чека...</div>');
+            
             try {
                 const headers = getAuthHeaders();
-                const { momentFrom, momentTo } = dashboardData;
+                // Согласно документации: expand=positions.assortment + fields=stock + limit<=100
+                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock&limit=100`;
                 
-                // Правильная фильтрация документов по дате + только проведенные
+                const response = await proxyFetch(url, headers);
+                const checkData = await response.json();
+                const positions = checkData.positions?.rows || [];
+                
+                let totalCalculated = 0;
+                const itemsHtml = positions.map(p => {
+                    const productName = p.assortment?.name || 'Товар без названия';
+                    const quantity = p.quantity || 0;
+                    const price = (p.price || 0) / 100;
+                    const sum = (p.sum || 0) / 100;
+                    totalCalculated += sum;
+                    
+                    return `
+                        <div class="flex justify-between items-start p-4 bg-slate-900 rounded-lg border border-slate-800 mb-2">
+                            <div class="flex-1 pr-4">
+                                <div class="font-medium text-white mb-1">${productName}</div>
+                                <div class="text-sm text-gray-400">
+                                    ${formatNumber(quantity)} шт × ${formatMoney(price)}
+                                </div>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <div class="font-bold text-green-400 text-lg">${formatMoney(sum)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                const html = `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">Чек</div>
+                                    <div class="text-2xl font-bold text-white">${checkName}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-400 mb-1">Сумма</div>
+                                    <div class="text-3xl font-bold text-green-400">${formatMoney(checkSum)}</div>
+                                </div>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-3 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                ${checkMoment}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800 p-6 rounded-lg">
+                            <h4 class="font-bold mb-4 flex items-center gap-2 text-white text-lg">
+                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                </svg>
+                                Товары в чеке (${positions.length})
+                            </h4>
+                            <div class="space-y-2 custom-scroll max-h-[400px] overflow-y-auto pr-2">
+                                ${itemsHtml || '<div class="text-gray-500 text-center py-8">В чеке нет позиций</div>'}
+                            </div>
+                            ${positions.length > 0 ? `
+                                <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between items-center">
+                                    <span class="font-bold text-gray-300 text-lg">Итого по позициям:</span>
+                                    <span class="font-bold text-green-400 text-2xl">${formatMoney(totalCalculated)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <button onclick="showChecksList()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 mt-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                            Вернуться к списку чеков
+                        </button>
+                    </div>
+                `;
+                
+                openDetailsModal(`Чек: ${checkName}`, html);
+                
+            } catch (error) {
+                openDetailsModal('Ошибка', `
+                    <div class="text-red-400 text-center py-8">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <div class="text-lg font-bold mb-2">Не удалось загрузить чек</div>
+                        <div class="text-sm">${error.message}</div>
+                    </div>
+                    <button onclick="showChecksList()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition">
+                        Назад к списку
+                    </button>
+                `);
+            }
+        }
+
+        async function showChecksList() {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
+            
+            try {
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                const momentFrom = `${dateFrom} 00:00:00`;
+                const momentTo = `${dateTo} 23:59:59`;
+                const headers = getAuthHeaders();
+                
                 const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
-                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?filter=${filter}&limit=1000&order=moment,desc`;
+                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?filter=${filter}&limit=100&order=moment,desc`;
                 
                 const response = await proxyFetch(url, headers);
                 const data = await response.json();
                 const checks = data.rows || [];
                 const totalSum = checks.reduce((sum, c) => sum + (c.sum || 0) / 100, 0);
-
+                
                 const html = `
                     <div class="space-y-4">
-                        <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-purple-500 flex justify-between items-center">
-                            <div>
-                                <div class="text-sm text-gray-400">Всего чеков за период</div>
-                                <div class="text-2xl font-bold text-purple-400">${checks.length}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm text-gray-400">На сумму</div>
-                                <div class="text-xl font-bold text-green-400">${formatMoney(totalSum)}</div>
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-purple-500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">Всего чеков за период</div>
+                                    <div class="text-3xl font-bold text-purple-400">${formatNumber(checks.length)}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm text-gray-400 mb-1">На сумму</div>
+                                    <div class="text-2xl font-bold text-green-400">${formatMoney(totalSum)}</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="space-y-2 custom-scroll max-h-[60vh] overflow-y-auto pr-2">
+                        
+                        <div class="space-y-2 custom-scroll max-h-[500px] overflow-y-auto pr-2">
                             ${checks.length === 0 ? '<div class="text-center text-gray-500 py-8">Проведенных чеков за этот период не найдено</div>' : ''}
                             ${checks.map(c => {
                                 const sum = (c.sum || 0) / 100;
-                                const date = c.moment ? new Date(c.moment).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                                const moment = c.moment ? formatDateTime(c.moment) : '-';
+                                const name = c.name || 'Чек';
                                 return `
-                                    <div class="bg-slate-800 p-4 rounded-lg cursor-pointer hover:bg-slate-700 transition border border-transparent hover:border-blue-500/50" onclick="loadCheckDetails('${c.id}', '${c.name || 'Чек'}', ${sum}, '${date}')">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <span class="font-bold text-lg text-white">${c.name || 'Чек'}</span>
-                                            <span class="font-bold text-green-400 text-lg">${formatMoney(sum)}</span>
-                                        </div>
-                                        <div class="flex justify-between items-center text-xs text-gray-400">
-                                            <span>${date}</span>
-                                            <span class="text-blue-400 flex items-center gap-1 font-medium">Открыть товары <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+                                    <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${c.id}', '${name}', ${sum}, '${moment}')">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <div class="font-medium text-white">${name}</div>
+                                                    <div class="text-xs text-gray-400">${moment}</div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="font-bold text-green-400 text-lg">${formatMoney(sum)}</div>
+                                                <div class="text-xs text-blue-400 flex items-center gap-1 justify-end">
+                                                    Подробнее
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 `;
@@ -778,119 +1284,29 @@
                         </div>
                     </div>
                 `;
-                openDetailsModal(`Список чеков (${checks.length})`, html);
-            } catch (error) {
-                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-4">Не удалось загрузить чеки:<br><br>${error.message}</div>`);
-            }
-        }
-
-        async function loadCheckDetails(checkId, checkName, checkSum, checkMoment) {
-            const modal = document.getElementById('details-modal');
-            const title = document.getElementById('details-title');
-            const content = document.getElementById('details-content');
-            
-            title.textContent = 'Загрузка товаров...';
-            content.innerHTML = '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка позиций чека...</div>';
-            
-            try {
-                const headers = getAuthHeaders();
-                // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: fields=stock&expand=positions.assortment гарантирует получение имен и цен
-                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?fields=stock&expand=positions.assortment`;
                 
-                const response = await proxyFetch(url, headers);
-                const checkData = await response.json();
-                const positions = checkData.positions?.rows || [];
-
-                let totalCalculated = 0;
-                const itemsHtml = positions.map(p => {
-                    const productName = p.assortment?.name || 'Товар без названия';
-                    const quantity = p.quantity || 0;
-                    // Цена берется из p.price (в копейках), если нет - вычисляем
-                    const price = (p.price !== undefined ? p.price : ((p.sum || 0) / (quantity || 1))) / 100;
-                    const sum = (p.sum || 0) / 100;
-                    totalCalculated += sum;
-
-                    return `
-                        <div class="flex justify-between items-start p-3 bg-slate-900 rounded mb-2 border border-slate-800">
-                            <div class="flex-1 pr-4">
-                                <div class="font-medium text-white">${productName}</div>
-                                <div class="text-sm text-gray-400 mt-1">${formatNumber(quantity)} шт × ${formatMoney(price)}</div>
-                            </div>
-                            <div class="text-right flex-shrink-0">
-                                <div class="font-bold text-green-400">${formatMoney(sum)}</div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                const html = `
-                    <div class="space-y-4">
-                        <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-green-500">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <div class="text-sm text-gray-400">Чек</div>
-                                    <div class="text-xl font-bold text-white">${checkName}</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm text-gray-400">Сумма</div>
-                                    <div class="text-2xl font-bold text-green-400">${formatMoney(checkSum)}</div>
-                                </div>
-                            </div>
-                            <div class="text-xs text-gray-500 mt-2 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                ${checkMoment}
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-800 p-4 rounded-lg">
-                            <h4 class="font-bold mb-3 flex items-center gap-2 text-white">
-                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                                Товары в чеке (${positions.length})
-                            </h4>
-                            <div class="space-y-2 custom-scroll max-h-[50vh] overflow-y-auto pr-2">
-                                ${itemsHtml || '<div class="text-gray-500 text-center py-4">В чеке нет позиций</div>'}
-                            </div>
-                            ${positions.length > 0 ? `
-                                <div class="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
-                                    <span class="font-bold text-gray-300">Итого по позициям:</span>
-                                    <span class="font-bold text-green-400 text-xl">${formatMoney(totalCalculated)}</span>
-                                </div>
-                            ` : ''}
-                        </div>
-
-                        <button onclick="showChecksDetails()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2 mt-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                            Вернуться к списку чеков
-                        </button>
-                    </div>
-                `;
-                title.textContent = `Детализация чека: ${checkName}`;
-                content.innerHTML = html;
+                openDetailsModal(`Все чеки (${checks.length})`, html);
+                
             } catch (error) {
-                title.textContent = 'Ошибка';
-                content.innerHTML = `<div class="text-red-400 text-center py-4">Не удалось загрузить позиции:<br><br>${error.message}</div>
-                <button onclick="showChecksDetails()" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition">Назад к списку</button>`;
+                openDetailsModal('Ошибка', `
+                    <div class="text-red-400 text-center py-8">
+                        <div class="text-lg font-bold mb-2">Не удалось загрузить чеки</div>
+                        <div class="text-sm">${error.message}</div>
+                    </div>
+                `);
             }
         }
 
         // ==========================================
-        // 7. ИНИЦИАЛИЗАЦИЯ
+        // ИНИЦИАЛИЗАЦИЯ
         // ==========================================
         window.addEventListener('load', () => {
             const dates = getPeriodDates('week');
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
             
-            // Подсветка активной кнопки периода
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                if (btn.textContent.trim() === 'Неделя') {
-                    btn.classList.add('bg-blue-600', 'text-white');
-                    btn.classList.remove('text-gray-300');
-                }
-            });
-
             if (apiToken) {
-                loadCurrentView();
+                loadDashboard();
             } else {
                 showConnectionModal();
             }
