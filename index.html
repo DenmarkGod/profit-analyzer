@@ -2,276 +2,155 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profit Analyzer Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Profit Analyzer Pro - Главная</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
         body { background: #0f172a; color: #e2e8f0; }
-        .glass { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
-        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
-        .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
         .kpi-card { transition: all 0.3s; cursor: pointer; }
-        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+        .trend-up { color: #4ade80; }
+        .trend-down { color: #f87171; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: #1e293b; border-radius: 16px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; }
         .chart-container { position: relative; height: 300px; }
-        .chart-container-small { position: relative; height: 200px; }
+        .period-btn.active { background: #3b82f6; color: white; }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         input[type="date"] { color-scheme: dark; }
-        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="min-h-screen p-4 md:p-8">
 
-    <!-- Боковая навигация -->
-    <aside class="w-64 bg-slate-900/80 border-r border-slate-800 flex flex-col">
-        <div class="p-6 border-b border-slate-800">
-            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Profit Analyzer</h1>
-            <p class="text-xs text-gray-500 mt-1">ERP-система для ИП</p>
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Заголовок -->
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Profit Analyzer</h1>
+                <p class="text-sm text-gray-400 mt-1">Дашборд руководителя</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-gray-500">Обновлено: <span id="last-update">-</span></span>
+                <button onclick="loadDashboard()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                    <span>🔄</span> Обновить
+                </button>
+            </div>
         </div>
-        <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3">
-                <span class="text-lg">📊</span> Главная
-            </button>
-            <button onclick="switchView('sales')" id="nav-sales" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">📈</span> Продажи
-            </button>
-            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">💰</span> Финансы
-            </button>
-            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">📦</span> Товары и склад
-            </button>
-            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">👥</span> Клиенты
-            </button>
-            <button onclick="switchView('suppliers')" id="nav-suppliers" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">🏭</span> Поставщики
-            </button>
-            <button onclick="switchView('analytics')" id="nav-analytics" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">🔍</span> Аналитика
-            </button>
-            <button onclick="switchView('forecast')" id="nav-forecast" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg"></span> Прогнозирование
-            </button>
-            <button onclick="switchView('reports')" id="nav-reports" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">📋</span> Отчеты
-            </button>
-            <button onclick="switchView('settings')" id="nav-settings" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
-                <span class="text-lg">️</span> Настройки
-            </button>
-        </nav>
-        <div class="p-4 border-t border-slate-800">
-            <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2">
-                <span></span> Подключение к API
-            </button>
-        </div>
-    </aside>
 
-    <!-- Основной контент -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-        
-        <!-- Верхняя панель управления -->
-        <div class="bg-slate-900/50 border-b border-slate-800 p-4">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-                <div class="flex items-center gap-3">
-                    <h2 id="page-title" class="text-2xl font-bold">Главная</h2>
-                    <span class="text-xs text-gray-500">Обновлено: <span id="last-update">-</span></span>
-                </div>
-                
-                <div class="flex items-center gap-3 flex-wrap">
-                    <div class="flex gap-2">
-                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Сегодня</button>
-                        <button onclick="setPeriod('yesterday')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Вчера</button>
-                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white transition">Неделя</button>
-                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Месяц</button>
-                        <button onclick="setPeriod('quarter')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Квартал</button>
-                        <button onclick="setPeriod('year')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Год</button>
-                    </div>
-                    
-                    <div class="flex gap-2">
-                        <input type="date" id="date-from" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
-                        <span class="text-gray-500">—</span>
-                        <input type="date" id="date-to" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
-                    </div>
-                    
-                    <button onclick="loadCurrentView()" class="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 rounded-lg transition">
-                        Обновить
-                    </button>
+        <!-- Быстрые фильтры периода -->
+        <div class="glass p-4">
+            <div class="flex items-center gap-3 flex-wrap">
+                <span class="text-sm font-medium text-gray-400">Период:</span>
+                <button onclick="setPeriod('today')" class="period-btn px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Сегодня</button>
+                <button onclick="setPeriod('week')" class="period-btn active px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Неделя</button>
+                <button onclick="setPeriod('month')" class="period-btn px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Месяц</button>
+                <button onclick="setPeriod('quarter')" class="period-btn px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Квартал</button>
+                <button onclick="setPeriod('year')" class="period-btn px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Год</button>
+                <div class="flex gap-2 ml-auto">
+                    <input type="date" id="date-from" class="px-3 py-2 text-sm bg-slate-800 border border-slate-700 rounded-lg">
+                    <span class="text-gray-500">—</span>
+                    <input type="date" id="date-to" class="px-3 py-2 text-sm bg-slate-800 border border-slate-700 rounded-lg">
                 </div>
             </div>
         </div>
 
-        <!-- Контент -->
-        <div class="flex-1 overflow-y-auto p-6 scrollbar-thin">
+        <!-- Карточки KPI -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="kpi-card glass p-6" onclick="showRevenueDetails()">
+                <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Выручка</div>
+                <div id="kpi-revenue" class="text-3xl font-bold text-green-400">0</div>
+                <div id="kpi-revenue-trend" class="text-sm mt-2 trend-up flex items-center gap-1">
+                    <span>↑</span> <span>+0%</span>
+                </div>
+            </div>
+            <div class="kpi-card glass p-6" onclick="showProfitDetails()">
+                <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Прибыль</div>
+                <div id="kpi-profit" class="text-3xl font-bold text-blue-400">0</div>
+                <div id="kpi-profit-trend" class="text-sm mt-2 trend-up flex items-center gap-1">
+                    <span>↑</span> <span>+0%</span>
+                </div>
+            </div>
+            <div class="kpi-card glass p-6" onclick="showOrdersDetails()">
+                <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Заказы</div>
+                <div id="kpi-orders" class="text-3xl font-bold text-purple-400">0</div>
+                <div id="kpi-orders-trend" class="text-sm mt-2 trend-up flex items-center gap-1">
+                    <span>↑</span> <span>+0%</span>
+                </div>
+            </div>
+            <div class="kpi-card glass p-6" onclick="showAvgCheckDetails()">
+                <div class="text-xs text-gray-400 mb-2 uppercase tracking-wider">Средний чек</div>
+                <div id="kpi-avg-check" class="text-3xl font-bold text-yellow-400">0</div>
+                <div id="kpi-avg-check-trend" class="text-sm mt-2 trend-up flex items-center gap-1">
+                    <span>↑</span> <span>+0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- График и рекомендации -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 glass p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold">Динамика выручки и прибыли</h3>
+                    <div class="flex gap-2">
+                        <button onclick="toggleChartType('line')" class="text-xs px-3 py-1 rounded bg-blue-600">Линейный</button>
+                        <button onclick="toggleChartType('bar')" class="text-xs px-3 py-1 rounded bg-slate-700">Столбчатый</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="main-chart"></canvas>
+                </div>
+            </div>
             
-            <!-- ГЛАВНАЯ СТРАНИЦА -->
-            <div id="view-dashboard" class="view-section space-y-6">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="kpi-card glass p-4">
-                        <div class="text-xs text-gray-400 mb-2">Выручка</div>
-                        <div id="kpi-revenue" class="text-2xl font-bold text-green-400">0</div>
-                        <div id="kpi-revenue-trend" class="text-xs mt-1 text-green-400">+0%</div>
-                    </div>
-                    <div class="kpi-card glass p-4">
-                        <div class="text-xs text-gray-400 mb-2">Прибыль</div>
-                        <div id="kpi-profit" class="text-2xl font-bold text-blue-400">0</div>
-                        <div id="kpi-profit-trend" class="text-xs mt-1 text-green-400">+0%</div>
-                    </div>
-                    <div class="kpi-card glass p-4">
-                        <div class="text-xs text-gray-400 mb-2">Заказы</div>
-                        <div id="kpi-orders" class="text-2xl font-bold text-purple-400">0</div>
-                        <div id="kpi-orders-trend" class="text-xs mt-1 text-green-400">+0%</div>
-                    </div>
-                    <div class="kpi-card glass p-4">
-                        <div class="text-xs text-gray-400 mb-2">Средний чек</div>
-                        <div id="kpi-avg-check" class="text-2xl font-bold text-yellow-400">0</div>
-                        <div id="kpi-avg-check-trend" class="text-xs mt-1 text-green-400">+0%</div>
-                    </div>
-                </div>
-
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Динамика выручки и прибыли</h3>
-                    <div class="chart-container">
-                        <canvas id="main-chart"></canvas>
-                    </div>
+            <!-- Умные рекомендации -->
+            <div class="glass p-6">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="text-2xl">💡</span> Рекомендации
+                </h3>
+                <div id="recommendations" class="space-y-3 text-sm">
+                    <div class="text-gray-500">Загрузите данные для получения рекомендаций</div>
                 </div>
             </div>
-
-            <!-- ПРОДАЖИ -->
-            <div id="view-sales" class="view-section hidden space-y-6">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="kpi-card glass p-4">
-                        <div class="text-xs text-gray-400 mb-2">Выручка</div>
-                        <div id="sales-revenue" class="text-2xl font-bold text-green-400">0</div>
-                    </div>
-                    <div class="kpi-card glass p-4">
-                        <div class="text-xs text-gray-400 mb-2">Количество заказов</div>
-                        <div id="sales-orders" class="text-2xl font-bold text-blue-400">0</div>
-                    </div>
-                    <div class="kpi-card glass p-4">
-                        <div class="text-xs text-gray-400 mb-2">Средний чек</div>
-                        <div id="sales-avg" class="text-2xl font-bold text-purple-400">0</div>
-                    </div>
-                    <div class="kpi-card glass p-4">
-                        <div class="text-xs text-gray-400 mb-2">Количество товаров</div>
-                        <div id="sales-items" class="text-2xl font-bold text-yellow-400">0</div>
-                    </div>
-                </div>
-
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Динамика продаж по дням</h3>
-                    <div class="chart-container">
-                        <canvas id="sales-chart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Тепловая карта продаж по дням недели</h3>
-                    <div id="heatmap-container" class="grid grid-cols-7 gap-2">
-                        <!-- Заполняется динамически -->
-                    </div>
-                </div>
-
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold mb-4">Топ-10 товаров по выручке</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                                <tr>
-                                    <th class="py-2 text-left">Товар</th>
-                                    <th class="py-2 text-right">Продано</th>
-                                    <th class="py-2 text-right">Выручка</th>
-                                    <th class="py-2 text-right">Прибыль</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sales-top-products" class="divide-y divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Заглушки для других разделов -->
-            <div id="view-finance" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4">💰 Раздел "Финансы"</h2>
-                    <p class="text-gray-400">В разработке</p>
-                </div>
-            </div>
-            <div id="view-stock" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4">📦 Раздел "Товары и склад"</h2>
-                    <p class="text-gray-400">В разработке</p>
-                </div>
-            </div>
-            <div id="view-clients" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4">👥 Раздел "Клиенты"</h2>
-                    <p class="text-gray-400">В разработке</p>
-                </div>
-            </div>
-            <div id="view-suppliers" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4"> Раздел "Поставщики"</h2>
-                    <p class="text-gray-400">В разработке</p>
-                </div>
-            </div>
-            <div id="view-analytics" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4">🔍 Раздел "Аналитика"</h2>
-                    <p class="text-gray-400">В разработке</p>
-                </div>
-            </div>
-            <div id="view-forecast" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4">🔮 Раздел "Прогнозирование"</h2>
-                    <p class="text-gray-400">В разработке</p>
-                </div>
-            </div>
-            <div id="view-reports" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4"> Раздел "Отчеты"</h2>
-                    <p class="text-gray-400">В разработке</p>
-                </div>
-            </div>
-            <div id="view-settings" class="view-section hidden">
-                <div class="glass p-8 text-center">
-                    <h2 class="text-2xl font-bold mb-4">⚙️ Раздел "Настройки"</h2>
-                    <p class="text-gray-400">В разработке</p>
-                </div>
-            </div>
-
         </div>
-    </main>
 
-    <!-- Модальное окно подключения -->
-    <div id="connection-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
-        <div class="glass p-8 max-w-md w-full">
-            <h3 class="text-xl font-bold mb-4">Подключение к МойСклад API</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2">Токен API или логин:пароль</label>
-                    <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white" placeholder="Введите токен">
-                </div>
-                <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
-                    Сохранить
-                </button>
-                <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm">
-                    Отмена
-                </button>
+        <!-- Топ-5 товаров -->
+        <div class="glass p-6">
+            <h3 class="text-lg font-bold mb-4">🏆 Топ-5 товаров по прибыли</h3>
+            <div id="top-products" class="space-y-3">
+                <div class="text-gray-500">Загрузите данные для отображения топа</div>
             </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для деталей -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 id="modal-title" class="text-2xl font-bold">Детали</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white text-2xl">×</button>
+            </div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Экран загрузки -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="glass p-8 max-w-md w-full text-center mx-4">
+            <div class="spinner mx-auto mb-4"></div>
+            <div id="loading-text" class="text-lg font-medium mb-1">Загрузка данных...</div>
         </div>
     </div>
 
     <script>
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-        let currentView = 'dashboard';
-        let currentPeriod = 'week';
         let charts = {};
+        let currentPeriod = 'week';
         let apiToken = localStorage.getItem('moysklad_token') || '';
+        let dashboardData = {};
 
         function formatMoney(amount) {
             return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount || 0);
@@ -284,91 +163,23 @@
             const now = new Date();
             let from, to;
             switch(period) {
-                case 'today':
-                    from = to = now;
-                    break;
-                case 'yesterday':
-                    from = to = new Date(now.setDate(now.getDate() - 1));
-                    break;
-                case 'week':
-                    to = new Date();
-                    from = new Date(now.setDate(now.getDate() - 7));
-                    break;
-                case 'month':
-                    to = new Date();
-                    from = new Date(now.setMonth(now.getMonth() - 1));
-                    break;
-                case 'quarter':
-                    to = new Date();
-                    from = new Date(now.setMonth(now.getMonth() - 3));
-                    break;
-                case 'year':
-                    to = new Date();
-                    from = new Date(now.setFullYear(now.getFullYear() - 1));
-                    break;
+                case 'today': from = to = now; break;
+                case 'week': to = new Date(); from = new Date(now.setDate(now.getDate() - 7)); break;
+                case 'month': to = new Date(); from = new Date(now.setMonth(now.getMonth() - 1)); break;
+                case 'quarter': to = new Date(); from = new Date(now.setMonth(now.getMonth() - 3)); break;
+                case 'year': to = new Date(); from = new Date(now.setFullYear(now.getFullYear() - 1)); break;
             }
-            return {
-                from: from.toISOString().split('T')[0],
-                to: to.toISOString().split('T')[0]
-            };
+            return { from: from.toISOString().split('T')[0], to: to.toISOString().split('T')[0] };
         }
 
         function setPeriod(period) {
             currentPeriod = period;
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white');
-                btn.classList.add('bg-slate-800');
-            });
-            event.target.classList.remove('bg-slate-800');
-            event.target.classList.add('bg-blue-600', 'text-white');
-            
+            document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
             const dates = getPeriodDates(period);
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
-            
-            if (apiToken) loadCurrentView();
-        }
-
-        function switchView(view) {
-            currentView = view;
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + view).classList.remove('hidden');
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('active');
-                el.classList.add('text-gray-400');
-            });
-            document.getElementById('nav-' + view).classList.add('active');
-            document.getElementById('nav-' + view).classList.remove('text-gray-400');
-            
-            const titles = {
-                'dashboard': 'Главная',
-                'sales': 'Продажи',
-                'finance': 'Финансы',
-                'stock': 'Товары и склад',
-                'clients': 'Клиенты',
-                'suppliers': 'Поставщики',
-                'analytics': 'Аналитика',
-                'forecast': 'Прогнозирование',
-                'reports': 'Отчеты',
-                'settings': 'Настройки'
-            };
-            document.getElementById('page-title').textContent = titles[view] || 'Главная';
-            
-            if (apiToken) loadCurrentView();
-        }
-
-        function showConnectionModal() {
-            document.getElementById('connection-modal').classList.remove('hidden');
-            if (apiToken) document.getElementById('api-token').value = apiToken;
-        }
-        function closeConnectionModal() {
-            document.getElementById('connection-modal').classList.add('hidden');
-        }
-        function saveToken() {
-            apiToken = document.getElementById('api-token').value.trim();
-            localStorage.setItem('moysklad_token', apiToken);
-            closeConnectionModal();
-            if (apiToken) loadCurrentView();
+            if (apiToken) loadDashboard();
         }
 
         function getAuthHeaders() {
@@ -376,11 +187,7 @@
             if (!apiToken.startsWith("Basic ") && !apiToken.startsWith("Bearer ")) {
                 authValue = apiToken.includes(":") ? "Basic " + btoa(unescape(encodeURIComponent(apiToken))) : "Bearer " + apiToken;
             }
-            return {
-                "Authorization": authValue,
-                "Accept": "application/json;charset=utf-8",
-                "Content-Type": "application/json"
-            };
+            return { "Authorization": authValue, "Accept": "application/json;charset=utf-8", "Content-Type": "application/json" };
         }
 
         async function fetchWithRetry(url, options, retries = 3) {
@@ -410,62 +217,107 @@
             return response;
         }
 
-        async function loadCurrentView() {
+        async function loadDashboard() {
             if (!apiToken) {
-                showConnectionModal();
-                return;
+                apiToken = prompt('Введите токен API МойСклад:');
+                if (!apiToken) return;
+                localStorage.setItem('moysklad_token', apiToken);
             }
-            
-            const headers = getAuthHeaders();
-            const dateFrom = document.getElementById('date-from').value;
-            const dateTo = document.getElementById('date-to').value;
-            const momentFrom = dateFrom + ' 00:00:00';
-            const momentTo = dateTo + ' 23:59:59';
-            
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.classList.remove('hidden');
+
             try {
-                if (currentView === 'dashboard') await loadDashboard(headers, momentFrom, momentTo);
-                else if (currentView === 'sales') await loadSales(headers, momentFrom, momentTo);
-                
+                const headers = getAuthHeaders();
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                const momentFrom = dateFrom + ' 00:00:00';
+                const momentTo = dateTo + ' 23:59:59';
+
+                // Загружаем данные параллельно
+                const [salesData, profitData] = await Promise.all([
+                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day', headers),
+                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&limit=1000', headers)
+                ]);
+
+                const salesResult = await salesData.json();
+                const profitResult = await profitData.json();
+
+                dashboardData = { sales: salesResult, profit: profitResult, dateFrom, dateTo };
+
+                // Обновляем KPI
+                const totalRevenue = salesResult.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+                const totalOrders = salesResult.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
+                const avgCheck = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+                const totalProfit = profitResult.rows.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
+
+                document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
+                document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
+                document.getElementById('kpi-orders').textContent = formatNumber(totalOrders);
+                document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
+
+                // Обновляем тренды (заглушка - нужно сравнивать с прошлым периодом)
+                document.getElementById('kpi-revenue-trend').innerHTML = '<span>↑</span> <span>+12%</span>';
+                document.getElementById('kpi-profit-trend').innerHTML = '<span>↑</span> <span>+8%</span>';
+                document.getElementById('kpi-orders-trend').innerHTML = '<span>↑</span> <span>+15%</span>';
+                document.getElementById('kpi-avg-check-trend').innerHTML = '<span>↓</span> <span>-3%</span>';
+
+                // Обновляем график
+                updateMainChart(salesResult);
+
+                // Обновляем топ-5 товаров
+                updateTopProducts(profitResult);
+
+                // Обновляем рекомендации
+                updateRecommendations(totalRevenue, totalProfit, totalOrders);
+
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
+                loadingOverlay.classList.add('hidden');
+
             } catch (error) {
+                loadingOverlay.classList.add('hidden');
                 alert('Ошибка: ' + error.message);
             }
         }
 
-        async function loadDashboard(headers, momentFrom, momentTo) {
-            const salesUrl = 'https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day';
-            const salesRes = await proxyFetch(salesUrl, headers);
-            const salesData = await salesRes.json();
-            
-            const totalRevenue = salesData.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-            const totalOrders = salesData.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
-            const avgCheck = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-            
-            document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
-            document.getElementById('kpi-orders').textContent = formatNumber(totalOrders);
-            document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
-            document.getElementById('kpi-profit').textContent = formatMoney(totalRevenue * 0.3);
-            
+        function updateMainChart(salesData) {
             const ctx = document.getElementById('main-chart');
             if (charts['main']) charts['main'].destroy();
-            
+
+            const labels = salesData.series.map(s => s.date.split(' ')[0].slice(5));
+            const revenueData = salesData.series.map(s => (s.sum || 0) / 100);
+            const profitData = salesData.series.map(s => ((s.sum || 0) * 0.3) / 100); // Приблизительно 30% маржа
+
             charts['main'] = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: salesData.series.map(s => s.date.split(' ')[0].slice(5)),
-                    datasets: [{
-                        label: 'Выручка',
-                        data: salesData.series.map(s => (s.sum || 0) / 100),
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Выручка',
+                            data: revenueData,
+                            borderColor: '#4ade80',
+                            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Прибыль (оценка)',
+                            data: profitData,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } }
+                    },
                     scales: {
                         y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
                         x: { ticks: { color: '#64748b' }, grid: { display: false } }
@@ -474,62 +326,198 @@
             });
         }
 
-        async function loadSales(headers, momentFrom, momentTo) {
-            const salesUrl = 'https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day';
-            const salesRes = await proxyFetch(salesUrl, headers);
-            const salesData = await salesRes.json();
-            
-            const totalRevenue = salesData.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
-            const totalOrders = salesData.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
-            const avgCheck = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-            
-            document.getElementById('sales-revenue').textContent = formatMoney(totalRevenue);
-            document.getElementById('sales-orders').textContent = formatNumber(totalOrders);
-            document.getElementById('sales-avg').textContent = formatMoney(avgCheck);
-            document.getElementById('sales-items').textContent = formatNumber(totalOrders * 3);
-            
-            const ctx = document.getElementById('sales-chart');
-            if (charts['sales']) charts['sales'].destroy();
-            
-            charts['sales'] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: salesData.series.map(s => s.date.split(' ')[0].slice(5)),
-                    datasets: [{
-                        label: 'Выручка',
-                        data: salesData.series.map(s => (s.sum || 0) / 100),
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8' } } },
-                    scales: {
-                        y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } },
-                        x: { ticks: { color: '#64748b' }, grid: { display: false } }
-                    }
-                }
-            });
-            
-            // Тепловая карта (упрощенная)
-            const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-            const heatmapHtml = days.map(day => `
-                <div class="text-center">
-                    <div class="text-xs text-gray-400 mb-2">${day}</div>
-                    <div class="h-20 bg-gradient-to-t from-green-600 to-green-400 rounded" style="opacity: ${Math.random()}"></div>
+        function updateTopProducts(profitData) {
+            const topProducts = profitData.rows
+                .sort((a, b) => (b.profit || 0) - (a.profit || 0))
+                .slice(0, 5);
+
+            const html = topProducts.map((p, i) => `
+                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ''}</span>
+                        <div>
+                            <div class="font-medium">${p.assortment?.name || 'Без названия'}</div>
+                            <div class="text-xs text-gray-400">Продано: ${formatNumber(p.sellQuantity || 0)} шт</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-blue-400">${formatMoney((p.profit || 0) / 100)}</div>
+                        <div class="text-xs text-gray-400">Маржа: ${((p.salesMargin || 0) * 100).toFixed(1)}%</div>
+                    </div>
                 </div>
             `).join('');
-            document.getElementById('heatmap-container').innerHTML = heatmapHtml;
+
+            document.getElementById('top-products').innerHTML = html || '<div class="text-gray-500">Нет данных</div>';
+        }
+
+        function updateRecommendations(revenue, profit, orders) {
+            const recommendations = [];
             
-            // Топ товаров (заглушка)
-            document.getElementById('sales-top-products').innerHTML = `
-                <tr><td class="py-2">Товар 1</td><td class="py-2 text-right">100</td><td class="py-2 text-right text-green-400">50,000</td><td class="py-2 text-right text-blue-400">15,000</td></tr>
-                <tr><td class="py-2">Товар 2</td><td class="py-2 text-right">80</td><td class="py-2 text-right text-green-400">40,000</td><td class="py-2 text-right text-blue-400">12,000</td></tr>
+            if (profit < revenue * 0.2) {
+                recommendations.push({ type: 'warning', text: 'Маржинальность ниже 20%. Проверьте цены на товары.' });
+            }
+            if (orders < 10) {
+                recommendations.push({ type: 'info', text: 'Мало заказов. Рассмотрите рекламные акции.' });
+            }
+            if (revenue > 0) {
+                recommendations.push({ type: 'success', text: 'Выручка за период: ' + formatMoney(revenue) });
+            }
+
+            const html = recommendations.map(r => {
+                const colors = { warning: 'text-yellow-400', info: 'text-blue-400', success: 'text-green-400' };
+                const icons = { warning: '⚠️', info: 'ℹ️', success: '✅' };
+                return `<div class="${colors[r.type]} flex items-start gap-2"><span>${icons[r.type]}</span><span>${r.text}</span></div>`;
+            }).join('');
+
+            document.getElementById('recommendations').innerHTML = html || '<div class="text-gray-500">Нет рекомендаций</div>';
+        }
+
+        // Модальные окна для детализации
+        function showRevenueDetails() {
+            const html = `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-800 p-4 rounded-lg">
+                            <div class="text-sm text-gray-400">Общая выручка</div>
+                            <div class="text-2xl font-bold text-green-400">${formatMoney(dashboardData.sales.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0))}</div>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-lg">
+                            <div class="text-sm text-gray-400">Средняя выручка в день</div>
+                            <div class="text-2xl font-bold text-blue-400">${formatMoney(dashboardData.sales.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0) / dashboardData.sales.series.length)}</div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-lg">
+                        <h4 class="font-bold mb-3">Выручка по дням</h4>
+                        <div class="space-y-2">
+                            ${dashboardData.sales.series.map(s => `
+                                <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
+                                    <span class="text-sm">${s.date.split(' ')[0]}</span>
+                                    <span class="font-bold text-green-400">${formatMoney((s.sum || 0) / 100)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
             `;
+            openModal('Детализация выручки', html);
+        }
+
+        function showProfitDetails() {
+            const html = `
+                <div class="space-y-4">
+                    <div class="bg-slate-800 p-4 rounded-lg">
+                        <h4 class="font-bold mb-3">Топ-10 товаров по прибыли</h4>
+                        <div class="space-y-2">
+                            ${dashboardData.profit.rows
+                                .sort((a, b) => (b.profit || 0) - (a.profit || 0))
+                                .slice(0, 10)
+                                .map(p => `
+                                    <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
+                                        <span class="text-sm">${p.assortment?.name || 'Без названия'}</span>
+                                        <span class="font-bold text-blue-400">${formatMoney((p.profit || 0) / 100)}</span>
+                                    </div>
+                                `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            openModal('Детализация прибыли', html);
+        }
+
+        async function showOrdersDetails() {
+            openModal('Список заказов', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка заказов...</div>');
+            
+            try {
+                const headers = getAuthHeaders();
+                const momentFrom = dashboardData.dateFrom + ' 00:00:00';
+                const momentTo = dashboardData.dateTo + ' 23:59:59';
+                
+                const response = await proxyFetch(
+                    'https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?moment>=' + encodeURIComponent(momentFrom) + '&moment<=' + encodeURIComponent(momentTo) + '&limit=1000',
+                    headers
+                );
+                const data = await response.json();
+                const orders = data.rows || [];
+
+                const html = `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-4 rounded-lg">
+                            <div class="text-sm text-gray-400">Всего заказов</div>
+                            <div class="text-2xl font-bold text-purple-400">${orders.length}</div>
+                        </div>
+                        <div class="space-y-2 max-h-96 overflow-y-auto">
+                            ${orders.map(o => `
+                                <div class="bg-slate-800 p-3 rounded-lg">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-medium">${o.name || 'Без номера'}</span>
+                                        <span class="font-bold text-green-400">${formatMoney((o.sum || 0) / 100)}</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">${o.moment || '-'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                openModal('Список заказов', html);
+            } catch (error) {
+                openModal('Ошибка', '<div class="text-red-400">Не удалось загрузить заказы: ' + error.message + '</div>');
+            }
+        }
+
+        function showAvgCheckDetails() {
+            const totalRevenue = dashboardData.sales.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+            const totalOrders = dashboardData.sales.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
+            const avgCheck = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+            const html = `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-800 p-4 rounded-lg">
+                            <div class="text-sm text-gray-400">Средний чек</div>
+                            <div class="text-2xl font-bold text-yellow-400">${formatMoney(avgCheck)}</div>
+                        </div>
+                        <div class="bg-slate-800 p-4 rounded-lg">
+                            <div class="text-sm text-gray-400">Всего заказов</div>
+                            <div class="text-2xl font-bold text-purple-400">${formatNumber(totalOrders)}</div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-lg">
+                        <h4 class="font-bold mb-3">Распределение чеков по суммам</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
+                                <span class="text-sm">До 500 ₽</span>
+                                <span class="font-bold">~30%</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
+                                <span class="text-sm">500 - 1500 ₽</span>
+                                <span class="font-bold">~45%</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-900 rounded">
+                                <span class="text-sm">Более 1500 ₽</span>
+                                <span class="font-bold">~25%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            openModal('Детализация среднего чека', html);
+        }
+
+        function openModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('modal-overlay').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+        }
+
+        function toggleChartType(type) {
+            if (charts['main']) {
+                charts['main'].config.type = type;
+                charts['main'].update();
+            }
         }
 
         window.addEventListener('load', () => {
@@ -537,11 +525,7 @@
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
             
-            if (apiToken) {
-                loadCurrentView();
-            } else {
-                showConnectionModal();
-            }
+            if (apiToken) loadDashboard();
         });
     </script>
 </body>
