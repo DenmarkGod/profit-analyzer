@@ -2,225 +2,417 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro - МойСклад</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profit Analyzer Pro - ERP для ИП</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; min-height: 100vh; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #0f172a; color: #e2e8f0; }
+        .glass { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
+        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
+        .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
+        .kpi-card { transition: all 0.3s; cursor: pointer; }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .trend-up { color: #4ade80; }
+        .trend-down { color: #f87171; }
         .loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 100; display: flex; align-items: center; justify-content: center; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .nav-btn { transition: all 0.2s; }
-        .nav-btn.active { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-left: 3px solid #60a5fa; }
-        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .metric-card { transition: transform 0.2s, box-shadow 0.2s; }
-        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
         input[type="date"] { color-scheme: dark; }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Боковое меню -->
-    <aside class="w-64 bg-slate-900/80 border-r border-slate-800 flex flex-col hidden md:flex">
+    <!-- Боковая навигация -->
+    <aside class="w-64 bg-slate-900/80 border-r border-slate-800 flex flex-col">
         <div class="p-6 border-b border-slate-800">
-            <h1 class="text-xl font-bold text-blue-400">Profit Analyzer</h1>
-            <p class="text-xs text-gray-500 mt-1">Управленческий учет</p>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Profit Analyzer</h1>
+            <p class="text-xs text-gray-500 mt-1">ERP-система для ИП</p>
         </div>
-        <nav class="flex-1 py-4 space-y-1 overflow-y-auto">
-            <button onclick="switchView('profit')" id="nav-profit" class="nav-btn active w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📊 Прибыльность</button>
-            <button onclick="switchView('money')" id="nav-money" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">💰 Движение денег</button>
-            <button onclick="switchView('turnover')" id="nav-turnover" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">📦 Оборачиваемость</button>
-            <button onclick="switchView('sales')" id="nav-sales" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800"> Продажи</button>
-            <button onclick="switchView('stock')" id="nav-stock" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800"> Остатки</button>
-            <button onclick="switchView('clients')" id="nav-clients" class="nav-btn w-full text-left px-6 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-slate-800">👥 Клиенты</button>
+        <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3">
+                <span class="text-lg">📊</span> Главная
+            </button>
+            <button onclick="switchView('sales')" id="nav-sales" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">📈</span> Продажи
+            </button>
+            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">💰</span> Финансы
+            </button>
+            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg"></span> Товары и склад
+            </button>
+            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg"></span> Клиенты
+            </button>
+            <button onclick="switchView('suppliers')" id="nav-suppliers" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg"></span> Поставщики
+            </button>
+            <button onclick="switchView('analytics')" id="nav-analytics" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">🔍</span> Аналитика
+            </button>
+            <button onclick="switchView('forecast')" id="nav-forecast" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">🔮</span> Прогнозирование
+            </button>
+            <button onclick="switchView('reports')" id="nav-reports" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">📋</span> Отчеты
+            </button>
+            <button onclick="switchView('settings')" id="nav-settings" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
+                <span class="text-lg">⚙️</span> Настройки
+            </button>
         </nav>
         <div class="p-4 border-t border-slate-800">
-            <button onclick="clearCache()" class="w-full text-xs text-red-400 hover:text-red-300 flex items-center justify-center gap-2">🗑️ Очистить кэш</button>
+            <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2">
+                <span>🔌</span> Подключение к API
+            </button>
         </div>
     </aside>
 
-    <!-- Мобильное меню -->
-    <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto backdrop-blur-md">
-        <button onclick="switchView('profit')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Прибыль</button>
-        <button onclick="switchView('money')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Деньги</button>
-        <button onclick="switchView('turnover')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Оборот</button>
-        <button onclick="switchView('sales')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📈</span>Продажи</button>
-        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">🏪</span>Склад</button>
-    </div>
-
     <!-- Основной контент -->
-    <main class="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
-        <div class="max-w-7xl mx-auto mb-6">
-            <div class="glass p-4">
-                <div class="flex flex-wrap gap-4 items-end">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs text-gray-400 mb-1">Токен API МойСклад</label>
-                        <input type="text" id="token-input" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Введите токен">
+    <main class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Верхняя панель управления -->
+        <div class="bg-slate-900/50 border-b border-slate-800 p-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <h2 id="page-title" class="text-2xl font-bold">Главная</h2>
+                    <span class="text-xs text-gray-500">Обновлено: <span id="last-update">-</span></span>
+                </div>
+                
+                <div class="flex items-center gap-3 flex-wrap">
+                    <!-- Выбор периода -->
+                    <div class="flex gap-2">
+                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Сегодня</button>
+                        <button onclick="setPeriod('yesterday')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Вчера</button>
+                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white transition">Неделя</button>
+                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Месяц</button>
+                        <button onclick="setPeriod('quarter')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Квартал</button>
+                        <button onclick="setPeriod('year')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 transition">Год</button>
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Период с</label>
-                        <input type="date" id="date-from" class="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    
+                    <div class="flex gap-2">
+                        <input type="date" id="date-from" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
+                        <span class="text-gray-500">—</span>
+                        <input type="date" id="date-to" class="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg">
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">По</label>
-                        <input type="date" id="date-to" class="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <button onclick="loadCurrentView()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition shadow-lg shadow-blue-500/20">
-                        Загрузить
+                    
+                    <button onclick="loadDashboard()" class="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                        Обновить
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- 1. ПРИБЫЛЬНОСТЬ -->
-        <div id="view-profit" class="view-section active max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4">📊 Прибыльность по товарам</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Выручка</div><div id="profit-revenue" class="text-2xl font-bold text-green-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Себестоимость</div><div id="profit-cost" class="text-2xl font-bold text-red-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Прибыль</div><div id="profit-value" class="text-2xl font-bold text-blue-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Маржа</div><div id="profit-margin" class="text-2xl font-bold text-yellow-400">0%</div></div>
-            </div>
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">Топ-10 товаров по прибыли</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                            <tr><th class="py-2 text-left">Товар</th><th class="py-2 text-right">Выручка</th><th class="py-2 text-right">Прибыль</th><th class="py-2 text-right">Маржа</th></tr>
-                        </thead>
-                        <tbody id="profit-top-table" class="divide-y divide-slate-800"></tbody>
-                    </table>
+        <!-- Контент -->
+        <div class="flex-1 overflow-y-auto p-6 scrollbar-thin">
+            
+            <!-- ГЛАВНАЯ СТРАНИЦА -->
+            <div id="view-dashboard" class="view-section space-y-6">
+                
+                <!-- Карточки KPI -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div class="kpi-card glass p-4" onclick="showKpiDetails('revenue')">
+                        <div class="text-xs text-gray-400 mb-2">Выручка</div>
+                        <div id="kpi-revenue" class="text-2xl font-bold text-green-400">0</div>
+                        <div id="kpi-revenue-trend" class="text-xs mt-1 trend-up">+0%</div>
+                    </div>
+                    <div class="kpi-card glass p-4" onclick="showKpiDetails('profit')">
+                        <div class="text-xs text-gray-400 mb-2">Чистая прибыль</div>
+                        <div id="kpi-profit" class="text-2xl font-bold text-blue-400">0</div>
+                        <div id="kpi-profit-trend" class="text-xs mt-1 trend-up">+0%</div>
+                    </div>
+                    <div class="kpi-card glass p-4" onclick="showKpiDetails('orders')">
+                        <div class="text-xs text-gray-400 mb-2">Количество заказов</div>
+                        <div id="kpi-orders" class="text-2xl font-bold text-purple-400">0</div>
+                        <div id="kpi-orders-trend" class="text-xs mt-1 trend-up">+0%</div>
+                    </div>
+                    <div class="kpi-card glass p-4" onclick="showKpiDetails('avg-check')">
+                        <div class="text-xs text-gray-400 mb-2">Средний чек</div>
+                        <div id="kpi-avg-check" class="text-2xl font-bold text-yellow-400">0</div>
+                        <div id="kpi-avg-check-trend" class="text-xs mt-1 trend-up">+0%</div>
+                    </div>
+                    <div class="kpi-card glass p-4" onclick="showKpiDetails('margin')">
+                        <div class="text-xs text-gray-400 mb-2">Средняя маржа</div>
+                        <div id="kpi-margin" class="text-2xl font-bold text-cyan-400">0%</div>
+                        <div id="kpi-margin-trend" class="text-xs mt-1 trend-up">+0%</div>
+                    </div>
+                    <div class="kpi-card glass p-4" onclick="showKpiDetails('new-clients')">
+                        <div class="text-xs text-gray-400 mb-2">Новые клиенты</div>
+                        <div id="kpi-new-clients" class="text-2xl font-bold text-pink-400">0</div>
+                        <div id="kpi-new-clients-trend" class="text-xs mt-1 trend-up">+0%</div>
+                    </div>
+                    <div class="kpi-card glass p-4" onclick="showKpiDetails('stock-value')">
+                        <div class="text-xs text-gray-400 mb-2">Остаток на складе</div>
+                        <div id="kpi-stock-value" class="text-2xl font-bold text-orange-400">0</div>
+                        <div id="kpi-stock-value-trend" class="text-xs mt-1 trend-up">+0%</div>
+                    </div>
+                    <div class="kpi-card glass p-4" onclick="showKpiDetails('turnover')">
+                        <div class="text-xs text-gray-400 mb-2">Оборачиваемость</div>
+                        <div id="kpi-turnover" class="text-2xl font-bold text-indigo-400">0 дн</div>
+                        <div id="kpi-turnover-trend" class="text-xs mt-1 trend-up">+0%</div>
+                    </div>
+                </div>
+
+                <!-- Основной график и интеллектуальная панель -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold">Динамика выручки и прибыли</h3>
+                            <div class="flex gap-2">
+                                <button onclick="toggleChartType('line')" class="text-xs px-3 py-1 rounded bg-blue-600">Линейный</button>
+                                <button onclick="toggleChartType('bar')" class="text-xs px-3 py-1 rounded bg-slate-700">Столбчатый</button>
+                            </div>
+                        </div>
+                        <canvas id="main-chart" height="100"></canvas>
+                    </div>
+                    
+                    <!-- Интеллектуальная панель -->
+                    <div class="glass p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="text-2xl">🧠</span> Анализ и рекомендации
+                        </h3>
+                        <div id="ai-insights" class="space-y-3 text-sm">
+                            <div class="text-gray-500">Загрузите данные для получения рекомендаций</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Оперативные показатели -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Заканчивающиеся товары -->
+                    <div class="glass p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="text-2xl">️</span> Заканчиваются
+                        </h3>
+                        <div id="low-stock-list" class="space-y-2 text-sm">
+                            <div class="text-gray-500">Нет данных</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Избыточные запасы -->
+                    <div class="glass p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="text-2xl">🧊</span> Замороженные средства
+                        </h3>
+                        <div id="excess-stock-list" class="space-y-2 text-sm">
+                            <div class="text-gray-500">Нет данных</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Последние события -->
+                    <div class="glass p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="text-2xl">📋</span> Последние события
+                        </h3>
+                        <div id="recent-events" class="space-y-2 text-sm">
+                            <div class="text-gray-500">Нет данных</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 2. ДВИЖЕНИЕ ДЕНЕГ -->
-        <div id="view-money" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4">💰 Движение денежных средств</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Приход</div><div id="money-income" class="text-2xl font-bold text-green-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Расход</div><div id="money-outcome" class="text-2xl font-bold text-red-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Сальдо</div><div id="money-balance" class="text-2xl font-bold text-blue-400">0</div></div>
-            </div>
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">График движения денег по дням</h3>
-                <canvas id="money-chart" height="100"></canvas>
-            </div>
-        </div>
-
-        <!-- 3. ОБОРАЧИВАЕМОСТЬ -->
-        <div id="view-turnover" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4"> Оборачиваемость товаров</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Приход (кол-во)</div><div id="turnover-income" class="text-2xl font-bold text-purple-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Расход (кол-во)</div><div id="turnover-outcome" class="text-2xl font-bold text-red-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Остаток на конец</div><div id="turnover-end" class="text-2xl font-bold text-blue-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Стоимость остатка</div><div id="turnover-end-sum" class="text-2xl font-bold text-yellow-400">0</div></div>
-            </div>
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4 text-red-400">⚠️ Товары с движением (Топ-15)</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                            <tr><th class="py-2 text-left">Товар</th><th class="py-2 text-right">Приход</th><th class="py-2 text-right">Расход</th><th class="py-2 text-right">Остаток</th></tr>
-                        </thead>
-                        <tbody id="turnover-table" class="divide-y divide-slate-800"></tbody>
-                    </table>
+            <!-- Другие разделы (заглушки) -->
+            <div id="view-sales" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4">📈 Раздел "Продажи"</h2>
+                    <p class="text-gray-400">В разработке. Здесь будет полный анализ продаж.</p>
                 </div>
             </div>
-        </div>
-
-        <!-- 4. ПРОДАЖИ -->
-        <div id="view-sales" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4">📈 Показатели продаж</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Количество</div><div id="sales-count" class="text-2xl font-bold text-blue-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Сумма</div><div id="sales-sum" class="text-2xl font-bold text-green-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Средний чек</div><div id="sales-avg" class="text-2xl font-bold text-purple-400">0</div></div>
-            </div>
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">Динамика продаж по дням</h3>
-                <canvas id="sales-chart" height="100"></canvas>
-            </div>
-        </div>
-
-        <!-- 5. ОСТАТКИ -->
-        <div id="view-stock" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4"> Расширенный отчет об остатках</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Всего позиций</div><div id="stock-total-items" class="text-2xl font-bold text-blue-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">Общая стоимость</div><div id="stock-total-value" class="text-2xl font-bold text-green-400">0</div></div>
-                <div class="glass p-6 metric-card text-center"><div class="text-gray-400 text-xs mb-2 uppercase">С остатком > 0</div><div id="stock-positive" class="text-2xl font-bold text-yellow-400">0</div></div>
-            </div>
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">Остатки по товарам (Топ-100 по стоимости)</h3>
-                <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                    <table class="w-full text-sm">
-                        <thead class="text-xs text-gray-400 uppercase border-b border-slate-700 sticky top-0 bg-slate-900 z-10">
-                            <tr><th class="py-2 text-left">Товар</th><th class="py-2 text-right">Остаток</th><th class="py-2 text-right">Себестоимость</th><th class="py-2 text-right">Сумма</th></tr>
-                        </thead>
-                        <tbody id="stock-table" class="divide-y divide-slate-800"></tbody>
-                    </table>
+            <div id="view-finance" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4">💰 Раздел "Финансы"</h2>
+                    <p class="text-gray-400">В разработке. Здесь будет анализ финансовых показателей.</p>
                 </div>
             </div>
-        </div>
-
-        <!-- 6. КЛИЕНТЫ -->
-        <div id="view-clients" class="view-section max-w-7xl mx-auto space-y-6">
-            <h2 class="text-2xl font-bold mb-4"> Показатели контрагентов</h2>
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold mb-4">Топ-20 клиентов по сумме продаж</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                            <tr><th class="py-2 text-left">Клиент</th><th class="py-2 text-right">Продаж</th><th class="py-2 text-right">Сумма</th><th class="py-2 text-right">Прибыль</th><th class="py-2 text-right">Баланс</th></tr>
-                        </thead>
-                        <tbody id="clients-table" class="divide-y divide-slate-800"></tbody>
-                    </table>
+            <div id="view-stock" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4">📦 Раздел "Товары и склад"</h2>
+                    <p class="text-gray-400">В разработке. Здесь будет управление запасами.</p>
                 </div>
             </div>
+            <div id="view-clients" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4"> Раздел "Клиенты"</h2>
+                    <p class="text-gray-400">В разработке. Здесь будет анализ клиентской базы.</p>
+                </div>
+            </div>
+            <div id="view-suppliers" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4"> Раздел "Поставщики"</h2>
+                    <p class="text-gray-400">В разработке. Здесь будет анализ поставщиков.</p>
+                </div>
+            </div>
+            <div id="view-analytics" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4">🔍 Раздел "Аналитика"</h2>
+                    <p class="text-gray-400">В разработке. Здесь будут ABC/XYZ анализы.</p>
+                </div>
+            </div>
+            <div id="view-forecast" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4"> Раздел "Прогнозирование"</h2>
+                    <p class="text-gray-400">В разработке. Здесь будут прогнозы продаж.</p>
+                </div>
+            </div>
+            <div id="view-reports" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4">📋 Раздел "Отчеты"</h2>
+                    <p class="text-gray-400">В разработке. Здесь будет конструктор отчетов.</p>
+                </div>
+            </div>
+            <div id="view-settings" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4">⚙️ Раздел "Настройки"</h2>
+                    <p class="text-gray-400">Здесь будет подключение к API МойСклад.</p>
+                    <button onclick="showConnectionModal()" class="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                        Подключить API
+                    </button>
+                </div>
+            </div>
+
         </div>
     </main>
+
+    <!-- Модальное окно подключения -->
+    <div id="connection-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="glass p-8 max-w-md w-full">
+            <h3 class="text-xl font-bold mb-4">Подключение к МойСклад API</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Токен API или логин:пароль</label>
+                    <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white" placeholder="Введите токен">
+                </div>
+                <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                    Сохранить
+                </button>
+                <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm">
+                    Отмена
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Экран загрузки -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="glass p-8 max-w-md w-full text-center mx-4">
             <div class="spinner mx-auto mb-4"></div>
-            <div id="loading-text" class="text-lg font-medium mb-1">Загрузка...</div>
-            <div id="loading-details" class="text-sm text-gray-400 mb-4"></div>
+            <div id="loading-text" class="text-lg font-medium mb-1">Загрузка данных...</div>
+            <div id="loading-details" class="text-sm text-gray-400"></div>
         </div>
     </div>
 
     <script>
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-        let currentView = 'profit';
+        let currentView = 'dashboard';
+        let currentPeriod = 'week';
         let charts = {};
+        let apiToken = localStorage.getItem('moysklad_token') || '';
 
-        function formatMoney(amount) { 
-            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount || 0); 
+        // ================= УТИЛИТЫ =================
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(amount || 0);
         }
         function formatNumber(num) {
             return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(num || 0);
         }
-        function getDaysAgo(days) { 
-            const d = new Date(); d.setDate(d.getDate() - days); return d.toISOString().split('T')[0]; 
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('ru-RU');
         }
-        function clearCache() { 
-            if(confirm('Очистить кэш?')) { localStorage.clear(); location.reload(); }
+
+        function getPeriodDates(period) {
+            const now = new Date();
+            let from, to;
+            switch(period) {
+                case 'today':
+                    from = to = now;
+                    break;
+                case 'yesterday':
+                    from = to = new Date(now.setDate(now.getDate() - 1));
+                    break;
+                case 'week':
+                    to = new Date();
+                    from = new Date(now.setDate(now.getDate() - 7));
+                    break;
+                case 'month':
+                    to = new Date();
+                    from = new Date(now.setMonth(now.getMonth() - 1));
+                    break;
+                case 'quarter':
+                    to = new Date();
+                    from = new Date(now.setMonth(now.getMonth() - 3));
+                    break;
+                case 'year':
+                    to = new Date();
+                    from = new Date(now.setFullYear(now.getFullYear() - 1));
+                    break;
+            }
+            return {
+                from: from.toISOString().split('T')[0],
+                to: to.toISOString().split('T')[0]
+            };
         }
-        
+
+        function setPeriod(period) {
+            currentPeriod = period;
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-slate-800');
+            });
+            event.target.classList.remove('bg-slate-800');
+            event.target.classList.add('bg-blue-600', 'text-white');
+            
+            const dates = getPeriodDates(period);
+            document.getElementById('date-from').value = dates.from;
+            document.getElementById('date-to').value = dates.to;
+            
+            if (apiToken) loadDashboard();
+        }
+
+        // ================= НАВИГАЦИЯ =================
         function switchView(view) {
             currentView = view;
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + view).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            const navBtn = document.getElementById('nav-' + view);
-            if (navBtn) navBtn.classList.add('active');
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + view).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+                el.classList.add('text-gray-400');
+            });
+            document.getElementById('nav-' + view).classList.add('active');
+            document.getElementById('nav-' + view).classList.remove('text-gray-400');
+            
+            const titles = {
+                'dashboard': 'Главная',
+                'sales': 'Продажи',
+                'finance': 'Финансы',
+                'stock': 'Товары и склад',
+                'clients': 'Клиенты',
+                'suppliers': 'Поставщики',
+                'analytics': 'Аналитика',
+                'forecast': 'Прогнозирование',
+                'reports': 'Отчеты',
+                'settings': 'Настройки'
+            };
+            document.getElementById('page-title').textContent = titles[view] || 'Главная';
+        }
+
+        // ================= API =================
+        function getAuthHeaders() {
+            let authValue = apiToken;
+            if (!apiToken.startsWith("Basic ") && !apiToken.startsWith("Bearer ")) {
+                authValue = apiToken.includes(":") ? "Basic " + btoa(unescape(encodeURIComponent(apiToken))) : "Bearer " + apiToken;
+            }
+            return {
+                "Authorization": authValue,
+                "Accept": "application/json;charset=utf-8",
+                "Content-Type": "application/json"
+            };
         }
 
         async function fetchWithRetry(url, options, retries = 3) {
@@ -229,7 +421,7 @@
                 return await fetch(url + separator + '_t=' + Date.now(), options);
             } catch (error) {
                 if (retries > 0) {
-                    await new Promise(r => setTimeout(r, 2500));
+                    await new Promise(r => setTimeout(r, 2000));
                     return fetchWithRetry(url, options, retries - 1);
                 }
                 throw new Error('Сеть сбрасывает соединение');
@@ -242,7 +434,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
-            if (response.status === 429) throw new Error('Лимит запросов (429). Подождите 1 минуту.');
+            if (response.status === 429) throw new Error('Превышен лимит запросов. Подождите 1 минуту.');
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error('Ошибка API ' + response.status + ': ' + errorText);
@@ -250,309 +442,267 @@
             return response;
         }
 
-        function getSafeHeaders(token) {
-            token = token.trim();
-            let authValue = token;
-            if (!token.startsWith("Basic ") && !token.startsWith("Bearer ")) {
-                authValue = token.includes(":") ? "Basic " + btoa(unescape(encodeURIComponent(token))) : "Bearer " + token;
+        // ================= ЗАГРУЗКА ДАННЫХ =================
+        async function loadDashboard() {
+            if (!apiToken) {
+                showConnectionModal();
+                return;
             }
-            return {
-                "Authorization": authValue,
-                "Accept": "application/json;charset=utf-8",
-                "Content-Type": "application/json"
-            };
-        }
-
-        async function loadCurrentView() {
-            const token = document.getElementById('token-input').value.trim();
-            const dateFrom = document.getElementById('date-from').value || getDaysAgo(30);
-            const dateTo = document.getElementById('date-to').value || new Date().toISOString().split('T')[0];
-
-            if (!token) return alert('Введите токен');
-            localStorage.setItem('moysklad_token', token);
-
+            
             const loadingOverlay = document.getElementById('loading-overlay');
             loadingOverlay.classList.remove('hidden');
-            document.getElementById('loading-text').textContent = 'Загрузка...';
-
+            document.getElementById('loading-text').textContent = 'Загрузка данных...';
+            
             try {
-                const headers = getSafeHeaders(token);
-                await proxyFetch('https://api.moysklad.ru/api/remap/1.2/entity/organization?limit=1', headers);
-
-                if (currentView === 'profit') await loadProfit(headers, dateFrom, dateTo);
-                else if (currentView === 'money') await loadMoney(headers, dateFrom, dateTo);
-                else if (currentView === 'turnover') await loadTurnover(headers, dateFrom, dateTo);
-                else if (currentView === 'sales') await loadSales(headers, dateFrom, dateTo);
-                else if (currentView === 'stock') await loadStock(headers);
-                else if (currentView === 'clients') await loadClients(headers);
-
+                const headers = getAuthHeaders();
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                const momentFrom = dateFrom + ' 00:00:00';
+                const momentTo = dateTo + ' 23:59:59';
+                
+                // Загружаем все данные параллельно
+                const [profitData, salesData, ordersData, moneyData, stockData] = await Promise.all([
+                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&limit=1000', headers),
+                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day', headers),
+                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/orders/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day', headers),
+                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/money/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day', headers),
+                    proxyFetch('https://api.moysklad.ru/api/remap/1.2/report/stock/all?limit=1000', headers)
+                ]);
+                
+                const profitResult = await profitData.json();
+                const salesResult = await salesData.json();
+                const ordersResult = await ordersData.json();
+                const moneyResult = await moneyData.json();
+                const stockResult = await stockData.json();
+                
+                // Обновляем KPI
+                updateKPIs(profitResult, salesResult, ordersResult, moneyResult, stockResult);
+                
+                // Обновляем график
+                updateMainChart(salesResult, moneyResult);
+                
+                // Обновляем интеллектуальную панель
+                updateAIInsights(profitResult, salesResult, stockResult);
+                
+                // Обновляем оперативные показатели
+                updateOperationalMetrics(stockResult);
+                
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
                 loadingOverlay.classList.add('hidden');
+                
             } catch (error) {
                 loadingOverlay.classList.add('hidden');
                 alert('Ошибка: ' + error.message);
+                console.error(error);
             }
         }
 
-        // 1. Прибыльность по товарам: /report/profit/byproduct
-        async function loadProfit(headers, dateFrom, dateTo) {
-            const momentFrom = dateFrom + ' 00:00:00';
-            const momentTo = dateTo + ' 23:59:59';
-            const url = 'https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&limit=1000';
+        function updateKPIs(profitData, salesData, ordersData, moneyData, stockData) {
+            // Выручка
+            const totalRevenue = salesData.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+            document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
             
-            const response = await proxyFetch(url, headers);
-            const resultData = await response.json();
-            const rows = resultData.rows || [];
-
-            let totalRevenue = 0, totalCost = 0, totalProfit = 0;
-            const byProduct = [];
-
-            for (const row of rows) {
-                const revenue = (row.sellSum || 0) / 100;
-                const cost = (row.sellCostSum || 0) / 100;
-                const profit = (row.profit || 0) / 100;
-                const name = row.assortment?.name || 'Без названия';
-                const margin = row.salesMargin || 0;
-                
-                totalRevenue += revenue;
-                totalCost += cost;
-                totalProfit += profit;
-                
-                byProduct.push({ name, revenue, cost, profit, margin });
-            }
-
-            byProduct.sort((a, b) => b.profit - a.profit);
-
-            const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
-            document.getElementById('profit-revenue').textContent = formatMoney(totalRevenue);
-            document.getElementById('profit-cost').textContent = formatMoney(totalCost);
-            document.getElementById('profit-value').textContent = formatMoney(totalProfit);
-            document.getElementById('profit-margin').textContent = avgMargin.toFixed(1) + '%';
-
-            document.getElementById('profit-top-table').innerHTML = byProduct.slice(0, 10).map(p => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2 font-medium">${p.name}</td>
-                    <td class="py-2 text-right text-green-400">${formatMoney(p.revenue)}</td>
-                    <td class="py-2 text-right text-blue-400">${formatMoney(p.profit)}</td>
-                    <td class="py-2 text-right text-yellow-400">${(p.margin * 100).toFixed(1)}%</td>
-                </tr>
-            `).join('') || '<tr><td colspan="4" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
+            // Прибыль
+            const totalProfit = profitData.rows.reduce((sum, r) => sum + (r.profit || 0) / 100, 0);
+            document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
+            
+            // Количество заказов
+            const totalOrders = ordersData.series.reduce((sum, s) => sum + (s.quantity || 0), 0);
+            document.getElementById('kpi-orders').textContent = formatNumber(totalOrders);
+            
+            // Средний чек
+            const avgCheck = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            document.getElementById('kpi-avg-check').textContent = formatMoney(avgCheck);
+            
+            // Маржа
+            const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+            document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
+            
+            // Остаток на складе
+            const stockValue = stockData.rows.reduce((sum, r) => sum + (r.stock || 0) * (r.price || 0) / 100, 0);
+            document.getElementById('kpi-stock-value').textContent = formatMoney(stockValue);
+            
+            // Оборачиваемость (упрощенно)
+            const turnoverDays = stockValue > 0 ? (stockValue / (totalRevenue / 30)) : 0;
+            document.getElementById('kpi-turnover').textContent = turnoverDays.toFixed(0) + ' дн';
         }
 
-        // 2. Движение денег: /report/money/plotseries
-        async function loadMoney(headers, dateFrom, dateTo) {
-            const momentFrom = dateFrom + ' 00:00:00';
-            const momentTo = dateTo + ' 23:59:59';
-            const url = 'https://api.moysklad.ru/api/remap/1.2/report/money/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day';
+        function updateMainChart(salesData, moneyData) {
+            const ctx = document.getElementById('main-chart');
+            if (charts['main']) charts['main'].destroy();
             
-            const response = await proxyFetch(url, headers);
-            const resultData = await response.json();
+            const labels = salesData.series.map(s => s.date.split(' ')[0]);
+            const revenueData = salesData.series.map(s => (s.sum || 0) / 100);
+            const profitData = moneyData.series.map(s => ((s.credit || 0) - (s.debit || 0)) / 100);
             
-            const totalIncome = (resultData.credit || 0) / 100;
-            const totalOutcome = (resultData.debit || 0) / 100;
-            const balance = totalIncome - totalOutcome;
-
-            document.getElementById('money-income').textContent = formatMoney(totalIncome);
-            document.getElementById('money-outcome').textContent = formatMoney(totalOutcome);
-            document.getElementById('money-balance').textContent = formatMoney(balance);
-
-            const series = resultData.series || [];
-            const dates = series.map(s => s.date.split(' ')[0].slice(5));
-            const incomeData = series.map(s => (s.credit || 0) / 100);
-            const outcomeData = series.map(s => (s.debit || 0) / 100);
-
-            renderChart('money-chart', dates, [
-                { label: 'Приход', data: incomeData, color: '#4ade80' },
-                { label: 'Расход', data: outcomeData, color: '#f87171' }
-            ]);
-        }
-
-        // 3. Оборачиваемость: /report/turnover/all
-        async function loadTurnover(headers, dateFrom, dateTo) {
-            const momentFrom = dateFrom + ' 00:00:00';
-            const momentTo = dateTo + ' 23:59:59';
-            const url = 'https://api.moysklad.ru/api/remap/1.2/report/turnover/all?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&limit=1000';
-            
-            const response = await proxyFetch(url, headers);
-            const resultData = await response.json();
-            const rows = resultData.rows || [];
-
-            let totalIncomeQty = 0, totalOutcomeQty = 0, totalEndQty = 0, totalEndSum = 0;
-            const turnoverData = [];
-
-            for (const row of rows) {
-                const incomeQty = row.income?.quantity || 0;
-                const outcomeQty = Math.abs(row.outcome?.quantity || 0);
-                const endQty = row.onPeriodEnd?.quantity || 0;
-                const endSum = (row.onPeriodEnd?.sum || 0) / 100;
-                const name = row.assortment?.name || 'Без названия';
-
-                if (incomeQty > 0 || outcomeQty > 0) {
-                    totalIncomeQty += incomeQty;
-                    totalOutcomeQty += outcomeQty;
-                    totalEndQty += endQty;
-                    totalEndSum += endSum;
-                    turnoverData.push({ name, incomeQty, outcomeQty, endQty });
-                }
-            }
-
-            turnoverData.sort((a, b) => b.outcomeQty - a.outcomeQty);
-
-            document.getElementById('turnover-income').textContent = formatNumber(totalIncomeQty);
-            document.getElementById('turnover-outcome').textContent = formatNumber(totalOutcomeQty);
-            document.getElementById('turnover-end').textContent = formatNumber(totalEndQty);
-            document.getElementById('turnover-end-sum').textContent = formatMoney(totalEndSum);
-
-            document.getElementById('turnover-table').innerHTML = turnoverData.slice(0, 15).map(item => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2 font-medium">${item.name}</td>
-                    <td class="py-2 text-right text-green-400">${formatNumber(item.incomeQty)}</td>
-                    <td class="py-2 text-right text-red-400">${formatNumber(item.outcomeQty)}</td>
-                    <td class="py-2 text-right text-blue-400">${formatNumber(item.endQty)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="4" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
-        }
-
-        // 4. Продажи: /report/sales/plotseries
-        async function loadSales(headers, dateFrom, dateTo) {
-            const momentFrom = dateFrom + ' 00:00:00';
-            const momentTo = dateTo + ' 23:59:59';
-            const url = 'https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=' + encodeURIComponent(momentFrom) + '&momentTo=' + encodeURIComponent(momentTo) + '&interval=day';
-            
-            const response = await proxyFetch(url, headers);
-            const resultData = await response.json();
-            const series = resultData.series || [];
-
-            let totalCount = 0, totalSum = 0;
-            const dates = [];
-            const sumData = [];
-            const countData = [];
-
-            for (const s of series) {
-                const count = s.quantity || 0;
-                const sum = (s.sum || 0) / 100;
-                totalCount += count;
-                totalSum += sum;
-                dates.push(s.date.split(' ')[0].slice(5));
-                sumData.push(sum);
-                countData.push(count);
-            }
-
-            const avgCheck = totalCount > 0 ? totalSum / totalCount : 0;
-
-            document.getElementById('sales-count').textContent = formatNumber(totalCount);
-            document.getElementById('sales-sum').textContent = formatMoney(totalSum);
-            document.getElementById('sales-avg').textContent = formatMoney(avgCheck);
-
-            renderChart('sales-chart', dates, [
-                { label: 'Сумма', data: sumData, color: '#4ade80' },
-                { label: 'Количество', data: countData, color: '#60a5fa' }
-            ]);
-        }
-
-        // 5. Остатки: /report/stock/all
-        async function loadStock(headers) {
-            const url = 'https://api.moysklad.ru/api/remap/1.2/report/stock/all?limit=1000';
-            
-            const response = await proxyFetch(url, headers);
-            const resultData = await response.json();
-            const rows = resultData.rows || [];
-
-            let totalItems = 0, totalValue = 0, positiveCount = 0;
-            const stockList = [];
-
-            for (const row of rows) {
-                const qty = row.stock || 0;
-                const costPerUnit = (row.price || 0) / 100;
-                const name = row.name || 'Без названия';
-                const value = qty * costPerUnit;
-
-                totalItems++;
-                totalValue += value;
-                if (qty > 0) positiveCount++;
-
-                stockList.push({ name, qty, costPerUnit, value });
-            }
-
-            stockList.sort((a, b) => b.value - a.value);
-
-            document.getElementById('stock-total-items').textContent = totalItems;
-            document.getElementById('stock-total-value').textContent = formatMoney(totalValue);
-            document.getElementById('stock-positive').textContent = positiveCount;
-
-            document.getElementById('stock-table').innerHTML = stockList.slice(0, 100).map(item => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2 font-medium">${item.name}</td>
-                    <td class="py-2 text-right ${item.qty === 0 ? 'text-red-400' : 'text-green-400'}">${formatNumber(item.qty)}</td>
-                    <td class="py-2 text-right text-gray-400">${formatMoney(item.costPerUnit)}</td>
-                    <td class="py-2 text-right font-semibold">${formatMoney(item.value)}</td>
-                </tr>
-            `).join('');
-        }
-
-        // 6. Клиенты: /report/counterparty
-        async function loadClients(headers) {
-            const url = 'https://api.moysklad.ru/api/remap/1.2/report/counterparty?limit=1000';
-            
-            const response = await proxyFetch(url, headers);
-            const resultData = await response.json();
-            const rows = resultData.rows || [];
-
-            const clientsData = rows
-                .filter(c => c.demandsCount > 0)
-                .sort((a, b) => b.demandsSum - a.demandsSum)
-                .slice(0, 20);
-
-            document.getElementById('clients-table').innerHTML = clientsData.map(c => `
-                <tr class="hover:bg-slate-800/50 transition">
-                    <td class="py-2 font-medium">${c.counterparty?.name || '-'}</td>
-                    <td class="py-2 text-right">${formatNumber(c.demandsCount)}</td>
-                    <td class="py-2 text-right text-green-400">${formatMoney((c.demandsSum || 0) / 100)}</td>
-                    <td class="py-2 text-right text-blue-400">${formatMoney((c.profit || 0) / 100)}</td>
-                    <td class="py-2 text-right ${c.balance < 0 ? 'text-red-400' : 'text-yellow-400'}">${formatMoney((c.balance || 0) / 100)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="5" class="py-4 text-center text-gray-500">Нет данных</td></tr>';
-        }
-
-        function renderChart(canvasId, labels, datasets) {
-            if (charts[canvasId]) charts[canvasId].destroy();
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-            
-            charts[canvasId] = new Chart(ctx, {
+            charts['main'] = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: datasets.map(ds => ({
-                        label: ds.label,
-                        data: ds.data,
-                        borderColor: ds.color,
-                        backgroundColor: ds.color + '20',
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 2
-                    }))
+                    datasets: [
+                        {
+                            label: 'Выручка',
+                            data: revenueData,
+                            borderColor: '#4ade80',
+                            backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Прибыль',
+                            data: profitData,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
-                    plugins: { 
-                        legend: { labels: { color: '#94a3b8' } },
-                        tooltip: { callbacks: { label: (context) => context.dataset.label + ': ' + formatMoney(context.parsed.y) } }
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } }
                     },
-                    scales: { 
-                        y: { ticks: { callback: v => formatMoney(v), color: '#64748b' }, grid: { color: '#1e293b' } }, 
-                        x: { ticks: { color: '#64748b' }, grid: { display: false } } 
+                    scales: {
+                        y: {
+                            ticks: { callback: v => formatMoney(v), color: '#64748b' },
+                            grid: { color: '#1e293b' }
+                        },
+                        x: {
+                            ticks: { color: '#64748b' },
+                            grid: { display: false }
+                        }
                     }
                 }
             });
         }
 
+        function updateAIInsights(profitData, salesData, stockData) {
+            const insights = [];
+            
+            // Анализ выручки
+            const totalRevenue = salesData.series.reduce((sum, s) => sum + (s.sum || 0) / 100, 0);
+            if (totalRevenue > 0) {
+                insights.push({ type: 'success', text: `Выручка за период: ${formatMoney(totalRevenue)}` });
+            }
+            
+            // Анализ прибыльности товаров
+            const topProducts = profitData.rows.sort((a, b) => b.profit - a.profit).slice(0, 3);
+            if (topProducts.length > 0) {
+                insights.push({ type: 'info', text: `Топ товар: ${topProducts[0].assortment?.name || 'Неизвестно'}` });
+            }
+            
+            // Анализ остатков
+            const lowStock = stockData.rows.filter(r => r.stock < 10 && r.stock > 0);
+            if (lowStock.length > 0) {
+                insights.push({ type: 'warning', text: `${lowStock.length} товаров заканчиваются` });
+            }
+            
+            const zeroStock = stockData.rows.filter(r => r.stock === 0);
+            if (zeroStock.length > 0) {
+                insights.push({ type: 'danger', text: `${zeroStock.length} товаров отсутствуют на складе` });
+            }
+            
+            // Рекомендации
+            if (lowStock.length > 0) {
+                insights.push({ type: 'action', text: 'Рекомендация: Заказать товары с низким остатком' });
+            }
+            
+            const insightsHtml = insights.map(i => {
+                const colors = {
+                    'success': 'text-green-400',
+                    'info': 'text-blue-400',
+                    'warning': 'text-yellow-400',
+                    'danger': 'text-red-400',
+                    'action': 'text-purple-400'
+                };
+                const icons = {
+                    'success': '✅',
+                    'info': 'ℹ️',
+                    'warning': '⚠️',
+                    'danger': '🚨',
+                    'action': '💡'
+                };
+                return `<div class="${colors[i.type]} flex items-start gap-2"><span>${icons[i.type]}</span><span>${i.text}</span></div>`;
+            }).join('');
+            
+            document.getElementById('ai-insights').innerHTML = insightsHtml || '<div class="text-gray-500">Нет данных для анализа</div>';
+        }
+
+        function updateOperationalMetrics(stockData) {
+            // Заканчивающиеся товары
+            const lowStock = stockData.rows
+                .filter(r => r.stock < 10 && r.stock > 0)
+                .sort((a, b) => a.stock - b.stock)
+                .slice(0, 5);
+            
+            document.getElementById('low-stock-list').innerHTML = lowStock.length > 0 
+                ? lowStock.map(r => `
+                    <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded">
+                        <span class="text-sm">${r.name}</span>
+                        <span class="text-yellow-400 font-bold">${r.stock} шт</span>
+                    </div>
+                `).join('')
+                : '<div class="text-gray-500">Все товары в норме</div>';
+            
+            // Избыточные запасы (упрощенно)
+            const excessStock = stockData.rows
+                .filter(r => r.stock > 100)
+                .sort((a, b) => b.stock - a.stock)
+                .slice(0, 5);
+            
+            document.getElementById('excess-stock-list').innerHTML = excessStock.length > 0
+                ? excessStock.map(r => {
+                    const value = r.stock * (r.price || 0) / 100;
+                    return `
+                        <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded">
+                            <span class="text-sm">${r.name}</span>
+                            <span class="text-red-400 font-bold">${formatMoney(value)}</span>
+                        </div>
+                    `;
+                }).join('')
+                : '<div class="text-gray-500">Нет избыточных запасов</div>';
+            
+            // Последние события (заглушка)
+            document.getElementById('recent-events').innerHTML = `
+                <div class="text-gray-500 text-sm">События будут отображаться после подключения к API</div>
+            `;
+        }
+
+        // ================= МОДАЛЬНЫЕ ОКНА =================
+        function showConnectionModal() {
+            document.getElementById('connection-modal').classList.remove('hidden');
+            if (apiToken) document.getElementById('api-token').value = apiToken;
+        }
+        function closeConnectionModal() {
+            document.getElementById('connection-modal').classList.add('hidden');
+        }
+        function saveToken() {
+            apiToken = document.getElementById('api-token').value.trim();
+            localStorage.setItem('moysklad_token', apiToken);
+            closeConnectionModal();
+            if (currentView === 'dashboard') loadDashboard();
+        }
+        function showKpiDetails(kpi) {
+            alert('Детализация показателя "' + kpi + '" будет доступна в следующих версиях');
+        }
+        function toggleChartType(type) {
+            alert('Переключение типа графика: ' + type);
+        }
+
+        // ================= ИНИЦИАЛИЗАЦИЯ =================
         window.addEventListener('load', () => {
-            const savedToken = localStorage.getItem('moysklad_token');
-            if (savedToken) document.getElementById('token-input').value = savedToken;
-            document.getElementById('date-from').value = getDaysAgo(30);
-            document.getElementById('date-to').value = new Date().toISOString().split('T')[0];
+            const dates = getPeriodDates('week');
+            document.getElementById('date-from').value = dates.from;
+            document.getElementById('date-to').value = dates.to;
+            
+            if (apiToken) {
+                loadDashboard();
+            } else {
+                showConnectionModal();
+            }
         });
     </script>
 </body>
