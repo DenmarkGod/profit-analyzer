@@ -225,7 +225,6 @@
             if (apiToken) loadCurrentView();
         }
 
-        // ИСПРАВЛЕНО: Добавлен критически важный заголовок Accept, требуемый документацией МойСклад
         function getAuthHeaders() {
             let authValue = apiToken;
             if (!apiToken.startsWith("Basic ") && !apiToken.startsWith("Bearer ")) {
@@ -268,7 +267,6 @@
         async function loadCurrentView() {
             if (!apiToken) { showConnectionModal(); return; }
             
-            // Показываем простую индикацию загрузки на кнопке
             const btn = document.querySelector('button[onclick="loadCurrentView()"]');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Загрузка...';
@@ -279,12 +277,10 @@
                 const dateFrom = document.getElementById('date-from').value;
                 const dateTo = document.getElementById('date-to').value;
                 
-                // Формат даты строго по документации: YYYY-MM-DD HH:MM:SS
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
 
                 if (currentView === 'dashboard') {
-                    // Параллельная загрузка для скорости
                     const [salesData, profitData] = await Promise.all([
                         proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers),
                         proxyFetch(`https://api.moysklad.ru/api/remap/1.2/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`, headers)
@@ -391,10 +387,6 @@
             openDetailsModal('Детализация прибыли', html);
         }
 
-        // =====================================================================
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Получение списка чеков за период
-        // Согласно документации, для документов используется filter=moment>=...;moment<=...
-        // =====================================================================
         async function showChecksDetails() {
             openDetailsModal('Загрузка чеков...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка списка чеков...</div>');
             
@@ -403,11 +395,8 @@
                 const momentFrom = dashboardData.momentFrom;
                 const momentTo = dashboardData.momentTo;
 
-                // ИСПРАВЛЕНИЕ: Правильный синтаксис фильтрации документов по дате + только проведенные (applicable=true)
                 const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
                 const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand?filter=${filter}&limit=1000&order=moment,desc`;
-                
-                console.log('Запрос чеков:', url); // Для отладки в консоли браузера
                 
                 const response = await proxyFetch(url, headers);
                 const data = await response.json();
@@ -457,8 +446,8 @@
         }
 
         // =====================================================================
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Детализация конкретного чека с товарами
-        // Используем expand=positions.assortment для получения названий товаров
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ: Детализация чека с ценами
+        // Согласно документации, добавлен параметр fields=stock вместе с expand
         // =====================================================================
         async function loadCheckDetails(checkId, checkName, checkSum, checkMoment) {
             const modal = document.getElementById('details-modal');
@@ -470,8 +459,9 @@
             
             try {
                 const headers = getAuthHeaders();
-                // ИСПРАВЛЕНИЕ: expand=positions.assortment гарантирует возврат объектов товаров с именами
-                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment`;
+                // ИСПРАВЛЕНИЕ: Добавлен параметр fields=stock согласно документации "Остатки и себестоимость в позициях документов"
+                // Это гарантирует корректное получение всех полей позиции, включая price и sum
+                const url = `https://api.moysklad.ru/api/remap/1.2/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
                 
                 console.log('Запрос деталей чека:', url);
                 
@@ -481,12 +471,18 @@
 
                 let totalCalculated = 0;
                 const itemsHtml = positions.map(p => {
-                    // Безопасное получение имени из вложенного объекта assortment
-                    const productName = p.assortment?.name || 'Товар без названия';
+                    // Безопасное получение имени товара
+                    const productName = p.assortment?.name || (p.assortment?.meta?.href ? 'Товар (ID: ' + p.assortment.meta.href.split('/').pop() + ')' : 'Товар без названия');
+                    
                     const quantity = p.quantity || 0;
-                    const price = (p.price || 0) / 100;
+                    // ИСПРАВЛЕНИЕ: Надежное получение цены. Если price по какой-то причине нет, вычисляем как sum / quantity
+                    const rawPrice = p.price !== undefined ? p.price : (p.sum / (quantity || 1));
+                    const price = rawPrice / 100;
                     const sum = (p.sum || 0) / 100;
                     totalCalculated += sum;
+
+                    // Логируем позицию в консоль на случай, если нужно будет посмотреть сырые данные
+                    console.log('Данные позиции чека:', p);
 
                     return `
                         <div class="flex justify-between items-start p-3 bg-slate-900 rounded mb-2 border border-slate-800">
