@@ -2,740 +2,248 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profit Analyzer - Главная</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-        body { background: #0f172a; color: #e2e8f0; margin: 0; padding: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        body { background: #0f172a; color: #e2e8f0; }
         
         .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(148, 163, 184, 0.15);
         }
         
         .kpi-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
         .kpi-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
         
-        .trend-up { color: #4ade80; }
-        .trend-down { color: #f87171; }
-        .trend-neutral { color: #94a3b8; }
-        
-        .check-item {
+        .nav-link {
             transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        
-        .check-item:hover {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: rgba(59, 130, 246, 0.3);
-            transform: translateX(4px);
-        }
-        
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            backdrop-filter: blur(4px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(59, 130, 246, 0.2);
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        input[type="date"] { color-scheme: dark; }
-        
-        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        
-        .chart-container { position: relative; height: 320px; }
-        
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4ade80;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
     </style>
 </head>
-<body>
-    <div class="min-h-screen p-4 md:p-6">
-        <!-- Верхняя панель -->
-        <div class="bg-slate-900/80 border-b border-slate-800 p-4 rounded-t-lg mb-6 backdrop-blur-md">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="pulse-dot"></div>
-                    <h1 class="text-xl md:text-2xl font-bold text-white">Главная</h1>
-                    <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
-                        Обновлено: <span id="last-update">-</span>
-                    </span>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex bg-slate-800 rounded-lg p-1 gap-1">
-                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Сегодня</button>
-                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition bg-blue-600 text-white">Неделя</button>
-                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Месяц</button>
-                    </div>
-                    <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
-                        <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
-                        <span class="text-gray-500">—</span>
-                        <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
-                    </div>
-                    <button onclick="loadDashboard()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
-                        🔄 Обновить
-                    </button>
-                </div>
+<body class="min-h-screen pb-12">
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                    <span class="text-emerald-400">💰</span> Profit Analyzer
+                </h1>
+                <p class="text-slate-400 mt-1">Управленческая аналитика для ИП</p>
             </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="flex bg-slate-800 rounded-xl p-1">
+                    <button onclick="setPeriod('today')" class="period-btn px-4 py-2 text-sm rounded-lg transition">Сегодня</button>
+                    <button onclick="setPeriod('week')" class="period-btn px-4 py-2 text-sm rounded-lg bg-blue-600 text-white">Неделя</button>
+                    <button onclick="setPeriod('month')" class="period-btn px-4 py-2 text-sm rounded-lg transition">Месяц</button>
+                    <button onclick="setPeriod('quarter')" class="period-btn px-4 py-2 text-sm rounded-lg transition">Квартал</button>
+                </div>
+                
+                <button onclick="showConnectionModal()" 
+                        class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-medium flex items-center gap-2 transition">
+                    <span>🔌</span> API
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8" id="kpi-container">
+            <!-- Заполнится JS -->
         </div>
 
-        <!-- KPI Карточки -->
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div class="kpi-card glass p-5" onclick="showKpiDetail('revenue')">
-                <div class="text-xs text-gray-400 uppercase">Выручка</div>
-                <div id="kpi-revenue" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
-                <div id="kpi-revenue-trend" class="text-xs mt-2 trend-neutral">—</div>
-            </div>
-            <div class="kpi-card glass p-5" onclick="showKpiDetail('profit')">
-                <div class="text-xs text-gray-400 uppercase">Прибыль</div>
-                <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
-                <div id="kpi-profit-trend" class="text-xs mt-2 trend-neutral">—</div>
-            </div>
-            <div class="kpi-card glass p-5" onclick="showChecksList()">
-                <div class="text-xs text-gray-400 uppercase">Чеки</div>
-                <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
-                <div id="kpi-checks-trend" class="text-xs mt-2 trend-neutral">—</div>
-            </div>
-            <div class="kpi-card glass p-5" onclick="showKpiDetail('avgCheck')">
-                <div class="text-xs text-gray-400 uppercase">Средний чек</div>
-                <div id="kpi-avg-check" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
-                <div id="kpi-avg-check-trend" class="text-xs mt-2 trend-neutral">—</div>
-            </div>
-            <div class="kpi-card glass p-5 col-span-2 lg:col-span-1" onclick="showKpiDetail('margin')">
-                <div class="text-xs text-gray-400 uppercase">Маржа</div>
-                <div id="kpi-margin" class="text-2xl md:text-3xl font-bold text-white mt-2">0%</div>
-                <div id="kpi-margin-trend" class="text-xs mt-2 trend-neutral">—</div>
-            </div>
-        </div>
-
-        <!-- График и Топ товаров -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div class="lg:col-span-2 glass p-6">
-                <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
-                <div class="chart-container">
-                    <canvas id="main-chart"></canvas>
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Revenue Chart -->
+            <div class="lg:col-span-8 glass rounded-3xl p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Динамика выручки и прибыли</h2>
+                    <select id="chart-type" onchange="updateMainChart()" class="bg-slate-800 text-sm rounded-lg px-3 py-1.5">
+                        <option value="revenue">Выручка</option>
+                        <option value="profit">Прибыль</option>
+                        <option value="both">Выручка + Прибыль</option>
+                    </select>
+                </div>
+                <div class="h-96">
+                    <canvas id="mainChart"></canvas>
                 </div>
             </div>
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold text-white mb-4">🏆 Топ-5 товаров</h3>
-                <div id="top-products-list" class="space-y-3 max-h-[320px] overflow-y-auto scrollbar-thin">
-                    <div class="text-gray-500 text-center py-8">Загрузка...</div>
+
+            <!-- Top Products -->
+            <div class="lg:col-span-4 glass rounded-3xl p-6">
+                <h2 class="text-xl font-semibold mb-6">🏆 Топ товаров</h2>
+                <div id="top-products" class="space-y-4">
+                    <!-- Заполнится JS -->
                 </div>
             </div>
-        </div>
 
-        <!-- Последние чеки -->
-        <div class="glass p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-white">🧾 Последние чеки</h3>
-                <button onclick="showChecksList()" class="text-xs text-blue-400 hover:text-blue-300 transition">Показать все</button>
-            </div>
-            <div id="recent-checks-list" class="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
-                <div class="text-gray-500 text-center py-8">Загрузка...</div>
-            </div>
-        </div>
-
-        <!-- Анализ и рекомендации -->
-        <div class="glass p-6">
-            <h3 class="text-lg font-bold text-white mb-4">🧠 Анализ и рекомендации</h3>
-            <div id="ai-insights" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="text-gray-500 text-center py-8 md:col-span-2">Загрузка...</div>
+            <!-- Recent Checks -->
+            <div class="lg:col-span-12 glass rounded-3xl p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Последние чеки / отгрузки</h2>
+                    <button onclick="loadRecentDemands()" 
+                            class="text-blue-400 hover:text-blue-300 text-sm font-medium">Обновить</button>
+                </div>
+                <div id="recent-demands" class="space-y-3 max-h-96 overflow-auto">
+                    <!-- Заполнится JS -->
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно API -->
-    <div id="connection-modal" class="modal-overlay">
-        <div class="glass p-8 max-w-md w-full shadow-2xl">
-            <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
-            <p class="text-sm text-gray-400 mb-6">Введите API-токен или логин:пароль</p>
-            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none mb-4" placeholder="user@domain.com:password">
-            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">Сохранить и подключить</button>
-            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3 mt-2">Отмена</button>
-        </div>
-    </div>
-
-    <!-- Модальное окно деталей -->
-    <div id="details-modal" class="modal-overlay">
-        <div class="glass p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] flex flex-col">
-            <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
-                <h2 id="details-title" class="text-xl font-bold text-white">Детали</h2>
-                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+    <!-- Connection Modal -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div class="glass max-w-md w-full mx-4 rounded-3xl p-8">
+            <h3 class="text-2xl font-semibold mb-2">Подключение к МойСклад</h3>
+            <p class="text-slate-400 mb-6">Вставьте Access Token</p>
+            
+            <input type="text" id="token-input" 
+                   class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                   placeholder="ваш_access_token">
+            
+            <div class="flex gap-3 mt-8">
+                <button onclick="saveToken()" 
+                        class="flex-1 bg-emerald-500 hover:bg-emerald-600 py-4 rounded-2xl font-semibold">Подключить</button>
+                <button onclick="hideModal()" 
+                        class="flex-1 bg-slate-700 hover:bg-slate-600 py-4 rounded-2xl font-semibold">Отмена</button>
             </div>
-            <div id="details-content" class="overflow-y-auto scrollbar-thin flex-1"></div>
-        </div>
-    </div>
-
-    <!-- Loader -->
-    <div id="global-loader" class="modal-overlay">
-        <div class="glass p-8 max-w-sm w-full text-center">
-            <div class="spinner mx-auto mb-4"></div>
-            <div id="loader-text" class="text-lg font-medium text-white mb-1">Загрузка данных...</div>
-            <div id="loader-subtext" class="text-sm text-gray-400">Пожалуйста, подождите</div>
         </div>
     </div>
 
     <script>
-        // =====================================================
-        // КОНФИГУРАЦИЯ
-        // =====================================================
-        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-        const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
+        // ==================== CONFIG ====================
+        const API_BASE = 'https://api.moysklad.ru/api/remap/1.2';
+        let token = localStorage.getItem('moysklad_token') || '';
         let currentPeriod = 'week';
-        let charts = {};
-        let apiToken = localStorage.getItem('moysklad_token') || '';
-        let dashboardCache = {};
+        let mainChartInstance = null;
 
-        // =====================================================
-        // ФОРМАТИРОВАНИЕ
-        // =====================================================
+        // ==================== UTILS ====================
         function formatMoney(amount) {
-            return new Intl.NumberFormat('ru-RU', {
-                style: 'currency',
-                currency: 'RUB',
-                maximumFractionDigits: 0
-            }).format(Number(amount) || 0);
+            return new Intl.NumberFormat('ru-RU').format(Math.round(amount)) + ' ₽';
         }
 
-        function formatNumber(number) {
-            return new Intl.NumberFormat('ru-RU', {
-                maximumFractionDigits: 0
-            }).format(Number(number) || 0);
+        function showModal() {
+            document.getElementById('modal').classList.remove('hidden');
         }
 
-        function formatDateTime(dateStr) {
-            if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleString('ru-RU');
-        }
-
-        function escapeHtml(value) {
-            return String(value || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
-        function dateToLocalISO(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function getPeriodDates(period) {
-            const now = new Date();
-            const from = new Date(now);
-            const to = new Date(now);
-
-            if (period === 'today') {
-                return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
-            }
-            if (period === 'week') {
-                from.setDate(from.getDate() - 6);
-            }
-            if (period === 'month') {
-                from.setDate(from.getDate() - 29);
-            }
-            return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
-        }
-
-        // =====================================================
-        // UI
-        // =====================================================
-        function setPeriod(period) {
-            currentPeriod = period;
-            document.querySelectorAll('.period-btn').forEach(button => {
-                button.classList.remove('bg-blue-600', 'text-white');
-                button.classList.add('text-gray-300');
-            });
-            if (event && event.target) {
-                event.target.classList.remove('text-gray-300');
-                event.target.classList.add('bg-blue-600', 'text-white');
-            }
-            const dates = getPeriodDates(period);
-            document.getElementById('date-from').value = dates.from;
-            document.getElementById('date-to').value = dates.to;
-            if (apiToken) loadDashboard();
-        }
-
-        function showLoader(text, subtext) {
-            document.getElementById('loader-text').textContent = text;
-            document.getElementById('loader-subtext').textContent = subtext;
-            document.getElementById('global-loader').classList.add('active');
-        }
-
-        function hideLoader() {
-            document.getElementById('global-loader').classList.remove('active');
-        }
-
-        function showConnectionModal() {
-            document.getElementById('api-token').value = apiToken;
-            document.getElementById('connection-modal').classList.add('active');
-        }
-
-        function closeConnectionModal() {
-            document.getElementById('connection-modal').classList.remove('active');
+        function hideModal() {
+            document.getElementById('modal').classList.add('hidden');
         }
 
         function saveToken() {
-            apiToken = document.getElementById('api-token').value.trim();
-            localStorage.setItem('moysklad_token', apiToken);
-            closeConnectionModal();
-            if (apiToken) loadDashboard();
-        }
-
-        function openDetailsModal(title, html) {
-            document.getElementById('details-title').textContent = title;
-            document.getElementById('details-content').innerHTML = html;
-            document.getElementById('details-modal').classList.add('active');
-        }
-
-        function closeDetailsModal() {
-            document.getElementById('details-modal').classList.remove('active');
-        }
-
-        // =====================================================
-        // API
-        // =====================================================
-        function getAuthHeaders() {
-            let authValue = apiToken;
-            if (!apiToken.startsWith('Basic ') && !apiToken.startsWith('Bearer ')) {
-                authValue = apiToken.includes(':')
-                    ? 'Basic ' + btoa(unescape(encodeURIComponent(apiToken)))
-                    : 'Bearer ' + apiToken;
+            const input = document.getElementById('token-input').value.trim();
+            if (input) {
+                token = input;
+                localStorage.setItem('moysklad_token', token);
+                hideModal();
+                loadDashboard();
             }
-            return {
-                Authorization: authValue,
-                Accept: 'application/json;charset=utf-8',
-                'Content-Type': 'application/json'
-            };
         }
 
-        async function fetchWithRetry(url, options, retries = 3) {
-            try {
-                const separator = url.includes('?') ? '&' : '?';
-                return await fetch(`${url}${separator}_t=${Date.now()}`, options);
-            } catch (error) {
-                if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 2500));
-                    return fetchWithRetry(url, options, retries - 1);
+        // ==================== API HELPERS ====================
+        async function apiRequest(endpoint, params = {}) {
+            if (!token) {
+                showModal();
+                return null;
+            }
+
+            const url = new URL(`${API_BASE}${endpoint}`);
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
                 }
-                throw new Error('Сеть сбрасывает соединение. Проверьте интернет.');
-            }
-        }
-
-        async function proxyFetch(targetUrl, headers) {
-            const response = await fetchWithRetry(PROXY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    url: targetUrl,
-                    headers: headers,
-                    method: 'GET'
-                })
             });
 
-            if (response.status === 429) {
-                throw new Error('Превышен лимит запросов. Подождите немного.');
-            }
-
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
+                console.error('API Error:', response.status);
+                return null;
             }
 
-            return response;
-        }
-
-        // =====================================================
-        // ГЛАВНАЯ — ЗАГРУЗКА ДАННЫХ
-        // =====================================================
-        async function loadDashboard() {
-            if (!apiToken) {
-                showConnectionModal();
-                return;
-            }
-
-            showLoader('Загрузка данных...', 'Обращение к API МойСклад');
-
-            try {
-                const dateFrom = document.getElementById('date-from').value;
-                const dateTo = document.getElementById('date-to').value;
-                const momentFrom = `${dateFrom} 00:00:00`;
-                const momentTo = `${dateTo} 23:59:59`;
-                const headers = getAuthHeaders();
-
-                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
-                    loadDashboardMetrics(headers),
-                    loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitByProduct(headers, momentFrom, momentTo),
-                    loadRecentChecks(headers, momentFrom, momentTo)
-                ]);
-
-                dashboardCache = { dashboardData, salesSeries, profitData, checksData };
-
-                updateKPIs(dashboardData, salesSeries, profitData);
-                updateMainChart(salesSeries);
-                updateTopProducts(profitData);
-                updateRecentChecks(checksData);
-                generateInsights(dashboardData, salesSeries, profitData);
-
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
-            } catch (error) {
-                console.error(error);
-                alert(error.message);
-            } finally {
-                hideLoader();
-            }
-        }
-
-        async function loadDashboardMetrics(headers) {
-            const endpoint = currentPeriod === 'today' ? 'day' : currentPeriod === 'month' ? 'month' : 'week';
-            const url = `${MOYSKLAD_API}/report/dashboard/${endpoint}`;
-            const response = await proxyFetch(url, headers);
             return await response.json();
         }
 
-        async function loadSalesSeries(headers, momentFrom, momentTo) {
-            const interval = currentPeriod === 'today' ? 'hour' : 'day';
-            const url = `${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.series || [];
+        // ==================== MAIN FUNCTIONS ====================
+        async function loadDashboard() {
+            if (!token) {
+                showModal();
+                return;
+            }
+
+            // Здесь будут вызовы API для KPI, графика и т.д.
+            console.log('Загрузка дашборда...');
+            
+            // Пример заглушки
+            renderKPIs();
+            renderTopProducts();
+            initMainChart();
         }
 
-        async function loadProfitByProduct(headers, momentFrom, momentTo) {
-            const url = `${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.rows || [];
-        }
-
-        async function loadRecentChecks(headers, momentFrom, momentTo) {
-            const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
-            const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=20&order=moment,desc`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.rows || [];
-        }
-
-        // =====================================================
-        // ГЛАВНАЯ — KPI
-        // =====================================================
-        function updateKPIs(dashboardData, salesSeries, profitData) {
-            const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
-            const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
-            const totalChecks = dashboardData.sales?.count || 0;
-            const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
-            const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
-
-            document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
-            document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
-            document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
-            document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
-            document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
-        }
-
-        // =====================================================
-        // ГЛАВНАЯ — ГРАФИК
-        // =====================================================
-        function updateMainChart(salesSeries) {
-            const canvas = document.getElementById('main-chart');
-            if (charts.main) charts.main.destroy();
-
-            const labels = salesSeries.map(row => {
-                return new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+        function setPeriod(period) {
+            currentPeriod = period;
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.toggle('bg-blue-600', btn.textContent.toLowerCase().includes(period));
             });
+            loadDashboard();
+        }
 
-            const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
+        // ==================== RENDER FUNCTIONS ====================
+        function renderKPIs() {
+            const container = document.getElementById('kpi-container');
+            container.innerHTML = `
+                <div class="kpi-card glass rounded-3xl p-6">
+                    <p class="text-slate-400 text-sm">Выручка</p>
+                    <p class="text-4xl font-bold text-white mt-2" id="revenue-kpi">0 ₽</p>
+                </div>
+                <!-- Добавь остальные KPI аналогично -->
+            `;
+        }
 
-            charts.main = new Chart(canvas, {
+        function renderTopProducts() {
+            // Заглушка
+            document.getElementById('top-products').innerHTML = `
+                <div class="text-slate-400">Данные загружаются...</div>
+            `;
+        }
+
+        function initMainChart() {
+            const ctx = document.getElementById('mainChart');
+            if (mainChartInstance) mainChartInstance.destroy();
+            
+            mainChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels,
+                    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
                     datasets: [{
                         label: 'Выручка',
-                        data: revenue,
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74,222,128,0.1)',
-                        fill: true,
-                        tension: 0.35
+                        data: [12000, 19000, 15000, 25000, 22000, 18000, 27000],
+                        borderColor: '#10b981',
+                        tension: 0.4
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            ticks: {
-                                callback: value => formatMoney(value)
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        // =====================================================
-        // ГЛАВНАЯ — ТОП ТОВАРОВ
-        // =====================================================
-        function updateTopProducts(profitData) {
-            const container = document.getElementById('top-products-list');
-            const rows = [...profitData]
-                .sort((a, b) => (b.profit || 0) - (a.profit || 0))
-                .slice(0, 5);
-
-            if (!rows.length) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет данных</div>';
-                return;
-            }
-
-            container.innerHTML = rows.map(row => `
-                <div class="bg-slate-800/50 rounded-lg p-3">
-                    <div class="font-medium text-white">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
-                    <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
-                </div>
-            `).join('');
-        }
-
-        // =====================================================
-        // ПОСЛЕДНИЕ ЧЕКИ
-        // =====================================================
-        function updateRecentChecks(checks) {
-            const container = document.getElementById('recent-checks-list');
-
-            if (!checks.length) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет чеков за период</div>';
-                return;
-            }
-
-            container.innerHTML = checks.map(check => `
-                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50"
-                     onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
-                            <div class="text-xs text-gray-400">${formatDateTime(check.moment)}</div>
-                        </div>
-                        <div class="font-bold text-green-400">${formatMoney((check.sum || 0) / 100)}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
-            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка позиций чека...</div>');
-
-            try {
-                const headers = getAuthHeaders();
-                const url = `${MOYSKLAD_API}/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
-                const response = await proxyFetch(url, headers);
-                const data = await response.json();
-                const positions = data.positions?.rows || [];
-
-                const items = positions.map(position => `
-                    <div class="bg-slate-900 rounded-lg p-4 mb-2">
-                        <div class="font-medium text-white">${escapeHtml(position.assortment?.name || 'Товар')}</div>
-                        <div class="text-sm text-gray-400 mt-1">
-                            ${formatNumber(position.quantity)} шт × ${formatMoney((position.price || 0) / 100)}
-                        </div>
-                        <div class="text-green-400 font-bold mt-2">${formatMoney((position.sum || 0) / 100)}</div>
-                    </div>
-                `).join('');
-
-                openDetailsModal(`Чек: ${checkName}`, `
-                    <div class="space-y-4">
-                        <div class="bg-slate-800 p-6 rounded-lg">
-                            <div class="text-sm text-gray-400">${checkMoment}</div>
-                            <div class="text-3xl font-bold text-green-400 mt-2">${formatMoney(checkSum)}</div>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white mb-3">Товары</h3>
-                            ${items || '<div class="text-gray-500">Нет позиций</div>'}
-                        </div>
-                    </div>
-                `);
-            } catch (error) {
-                openDetailsModal('Ошибка', `<div class="text-red-400">${escapeHtml(error.message)}</div>`);
-            }
-        }
-
-        async function showChecksList() {
-            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка чеков...</div>');
-
-            try {
-                const dateFrom = document.getElementById('date-from').value;
-                const dateTo = document.getElementById('date-to').value;
-                const headers = getAuthHeaders();
-                const checks = await loadRecentChecks(headers, `${dateFrom} 00:00:00`, `${dateTo} 23:59:59`);
-
-                openDetailsModal(`Чеки (${checks.length})`, checks.map(check => `
-                    <div class="check-item bg-slate-800/50 rounded-lg p-4 mb-2"
-                         onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
-                        <div class="flex justify-between">
-                            <span class="text-white">${escapeHtml(check.name || 'Чек')}</span>
-                            <span class="text-green-400 font-bold">${formatMoney((check.sum || 0) / 100)}</span>
-                        </div>
-                    </div>
-                `).join('') || '<div class="text-gray-500 text-center py-8">Нет чеков</div>');
-            } catch (error) {
-                openDetailsModal('Ошибка', `<div class="text-red-400">${escapeHtml(error.message)}</div>`);
-            }
-        }
-
-        // =====================================================
-        // РЕКОМЕНДАЦИИ
-        // =====================================================
-        function generateInsights(dashboardData, salesSeries, profitData) {
-            const container = document.getElementById('ai-insights');
-            const revenue = salesSeries.reduce((sum, row) => sum + (row.sum || 0) / 100, 0);
-            const profit = profitData.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
-            const margin = revenue > 0 ? (profit / revenue * 100) : 0;
-
-            const insights = [];
-
-            if (revenue > 0) {
-                insights.push({
-                    icon: '📊',
-                    title: 'Выручка за период',
-                    text: formatMoney(revenue)
-                });
-            }
-
-            if (revenue > 0) {
-                insights.push({
-                    icon: margin >= 30 ? '💪' : '⚠️',
-                    title: 'Маржинальность',
-                    text: `Текущая маржа: ${margin.toFixed(1)}%`
-                });
-            }
-
-            if (!insights.length) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-8 md:col-span-2">Недостаточно данных</div>';
-                return;
-            }
-
-            container.innerHTML = insights.map(insight => `
-                <div class="bg-slate-800/50 rounded-lg p-4">
-                    <div class="flex gap-3">
-                        <span class="text-2xl">${insight.icon}</span>
-                        <div>
-                            <div class="font-semibold text-white">${insight.title}</div>
-                            <div class="text-sm text-gray-400 mt-1">${insight.text}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // =====================================================
-        // KPI DETAILS
-        // =====================================================
-        function showKpiDetail(type) {
-            const titles = {
-                revenue: 'Детализация выручки',
-                profit: 'Детализация прибыли',
-                avgCheck: 'Средний чек',
-                margin: 'Маржинальность'
-            };
-
-            const elements = {
-                revenue: document.getElementById('kpi-revenue').textContent,
-                profit: document.getElementById('kpi-profit').textContent,
-                avgCheck: document.getElementById('kpi-avg-check').textContent,
-                margin: document.getElementById('kpi-margin').textContent
-            };
-
-            openDetailsModal(titles[type], `
-                <div class="bg-slate-800 p-6 rounded-lg">
-                    <div class="text-sm text-gray-400 mb-2">Значение за выбранный период</div>
-                    <div class="text-4xl font-bold text-blue-400">${elements[type]}</div>
-                </div>
-            `);
-        }
-
-        // =====================================================
-        // ИНИЦИАЛИЗАЦИЯ
-        // =====================================================
-        window.addEventListener('load', () => {
-            const dates = getPeriodDates('week');
-            document.getElementById('date-from').value = dates.from;
-            document.getElementById('date-to').value = dates.to;
-
-            if (apiToken) {
-                loadDashboard();
-            } else {
-                showConnectionModal();
-            }
-        });
+        // Инициализация
+        window.onload = () => {
+            if (token) loadDashboard();
+            else showModal();
+        };
     </script>
 </body>
 </html>
