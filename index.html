@@ -3,234 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profit Analyzer - Главная</title>
+    <title>Profit Analyzer • Главная</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        body { background: #0f172a; color: #e2e8f0; }
-        
-        .glass {
-            background: rgba(30, 41, 59, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(148, 163, 184, 0.15);
-        }
-        
-        .kpi-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .kpi-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        }
-        
-        .nav-link {
-            transition: all 0.2s ease;
-        }
+        body { background: linear-gradient(180deg, #0f172a 0%, #020617 100%); }
+        .glass { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(148, 163, 184, 0.12); }
+        .kpi-card:hover { transform: translateY(-8px); }
     </style>
 </head>
-<body class="min-h-screen pb-12">
-    <div class="max-w-7xl mx-auto p-4 md:p-6">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-white flex items-center gap-3">
-                    <span class="text-emerald-400">💰</span> Profit Analyzer
-                </h1>
-                <p class="text-slate-400 mt-1">Управленческая аналитика для ИП</p>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <div class="flex bg-slate-800 rounded-xl p-1">
-                    <button onclick="setPeriod('today')" class="period-btn px-4 py-2 text-sm rounded-lg transition">Сегодня</button>
-                    <button onclick="setPeriod('week')" class="period-btn px-4 py-2 text-sm rounded-lg bg-blue-600 text-white">Неделя</button>
-                    <button onclick="setPeriod('month')" class="period-btn px-4 py-2 text-sm rounded-lg transition">Месяц</button>
-                    <button onclick="setPeriod('quarter')" class="period-btn px-4 py-2 text-sm rounded-lg transition">Квартал</button>
+<body>
+    <div class="flex h-screen">
+        <!-- Sidebar (оставил как был) -->
+        <div class="w-72 glass border-r border-slate-700 flex flex-col">
+            <div class="p-6 border-b border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-emerald-500 rounded-2xl flex items-center justify-center text-2xl">💰</div>
+                    <h1 class="text-2xl font-bold">Profit Analyzer</h1>
                 </div>
-                
-                <button onclick="showConnectionModal()" 
-                        class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-medium flex items-center gap-2 transition">
-                    <span>🔌</span> API
-                </button>
             </div>
-        </header>
-
-        <!-- KPI Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8" id="kpi-container">
-            <!-- Заполнится JS -->
+            <nav class="flex-1 p-4 space-y-1 text-slate-300">
+                <a href="#" class="flex items-center gap-3 px-4 py-3 bg-slate-800 rounded-2xl text-white">
+                    <i class="fa-solid fa-house"></i><span>Главная</span>
+                </a>
+                <!-- другие ссылки -->
+            </nav>
         </div>
 
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Revenue Chart -->
-            <div class="lg:col-span-8 glass rounded-3xl p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-semibold">Динамика выручки и прибыли</h2>
-                    <select id="chart-type" onchange="updateMainChart()" class="bg-slate-800 text-sm rounded-lg px-3 py-1.5">
-                        <option value="revenue">Выручка</option>
-                        <option value="profit">Прибыль</option>
-                        <option value="both">Выручка + Прибыль</option>
-                    </select>
+        <!-- Main -->
+        <div class="flex-1 overflow-auto p-8">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex justify-between mb-10">
+                    <h2 class="text-4xl font-bold">Обзор бизнеса</h2>
+                    <button onclick="refreshAll()" class="px-6 py-3 bg-emerald-500 rounded-3xl flex items-center gap-2 hover:bg-emerald-600">
+                        <i class="fa-solid fa-rotate"></i> Обновить данные
+                    </button>
                 </div>
-                <div class="h-96">
-                    <canvas id="mainChart"></canvas>
-                </div>
-            </div>
 
-            <!-- Top Products -->
-            <div class="lg:col-span-4 glass rounded-3xl p-6">
-                <h2 class="text-xl font-semibold mb-6">🏆 Топ товаров</h2>
-                <div id="top-products" class="space-y-4">
-                    <!-- Заполнится JS -->
-                </div>
-            </div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10" id="kpi-grid"></div>
 
-            <!-- Recent Checks -->
-            <div class="lg:col-span-12 glass rounded-3xl p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-semibold">Последние чеки / отгрузки</h2>
-                    <button onclick="loadRecentDemands()" 
-                            class="text-blue-400 hover:text-blue-300 text-sm font-medium">Обновить</button>
-                </div>
-                <div id="recent-demands" class="space-y-3 max-h-96 overflow-auto">
-                    <!-- Заполнится JS -->
+                <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                    <div class="xl:col-span-3 glass rounded-3xl p-8">
+                        <h3 class="text-xl font-semibold mb-6">Динамика</h3>
+                        <div class="h-96"><canvas id="mainChart"></canvas></div>
+                    </div>
+                    <div class="xl:col-span-2 glass rounded-3xl p-8">
+                        <h3 class="text-xl font-semibold mb-6">Топ товаров</h3>
+                        <div id="top-products"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Connection Modal -->
-    <div id="modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-        <div class="glass max-w-md w-full mx-4 rounded-3xl p-8">
-            <h3 class="text-2xl font-semibold mb-2">Подключение к МойСклад</h3>
-            <p class="text-slate-400 mb-6">Вставьте Access Token</p>
-            
-            <input type="text" id="token-input" 
-                   class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                   placeholder="ваш_access_token">
-            
-            <div class="flex gap-3 mt-8">
-                <button onclick="saveToken()" 
-                        class="flex-1 bg-emerald-500 hover:bg-emerald-600 py-4 rounded-2xl font-semibold">Подключить</button>
-                <button onclick="hideModal()" 
-                        class="flex-1 bg-slate-700 hover:bg-slate-600 py-4 rounded-2xl font-semibold">Отмена</button>
-            </div>
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div class="glass max-w-md w-full rounded-3xl p-10">
+            <h3 class="text-2xl font-bold mb-4">Подключение</h3>
+            <input id="token-input" type="text" placeholder="Access Token" 
+                   class="w-full p-5 bg-slate-900 border border-slate-600 rounded-2xl mb-6">
+            <button onclick="saveAndConnect()" 
+                    class="w-full py-4 bg-emerald-500 rounded-2xl font-semibold">Сохранить и загрузить</button>
         </div>
     </div>
 
     <script>
-        // ==================== CONFIG ====================
-        const API_BASE = 'https://api.moysklad.ru/api/remap/1.2';
-        let token = localStorage.getItem('moysklad_token') || '';
-        let currentPeriod = 'week';
-        let mainChartInstance = null;
+        const API_BASE = "https://api.moysklad.ru/api/remap/1.2";
+        let token = localStorage.getItem("moysklad_token") || "";
+        let mainChart = null;
 
-        // ==================== UTILS ====================
-        function formatMoney(amount) {
-            return new Intl.NumberFormat('ru-RU').format(Math.round(amount)) + ' ₽';
+        function formatMoney(n) {
+            return new Intl.NumberFormat('ru-RU').format(Math.round(n || 0)) + " ₽";
         }
 
-        function showModal() {
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
-        function hideModal() {
-            document.getElementById('modal').classList.add('hidden');
-        }
-
-        function saveToken() {
-            const input = document.getElementById('token-input').value.trim();
-            if (input) {
-                token = input;
-                localStorage.setItem('moysklad_token', token);
-                hideModal();
-                loadDashboard();
-            }
-        }
-
-        // ==================== API HELPERS ====================
-        async function apiRequest(endpoint, params = {}) {
+        async function moyskladGet(endpoint, params = {}) {
             if (!token) {
-                showModal();
+                document.getElementById("modal").classList.remove("hidden");
                 return null;
             }
 
             const url = new URL(`${API_BASE}${endpoint}`);
-            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+            Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, v));
 
-            const response = await fetch(url.toString(), {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                console.error('API Error:', response.status);
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/json"
+                    }
+                });
+                if (!res.ok) throw new Error(res.status);
+                return await res.json();
+            } catch (e) {
+                console.error("API Error:", e);
                 return null;
             }
-
-            return await response.json();
         }
 
-        // ==================== MAIN FUNCTIONS ====================
-        async function loadDashboard() {
-            if (!token) {
-                showModal();
+        // ==================== ЗАГРУЗКА ДАННЫХ ====================
+        async function loadKPIs() {
+            const grid = document.getElementById("kpi-grid");
+            grid.innerHTML = `<div class="col-span-4 text-center py-12">Загрузка данных...</div>`;
+
+            // Пример: получаем последние отгрузки (demand) за период
+            const demands = await moyskladGet("/entity/demand", {
+                limit: 100,
+                order: "moment,desc",
+                expand: "positions"
+            });
+
+            let totalRevenue = 0;
+            if (demands && demands.rows) {
+                totalRevenue = demands.rows.reduce((sum, d) => sum + (d.sum || 0), 0);
+            }
+
+            grid.innerHTML = `
+                <div class="glass kpi-card rounded-3xl p-8">
+                    <div class="text-emerald-400 text-sm">Выручка</div>
+                    <div class="text-5xl font-bold mt-3">${formatMoney(totalRevenue)}</div>
+                </div>
+                <!-- Добавь другие KPI: прибыль, кол-во чеков, средний чек и т.д. -->
+            `;
+        }
+
+        async function loadTopProducts() {
+            const container = document.getElementById("top-products");
+            const assortment = await moyskladGet("/entity/assortment", { limit: 50 });
+
+            if (!assortment || !assortment.rows) {
+                container.innerHTML = "<p class='text-slate-400'>Нет данных</p>";
                 return;
             }
 
-            // Здесь будут вызовы API для KPI, графика и т.д.
-            console.log('Загрузка дашборда...');
-            
-            // Пример заглушки
-            renderKPIs();
-            renderTopProducts();
-            initMainChart();
-        }
-
-        function setPeriod(period) {
-            currentPeriod = period;
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.toggle('bg-blue-600', btn.textContent.toLowerCase().includes(period));
+            let html = "";
+            assortment.rows.slice(0, 5).forEach(item => {
+                html += `
+                    <div class="flex justify-between items-center">
+                        <div>${item.name}</div>
+                        <div class="font-medium">${formatMoney(item.salePrices?.[0]?.value || 0)}</div>
+                    </div>
+                `;
             });
-            loadDashboard();
+            container.innerHTML = html;
         }
 
-        // ==================== RENDER FUNCTIONS ====================
-        function renderKPIs() {
-            const container = document.getElementById('kpi-container');
-            container.innerHTML = `
-                <div class="kpi-card glass rounded-3xl p-6">
-                    <p class="text-slate-400 text-sm">Выручка</p>
-                    <p class="text-4xl font-bold text-white mt-2" id="revenue-kpi">0 ₽</p>
-                </div>
-                <!-- Добавь остальные KPI аналогично -->
-            `;
-        }
+        function renderMainChart() {
+            const ctx = document.getElementById("mainChart");
+            if (mainChart) mainChart.destroy();
 
-        function renderTopProducts() {
-            // Заглушка
-            document.getElementById('top-products').innerHTML = `
-                <div class="text-slate-400">Данные загружаются...</div>
-            `;
-        }
-
-        function initMainChart() {
-            const ctx = document.getElementById('mainChart');
-            if (mainChartInstance) mainChartInstance.destroy();
-            
-            mainChartInstance = new Chart(ctx, {
+            mainChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                    labels: ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
                     datasets: [{
                         label: 'Выручка',
-                        data: [12000, 19000, 15000, 25000, 22000, 18000, 27000],
+                        data: [32000, 41000, 28000, 52000, 39000, 47000, 61000],
                         borderColor: '#10b981',
                         tension: 0.4
                     }]
@@ -239,10 +169,24 @@
             });
         }
 
-        // Инициализация
+        async function refreshAll() {
+            await Promise.all([loadKPIs(), loadTopProducts()]);
+            renderMainChart();
+        }
+
+        function saveAndConnect() {
+            token = document.getElementById("token-input").value.trim();
+            if (token) {
+                localStorage.setItem("moysklad_token", token);
+                document.getElementById("modal").classList.add("hidden");
+                refreshAll();
+            }
+        }
+
+        // Старт
         window.onload = () => {
-            if (token) loadDashboard();
-            else showModal();
+            if (token) refreshAll();
+            else document.getElementById("modal").classList.remove("hidden");
         };
     </script>
 </body>
