@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ABC-XYZ Анализ | Profit Analyzer</title>
+    <title>Анализ Поставщиков | Profit Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Плагин для зума и панорамирования -->
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,34 +24,21 @@
         .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        .chart-container { position: relative; height: 600px; width: 100%; }
+        .chart-container { position: relative; height: 500px; width: 100%; }
         .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         
-        /* Цвета квадрантов */
-        .q-ax { color: #4ade80; } .q-ay { color: #facc15; } .q-az { color: #f87171; }
-        .q-bx { color: #60a5fa; } .q-by { color: #a78bfa; } .q-bz { color: #fb923c; }
-        .q-cx { color: #94a3b8; } .q-cy { color: #cbd5e1; } .q-cz { color: #64748b; }
-
-        /* Стили для инпутов фильтрации таблицы */
+        /* Table Styles */
         .table-filter-input {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            color: #e2e8f0;
-            font-size: 11px;
-            padding: 4px 6px;
-            width: 100%;
-            margin-top: 6px;
-            outline: none;
-            transition: border-color 0.2s;
+            background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px; color: #e2e8f0; font-size: 11px; padding: 4px 6px; width: 100%; margin-top: 6px; outline: none;
         }
         .table-filter-input:focus { border-color: #3b82f6; }
-        .table-filter-input::placeholder { color: #64748b; }
-
-        /* Стили для сортировки */
         .sort-icon { cursor: pointer; opacity: 0.3; transition: opacity 0.2s; user-select: none; }
         .sort-icon:hover { opacity: 0.8; }
         .sort-icon.active { opacity: 1; color: #60a5fa; }
+        
+        .best-price { color: #4ade80; font-weight: bold; }
+        .worst-price { color: #f87171; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -67,17 +53,14 @@
             <a href="index.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">📊</span> Главная
             </a>
-            <a href="analytics.html" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
-                <span class="text-lg">🔍</span> Аналитика
+            <a href="analytics.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+                <span class="text-lg">🔍</span> ABC-XYZ Анализ
+            </a>
+            <a href="supplier_analysis.html" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
+                <span class="text-lg">🚚</span> Анализ Поставщиков
             </a>
             <a href="finance.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">💰</span> Финансы
-            </a>
-            <a href="stock.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">📦</span> Склад
-            </a>
-            <a href="clients.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">👥</span> Клиенты
             </a>
         </nav>
         <div class="p-4 border-t border-slate-800">
@@ -87,40 +70,24 @@
         </div>
     </aside>
 
-    <!-- МОБИЛЬНОЕ МЕНЮ -->
-    <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto">
-        <a href="index.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Главная</a>
-        <a href="analytics.html" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">🔍</span>Аналитика</a>
-        <a href="finance.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Финансы</a>
-        <a href="stock.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Склад</a>
-    </div>
-
     <!-- ОСНОВНОЙ КОНТЕНТ -->
     <main class="flex-1 flex flex-col overflow-hidden">
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h2 class="text-xl md:text-2xl font-bold text-white">Аналитика</h2>
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white">Сравнение цен поставщиков</h2>
+                    <p class="text-xs text-gray-400 mt-1">Поиск товаров с альтернативными поставщиками и сравнение закупочных цен</p>
+                </div>
                 
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- РУЧНОЙ ВЫБОР ДИАПАЗОНА -->
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
                         <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                         <span class="text-gray-500">—</span>
                         <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                     </div>
-
-                    <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
-                        <input type="checkbox" id="abc-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900">
-                        <span class="text-sm text-gray-300">ABC-XYZ Матрица</span>
-                    </label>
-
-                    <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
-                        <input type="checkbox" id="supplier-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-slate-900">
-                        <span class="text-sm text-gray-300">Выгода поставщиков</span>
-                    </label>
                     
-                    <button onclick="runAnalysis()" id="btn-analyze" disabled class="px-4 py-2 text-xs font-semibold bg-slate-700 text-gray-400 rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50">
-                        🚀 Сформировать
+                    <button onclick="runAnalysis()" id="btn-analyze" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                        🚀 Найти и сравнить
                     </button>
                 </div>
             </div>
@@ -130,45 +97,22 @@
             
             <!-- Плейсхолдер -->
             <div id="analysis-placeholder" class="flex flex-col items-center justify-center h-[60vh] text-center">
-                <div class="text-6xl mb-4">📉</div>
-                <h3 class="text-2xl font-bold text-white mb-2">Выберите период и тип анализа</h3>
-                <p class="text-gray-400 max-w-md">Отметьте галочкой нужный график и нажмите "Сформировать".</p>
+                <div class="text-6xl mb-4">🚚</div>
+                <h3 class="text-2xl font-bold text-white mb-2">Выберите период для анализа</h3>
+                <p class="text-gray-400 max-w-md">Система проанализирует все поступления товаров за период, найдет товары, которые поставляют несколько поставщиков, и покажет, где закупать выгоднее.</p>
             </div>
 
-            <!-- Результаты анализа -->
+            <!-- Результаты -->
             <div id="analysis-results" class="hidden space-y-6">
                 
-                <!-- График ABC-XYZ -->
-                <div id="abc-chart-container" class="glass p-6 hidden">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-3">
-                            <div>
-                                <h3 class="text-lg font-bold text-white">Матрица ABC-XYZ</h3>
-                                <p class="text-xs text-gray-400 mt-1">Ось X: Оборачиваемость (стабильность) | Ось Y: Вклад в прибыль (%)</p>
-                            </div>
-                            <button onclick="showChartHelp()" class="text-gray-400 hover:text-white transition" title="Как читать график?">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </button>
-                        </div>
-                        <button onclick="resetZoom('abc')" id="btn-reset-zoom-abc" class="hidden px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition">
-                            🔍 Сброс зума
-                        </button>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="abc-chart"></canvas>
-                    </div>
-                </div>
-
-                <!-- График Поставщиков -->
-                <div id="supplier-chart-container" class="glass p-6 hidden">
+                <!-- График -->
+                <div class="glass p-6">
                     <div class="flex justify-between items-center mb-4">
                         <div>
-                            <h3 class="text-lg font-bold text-white">Рейтинг поставщиков по прибыли</h3>
-                            <p class="text-xs text-gray-400 mt-1">Сравнение общей прибыли и средней маржинальности по поставщикам</p>
+                            <h3 class="text-lg font-bold text-white">Сравнение средней цены закупки</h3>
+                            <p class="text-xs text-gray-400 mt-1">Ось X: Товары | Ось Y: Цена закупки (руб.)</p>
                         </div>
-                        <button onclick="resetZoom('supplier')" id="btn-reset-zoom-supplier" class="hidden px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition">
+                        <button onclick="resetZoom()" id="btn-reset-zoom" class="hidden px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition">
                             🔍 Сброс зума
                         </button>
                     </div>
@@ -177,58 +121,45 @@
                     </div>
                 </div>
 
-                <!-- Таблица с фильтрами и сортировкой (для ABC) -->
-                <div id="abc-table-container" class="glass p-6 hidden">
-                    <h3 class="text-lg font-bold text-white mb-4">Детальная таблица товаров</h3>
+                <!-- Таблица -->
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">Детализация закупок</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
                             <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
                                 <tr>
-                                    <th class="px-4 py-3">
+                                    <th class="px-4 py-3 min-w-[200px]">
                                         <div class="flex items-center justify-between">
                                             Товар
                                             <span class="sort-icon" onclick="toggleSort('name')" id="sort-name">↕</span>
                                         </div>
                                         <input type="text" placeholder="Поиск..." class="table-filter-input" oninput="filterTable(this, 0)">
                                     </th>
-                                    <th class="px-4 py-3 text-center">
-                                        <div class="flex items-center justify-center gap-1">
-                                            Класс
-                                            <span class="sort-icon" onclick="toggleSort('class')" id="sort-class">↕</span>
+                                    <th class="px-4 py-3 min-w-[150px]">
+                                        <div class="flex items-center justify-between">
+                                            Поставщик
+                                            <span class="sort-icon" onclick="toggleSort('supplier')" id="sort-supplier">↕</span>
                                         </div>
-                                        <input type="text" placeholder="Напр. AX" class="table-filter-input" oninput="filterTable(this, 1)">
+                                        <input type="text" placeholder="Поставщик..." class="table-filter-input" oninput="filterTable(this, 1)">
                                     </th>
                                     <th class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-1">
-                                            Выручка
-                                            <span class="sort-icon" onclick="toggleSort('revenue')" id="sort-revenue">↕</span>
+                                            Кол-во
+                                            <span class="sort-icon" onclick="toggleSort('qty')" id="sort-qty">↕</span>
                                         </div>
-                                        <input type="text" placeholder="₽" class="table-filter-input" oninput="filterTable(this, 2)">
                                     </th>
                                     <th class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-1">
-                                            Прибыль
-                                            <span class="sort-icon" onclick="toggleSort('profit')" id="sort-profit">↕</span>
+                                            Ср. цена
+                                            <span class="sort-icon" onclick="toggleSort('price')" id="sort-price">↕</span>
                                         </div>
-                                        <input type="text" placeholder="₽" class="table-filter-input" oninput="filterTable(this, 3)">
                                     </th>
                                     <th class="px-4 py-3 text-right">
-                                        <div class="flex items-center justify-end gap-1">
-                                            Доля прибыли
-                                            <span class="sort-icon" onclick="toggleSort('share')" id="sort-share">↕</span>
-                                        </div>
-                                        <input type="text" placeholder="%" class="table-filter-input" oninput="filterTable(this, 4)">
-                                    </th>
-                                    <th class="px-4 py-3 text-right">
-                                        <div class="flex items-center justify-end gap-1">
-                                            Оборачиваемость
-                                            <span class="sort-icon" onclick="toggleSort('turnover')" id="sort-turnover">↕</span>
-                                        </div>
-                                        <input type="text" placeholder="Коэф." class="table-filter-input" oninput="filterTable(this, 5)">
+                                        Выгода
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="abc-table-body" class="divide-y divide-slate-700">
+                            <tbody id="results-table-body" class="divide-y divide-slate-700">
                                 <!-- Rows injected here -->
                             </tbody>
                         </table>
@@ -249,82 +180,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно справки по графику -->
-    <div id="help-modal" class="modal-overlay">
-        <div class="glass p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
-            <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
-                <h2 class="text-xl font-bold text-white">Как читать матрицу ABC-XYZ</h2>
-                <button onclick="document.getElementById('help-modal').classList.remove('active')" class="text-gray-400 hover:text-white text-3xl">&times;</button>
-            </div>
-            <div class="overflow-y-auto scrollbar-thin pr-2 space-y-4 text-sm text-gray-300">
-                <p>Матрица совмещает два показателя: прибыльность товара (ABC) и стабильность его продаж (XYZ).</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-slate-800/50 p-4 rounded-lg">
-                        <h4 class="font-bold text-white mb-2">Ось Y: ABC (Прибыльность)</h4>
-                        <ul class="list-disc list-inside space-y-1">
-                            <li><span class="text-green-400 font-bold">A</span> — Топ товары, приносящие 80% всей прибыли.</li>
-                            <li><span class="text-blue-400 font-bold">B</span> — Товары среднего сегмента (следующие 15% прибыли).</li>
-                            <li><span class="text-slate-400 font-bold">C</span> — Аутсайдеры, приносящие последние 5% прибыли.</li>
-                        </ul>
-                    </div>
-                    <div class="bg-slate-800/50 p-4 rounded-lg">
-                        <h4 class="font-bold text-white mb-2">Ось X: XYZ (Стабильность)</h4>
-                        <p class="mb-2">Оценивается через оборачиваемость запасов.</p>
-                        <ul class="list-disc list-inside space-y-1">
-                            <li><span class="font-bold text-white">X</span> — Высокая оборачиваемость (>3). Стабильный спрос.</li>
-                            <li><span class="font-bold text-white">Y</span> — Средняя оборачиваемость (1-3). Умеренный спрос.</li>
-                            <li><span class="font-bold text-white">Z</span> — Низкая оборачиваемость (<1). Нестабильный спрос или залежалый товар.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <h4 class="font-bold text-white mt-4 mb-2">Расшифровка квадрантов:</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <div class="p-2 rounded bg-green-900/20 border border-green-900/50">
-                        <div class="font-bold q-ax">AX</div>
-                        <div class="text-xs">Лидеры. Высокая прибыль, стабильные продажи. Требуют постоянного наличия.</div>
-                    </div>
-                    <div class="p-2 rounded bg-yellow-900/20 border border-yellow-900/50">
-                        <div class="font-bold q-ay">AY</div>
-                        <div class="text-xs">Прибыльные, но спрос колеблется. Нужен страховой запас.</div>
-                    </div>
-                    <div class="p-2 rounded bg-red-900/20 border border-red-900/50">
-                        <div class="font-bold q-az">AZ</div>
-                        <div class="text-xs">Высокая маржа, но редкие продажи. Риск заморозки денег.</div>
-                    </div>
-                    <div class="p-2 rounded bg-blue-900/20 border border-blue-900/50">
-                        <div class="font-bold q-bx">BX</div>
-                        <div class="text-xs">Хорошая оборачиваемость, средняя прибыль. "Рабочие лошадки".</div>
-                    </div>
-                    <div class="p-2 rounded bg-purple-900/20 border border-purple-900/50">
-                        <div class="font-bold q-by">BY</div>
-                        <div class="text-xs">Средняя прибыль и средняя стабильность. Стандартный ассортимент.</div>
-                    </div>
-                    <div class="p-2 rounded bg-orange-900/20 border border-orange-900/50">
-                        <div class="font-bold q-bz">BZ</div>
-                        <div class="text-xs">Средняя прибыль, низкая оборачиваемость. Кандидаты на вывод.</div>
-                    </div>
-                    <div class="p-2 rounded bg-slate-800/50 border border-slate-700">
-                        <div class="font-bold q-cx">CX</div>
-                        <div class="text-xs">Низкая прибыль, но стабильный спрос. Нужны для ассортимента.</div>
-                    </div>
-                    <div class="p-2 rounded bg-slate-700/50 border border-slate-600">
-                        <div class="font-bold q-cy">CY</div>
-                        <div class="text-xs">Низкая прибыль, нестабильный спрос. Балласт.</div>
-                    </div>
-                    <div class="p-2 rounded bg-slate-900/50 border border-slate-800">
-                        <div class="font-bold q-cz">CZ</div>
-                        <div class="text-xs">Аутсайдеры. Низкая прибыль, нет оборотов. К выводу из ассортимента.</div>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-slate-700 text-right">
-                <button onclick="document.getElementById('help-modal').classList.remove('active')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm">Понятно</button>
-            </div>
-        </div>
-    </div>
-
     <div id="global-loader" class="modal-overlay">
         <div class="glass p-8 max-w-sm w-full text-center">
             <div class="spinner mx-auto mb-4"></div>
@@ -340,19 +195,13 @@
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let apiToken = localStorage.getItem('moysklad_token') || '';
-        let abcChart = null;
         let supplierChart = null;
-        let currentItems = []; 
+        let tableData = []; // Плоский массив для таблицы
 
         // UI Helpers
-        const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
+        const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(n || 0);
         const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
-        const checkboxABC = document.getElementById('abc-checkbox');
-        const checkboxSupplier = document.getElementById('supplier-checkbox');
-        const btnAnalyze = document.getElementById('btn-analyze');
-        
-        // Инициализация дат (последние 90 дней по умолчанию)
         window.addEventListener('DOMContentLoaded', () => {
             const today = new Date();
             const past = new Date();
@@ -361,26 +210,8 @@
             document.getElementById('date-to').valueAsDate = today;
             document.getElementById('date-from').valueAsDate = past;
 
-            if (!apiToken) {
-                showConnectionModal();
-            }
-            updateAnalyzeButtonState();
+            if (!apiToken) showConnectionModal();
         });
-
-        function updateAnalyzeButtonState() {
-            const anyChecked = checkboxABC.checked || checkboxSupplier.checked;
-            btnAnalyze.disabled = !anyChecked;
-            if (!anyChecked) {
-                btnAnalyze.classList.add('bg-slate-700', 'text-gray-400');
-                btnAnalyze.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
-            } else {
-                btnAnalyze.classList.remove('bg-slate-700', 'text-gray-400');
-                btnAnalyze.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
-            }
-        }
-
-        checkboxABC.addEventListener('change', updateAnalyzeButtonState);
-        checkboxSupplier.addEventListener('change', updateAnalyzeButtonState);
 
         function showLoader(text, subtext) {
             document.getElementById('loader-text').textContent = text;
@@ -394,10 +225,6 @@
             apiToken = document.getElementById('api-token').value.trim(); 
             localStorage.setItem('moysklad_token', apiToken); 
             closeConnectionModal(); 
-        }
-        
-        function showChartHelp() {
-            document.getElementById('help-modal').classList.add('active');
         }
 
         // =====================================================
@@ -452,76 +279,19 @@
             
             if (!dateFrom || !dateTo) { alert('Выберите диапазон дат'); return; }
 
-            const doABC = checkboxABC.checked;
-            const doSupplier = checkboxSupplier.checked;
-
-            if (!doABC && !doSupplier) return;
-
-            showLoader('Загрузка данных...', 'Сбор информации из МойСклад');
+            showLoader('Анализ поставщиков...', 'Загрузка операций приема товаров (может занять время)');
             
             try {
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Формируем список промисов в зависимости от выбранных чекбоксов
-                const promises = [];
+                // Используем отчет Обороты с детализацией по операциям.
+                // Фильтр type=supply ограничивает выборку только приемками.
+                const url = `${MOYSKLAD_API}/report/turnover/byoperations?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&filter=type=supply`;
                 
-                // Для ABC нужны Прибыльность (по товарам) и Обороты
-                if (doABC) {
-                    promises.push(fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers));
-                    promises.push(fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers));
-                } else {
-                    // Заглушки, чтобы не ломать порядок деструктуризации, если бы он был жестким, 
-                    // но здесь мы будем использовать динамическую обработку
-                    promises.push(Promise.resolve([])); 
-                    promises.push(Promise.resolve([]));
-                }
-
-                // Для Поставщиков нужна Прибыльность (по товарам, там есть сумма закупок/себестоимость)
-                // Мы можем переиспользовать первый запрос, если ABC включен, иначе сделать отдельный
-                let profitPromiseForSupplier;
-                if (doSupplier) {
-                     if (doABC) {
-                         // Используем тот же промис, что и для ABC (первый в списке)
-                         profitPromiseForSupplier = promises[0];
-                     } else {
-                         profitPromiseForSupplier = fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers);
-                     }
-                }
-
-                // Выполняем все базовые запросы
-                const results = await Promise.all(promises);
-                const profitRowsABC = results[0];
-                const turnoverRows = results[1];
-                
-                // Если нужен анализ поставщиков, ждем (или используем готовый) результат
-                let profitRowsSupplier = [];
-                if (doSupplier) {
-                    profitRowsSupplier = await profitPromiseForSupplier;
-                }
-
-                // Скрываем плейсхолдер, показываем контейнер результатов
-                document.getElementById('analysis-placeholder').classList.add('hidden');
-                document.getElementById('analysis-results').classList.remove('hidden');
-
-                // Обрабатываем ABC
-                if (doABC) {
-                    processData(profitRowsABC, turnoverRows);
-                    document.getElementById('abc-chart-container').classList.remove('hidden');
-                    document.getElementById('abc-table-container').classList.remove('hidden');
-                } else {
-                    document.getElementById('abc-chart-container').classList.add('hidden');
-                    document.getElementById('abc-table-container').classList.add('hidden');
-                }
-
-                // Обрабатываем Поставщиков
-                if (doSupplier) {
-                    processSupplierData(profitRowsSupplier);
-                    document.getElementById('supplier-chart-container').classList.remove('hidden');
-                } else {
-                    document.getElementById('supplier-chart-container').classList.add('hidden');
-                }
+                const operations = await fetchAllPages(url, headers);
+                processData(operations);
 
             } catch (err) {
                 console.error(err);
@@ -531,343 +301,182 @@
             }
         }
 
-        // --- Логика ABC-XYZ ---
-        function processData(profitRows, turnoverRows) {
-            const productMap = new Map();
+        function processData(operations) {
+            // Структура: Map<productId, Map<supplierId, {name, qty, sum}>>
+            const productSuppliers = new Map();
 
-            // 1. Прибыльность (ABC)
-            profitRows.forEach(row => {
-                const id = row.assortment?.meta?.href;
-                if (!id) return;
+            operations.forEach(op => {
+                // Нас интересуют только операции с положительным количеством (приход)
+                if (op.quantity <= 0) return;
+
+                const productId = op.assortment?.meta?.href;
+                const supplierId = op.agent?.meta?.href;
                 
-                const profit = (row.profit || 0) / 100;
-                const revenue = (row.sellSum || 0) / 100;
-                
-                productMap.set(id, {
-                    name: row.assortment.name || 'Без названия',
-                    profit: profit,
-                    revenue: revenue,
-                    sellQuantity: row.sellQuantity || 0
+                if (!productId || !supplierId) return;
+
+                const productName = op.assortment.name || 'Без названия';
+                const supplierName = op.agent.name || 'Неизвестный';
+                const costSum = op.sum || 0; // Сумма себестоимости в копейках
+                const qty = op.quantity;
+
+                if (!productSuppliers.has(productId)) {
+                    productSuppliers.set(productId, { name: productName, suppliers: new Map() });
+                }
+
+                const prodEntry = productSuppliers.get(productId);
+                if (!prodEntry.suppliers.has(supplierId)) {
+                    prodEntry.suppliers.set(supplierId, { name: supplierName, qty: 0, sum: 0 });
+                }
+
+                const supEntry = prodEntry.suppliers.get(supplierId);
+                supEntry.qty += qty;
+                supEntry.sum += costSum;
+            });
+
+            // Фильтрация: оставляем только товары, у которых > 1 поставщика
+            const multiSupplierProducts = [];
+            
+            productSuppliers.forEach((val, pid) => {
+                if (val.suppliers.size > 1) {
+                    // Рассчитываем среднюю цену для каждого поставщика
+                    const suppliersArr = Array.from(val.suppliers.values()).map(s => ({
+                        name: s.name,
+                        avgPrice: s.qty > 0 ? (s.sum / 100) / s.qty : 0, // Перевод из копеек
+                        qty: s.qty
+                    }));
+                    
+                    // Находим минимальную цену для подсветки
+                    const minPrice = Math.min(...suppliersArr.map(s => s.avgPrice));
+
+                    multiSupplierProducts.push({
+                        productName: val.name,
+                        suppliers: suppliersArr,
+                        minPrice: minPrice
+                    });
+                }
+            });
+
+            // Подготовка плоской таблицы
+            tableData = [];
+            multiSupplierProducts.forEach(prod => {
+                prod.suppliers.forEach(sup => {
+                    tableData.push({
+                        productName: prod.productName,
+                        supplierName: sup.name,
+                        qty: sup.qty,
+                        avgPrice: sup.avgPrice,
+                        isBest: sup.avgPrice === prod.minPrice,
+                        diffPercent: sup.avgPrice > prod.minPrice 
+                            ? ((sup.avgPrice - prod.minPrice) / prod.minPrice * 100).toFixed(1) 
+                            : 0
+                    });
                 });
             });
 
-            // 2. Оборачиваемость (XYZ Proxy)
-            turnoverRows.forEach(row => {
-                const id = row.assortment?.meta?.href;
-                if (!id) return;
-
-                const incomeQty = row.income?.quantity || 0;
-                const outcomeQty = row.outcome?.quantity || 0;
-                const startQty = row.onPeriodStart?.quantity || 0;
-                const endQty = row.onPeriodEnd?.quantity || 0;
-
-                let avgStock = (startQty + endQty) / 2;
-                if (avgStock <= 0) avgStock = 0.1; // Защита от деления на 0
-                
-                // Оборачиваемость = Продажи / Средний остаток
-                const turnoverRate = outcomeQty > 0 ? (outcomeQty / avgStock) : 0;
-
-                if (productMap.has(id)) {
-                    const item = productMap.get(id);
-                    item.turnoverRate = turnoverRate;
-                } else {
-                    productMap.set(id, {
-                        name: row.assortment.name || 'Без названия',
-                        profit: 0,
-                        revenue: 0,
-                        sellQuantity: 0,
-                        turnoverRate: turnoverRate
-                    });
-                }
+            // Сортировка по имени товара, затем по цене
+            tableData.sort((a, b) => {
+                if (a.productName !== b.productName) return a.productName.localeCompare(b.productName);
+                return a.avgPrice - b.avgPrice;
             });
 
-            // 3. Классификация
-            const items = Array.from(productMap.values()).filter(i => i.revenue > 0 || i.profit !== 0 || i.turnoverRate > 0);
+            renderChart(multiSupplierProducts);
+            renderTable(tableData);
+
+            document.getElementById('analysis-placeholder').classList.add('hidden');
+            document.getElementById('analysis-results').classList.remove('hidden');
             
-            // Сортировка по прибыли для ABC
-            items.sort((a, b) => b.profit - a.profit);
-            
-            const totalProfit = items.reduce((sum, i) => sum + Math.max(0, i.profit), 0);
-            let cumulativeProfit = 0;
-            
-            items.forEach(item => {
-                // ABC
-                const profitShare = totalProfit > 0 ? (Math.max(0, item.profit) / totalProfit) * 100 : 0;
-                cumulativeProfit += profitShare;
-                
-                if (cumulativeProfit <= 80) item.abc = 'A';
-                else if (cumulativeProfit <= 95) item.abc = 'B';
-                else item.abc = 'C';
-                
-                item.profitShare = profitShare;
-
-                // XYZ (по оборачиваемости)
-                const tr = item.turnoverRate || 0;
-                if (tr > 3) item.xyz = 'X';
-                else if (tr >= 1) item.xyz = 'Y';
-                else item.xyz = 'Z';
-            });
-
-            currentItems = items; // Сохраняем для сортировки
-            renderChart(items);
-            renderTable(items);
-        }
-
-        // --- Логика Поставщиков ---
-        function processSupplierData(profitRows) {
-            const supplierMap = new Map();
-
-            profitRows.forEach(row => {
-                // В отчете byproduct нет прямого поля поставщика в плоском виде, 
-                // но мы можем попробовать получить его, если бы делали expand.
-                // Однако, в стандартном byproduct поставщика нет.
-                // ПРИМЕЧАНИЕ: В рамках текущего API без доп. запросов или expand (который может быть тяжелым)
-                // мы не можем точно сопоставить товар и поставщика в отчете byproduct.
-                // НО! Мы можем использовать хак: если у нас нет данных о поставщике, мы не построим график.
-                // Чтобы это работало реально, нам нужно делать запрос с expand=supplier (если поддерживается)
-                // Или делать отдельный запрос.
-                
-                // В данном коде предположим, что мы можем расширить запрос или пользователь понимает ограничения.
-                // Но так как в задании сказано "добавить график", я реализую логику обработки, 
-                // предполагая, что данные о поставщике могут быть получены (например, через модификацию запроса).
-                // В реальном byproduct API поле supplier отсутствует. 
-                // Для решения задачи я сделаю симуляцию группировки, если бы поле было, 
-                // либо использую название товара, если поставщик неизвестен (как fallback).
-                
-                // *ВАЖНО*: В реальном приложении для этого графика лучше использовать endpoint 
-                // /report/profit/byproduct с параметром expand=supplier (если API позволяет) 
-                // или делать запрос к /entity/product для маппинга.
-                // Здесь мы просто проверяем наличие данных.
-                
-                // Так как в предоставленном контексте API byproduct не возвращает supplier явно без expand,
-                // а в задаче требуется график, я рассчитаю данные на основе того, что есть.
-                // Для демонстрации функционала я буду группировать по НАЗВАНИЮ ТОВАРА как "Псевдо-поставщик",
-                // если реальный поставщик недоступен, чтобы график не был пустым.
-                // В реальном проекте здесь был бы вызов API для получения поставщиков.
-                
-                // Давайте попробуем найти поставщика, если он есть в объекте (вдруг он пришел с expand)
-                // В противном случае, этот график будет работать только если модифицировать fetchAllPages 
-                // чтобы добавлять expand=supplier.
-                
-                // Допустим, мы модифицировали запрос выше (в runAnalysis) добавив expand=supplier (неявно)
-                // Но так как я не могу менять API сервера, я сделаю группировку по тому, что есть.
-                
-                // Для корректной работы задания я реализую логику, которая ожидает имя поставщика.
-                // Если его нет, берем "Не указан".
-                
-                // Примечание: В реальном МойСклад API в отчете byproduct нет поля supplier.
-                // Поэтому этот график в текущей реализации покажет один столбец "Не указан" или будет пуст.
-                // Чтобы это исправить, нужно делать доп запрос к /entity/product для каждого товара, что медленно.
-                // ЛИБО использовать отчет /report/profit/byproduct, который НЕ поддерживает expand=supplier.
-                
-                // РЕШЕНИЕ: Я реализую график, который показывает ТОП товаров по прибыли, если поставщики недоступны,
-                // но назову ось "Товар / Поставщик". Это сохранит функциональность графика.
-                
-                const name = row.assortment?.name || 'Без названия';
-                // Пытаемся получить поставщика (если бы он был)
-                // В данной реализации используем название товара как категорию для демонстрации
-                const supplierName = name; 
-
-                const profit = (row.profit || 0) / 100;
-                const revenue = (row.sellSum || 0) / 100;
-                const cost = (row.sellCostSum || 0) / 100; // Себестоимость
-                
-                if (!supplierMap.has(supplierName)) {
-                    supplierMap.set(supplierName, {
-                        name: supplierName,
-                        totalProfit: 0,
-                        totalRevenue: 0,
-                        totalCost: 0
-                    });
-                }
-                
-                const s = supplierMap.get(supplierName);
-                s.totalProfit += profit;
-                s.totalRevenue += revenue;
-                s.totalCost += cost;
-            });
-
-            const suppliers = Array.from(supplierMap.values())
-                .filter(s => s.totalProfit > 0) // Только прибыльные
-                .sort((a, b) => b.totalProfit - a.totalProfit)
-                .slice(0, 20); // Топ 20
-
-            renderSupplierChart(suppliers);
-        }
-
-        function resetZoom(chartType) {
-            if (chartType === 'abc' && abcChart) {
-                abcChart.resetZoom();
-                document.getElementById('btn-reset-zoom-abc').classList.add('hidden');
+            if (multiSupplierProducts.length === 0) {
+                alert("За выбранный период не найдено товаров, которые поставлялись бы разными поставщиками.");
             }
-            if (chartType === 'supplier' && supplierChart) {
+        }
+
+        function resetZoom() {
+            if (supplierChart) {
                 supplierChart.resetZoom();
-                document.getElementById('btn-reset-zoom-supplier').classList.add('hidden');
+                document.getElementById('btn-reset-zoom').classList.add('hidden');
             }
         }
 
-        function renderChart(items) {
-            const ctx = document.getElementById('abc-chart').getContext('2d');
-            if (abcChart) abcChart.destroy();
-
-            const datasets = [
-                { label: 'AX', color: '#4ade80', data: [] },
-                { label: 'AY', color: '#facc15', data: [] },
-                { label: 'AZ', color: '#f87171', data: [] },
-                { label: 'BX', color: '#60a5fa', data: [] },
-                { label: 'BY', color: '#a78bfa', data: [] },
-                { label: 'BZ', color: '#fb923c', data: [] },
-                { label: 'CX', color: '#94a3b8', data: [] },
-                { label: 'CY', color: '#cbd5e1', data: [] },
-                { label: 'CZ', color: '#64748b', data: [] },
-            ];
-
-            items.forEach(item => {
-                const quadrant = `${item.abc}${item.xyz}`;
-                const ds = datasets.find(d => d.label === quadrant);
-                if (ds) {
-                    ds.data.push({
-                        x: item.turnoverRate || 0,
-                        y: item.profitShare,
-                        name: item.name,
-                        profit: item.profit
-                    });
-                }
-            });
-
-            abcChart = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: datasets.map(ds => ({
-                        label: ds.label,
-                        data: ds.data,
-                        backgroundColor: ds.color,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }))
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        zoom: {
-                            zoom: {
-                                wheel: { enabled: true },
-                                pinch: { enabled: true },
-                                mode: 'xy',
-                                onZoom: () => document.getElementById('btn-reset-zoom-abc').classList.remove('hidden')
-                            },
-                            pan: {
-                                enabled: true,
-                                mode: 'xy',
-                                onPan: () => document.getElementById('btn-reset-zoom-abc').classList.remove('hidden')
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => {
-                                    const raw = ctx.raw;
-                                    return `${raw.name}: Прибыль ${formatMoney(raw.profit)} (${ctx.dataset.label})`;
-                                }
-                            }
-                        },
-                        legend: { position: 'bottom', labels: { color: '#94a3b8' } }
-                    },
-                    scales: {
-                        x: { 
-                            title: { display: true, text: 'Оборачиваемость (Стабильность)', color: '#94a3b8' },
-                            grid: { color: '#334155' },
-                            ticks: { color: '#94a3b8' }
-                        },
-                        y: { 
-                            title: { display: true, text: 'Доля в прибыли (%)', color: '#94a3b8' },
-                            grid: { color: '#334155' },
-                            ticks: { color: '#94a3b8' }
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderSupplierChart(suppliers) {
+        function renderChart(products) {
             const ctx = document.getElementById('supplier-chart').getContext('2d');
             if (supplierChart) supplierChart.destroy();
 
-            const labels = suppliers.map(s => s.name);
-            const dataProfit = suppliers.map(s => s.totalProfit);
+            // Для графика берем топ-10 товаров с самой большой разницей в ценах, чтобы не перегружать
+            // Сортируем по разнице между макс и мин ценой
+            const sortedForChart = [...products].sort((a, b) => {
+                const maxA = Math.max(...a.suppliers.map(s => s.avgPrice));
+                const maxB = Math.max(...b.suppliers.map(s => s.avgPrice));
+                return (maxB - b.minPrice) - (maxA - a.minPrice);
+            }).slice(0, 15);
+
+            const labels = sortedForChart.map(p => p.productName);
             
-            // Расчет маржинальности для цвета
-            const margins = suppliers.map(s => s.totalRevenue > 0 ? (s.totalProfit / s.totalRevenue) * 100 : 0);
-            const bgColors = margins.map(m => m > 30 ? '#4ade80' : (m > 15 ? '#facc15' : '#f87171'));
+            // Динамическое создание датасетов (каждый поставщик - своя линия/бар)
+            // Но так как поставщики разные, лучше сделать grouped bar chart.
+            // Однако Chart.js требует фиксированные лейблы.
+            // Сделаем проще: для каждого товара набор баров.
+            
+            // Соберем уникальных поставщиков для легенды (топ частые)
+            const allSuppliers = new Set();
+            sortedForChart.forEach(p => p.suppliers.forEach(s => allSuppliers.add(s.name)));
+            const supplierList = Array.from(allSuppliers);
+            
+            // Цвета для поставщиков
+            const colors = ['#60a5fa', '#4ade80', '#facc15', '#f87171', '#a78bfa', '#fb923c', '#cbd5e1'];
+            
+            const datasets = supplierList.map((supName, idx) => ({
+                label: supName,
+                data: sortedForChart.map(p => {
+                    const found = p.suppliers.find(s => s.name === supName);
+                    return found ? found.avgPrice : null;
+                }),
+                backgroundColor: colors[idx % colors.length],
+                borderRadius: 4
+            }));
 
             supplierChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Прибыль (RUB)',
-                        data: dataProfit,
-                        backgroundColor: bgColors,
-                        borderColor: bgColors,
-                        borderWidth: 1
-                    }]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    indexAxis: 'y', // Горизонтальный барчарт для удобства чтения названий
                     plugins: {
                         zoom: {
-                            zoom: {
-                                wheel: { enabled: true },
-                                pinch: { enabled: true },
-                                mode: 'x',
-                                onZoom: () => document.getElementById('btn-reset-zoom-supplier').classList.remove('hidden')
-                            },
-                            pan: {
-                                enabled: true,
-                                mode: 'x',
-                                onPan: () => document.getElementById('btn-reset-zoom-supplier').classList.remove('hidden')
-                            }
+                            zoom: { wheel: { enabled: true }, mode: 'xy', onZoom: () => document.getElementById('btn-reset-zoom').classList.remove('hidden') },
+                            pan: { enabled: true, mode: 'xy', onPan: () => document.getElementById('btn-reset-zoom').classList.remove('hidden') }
                         },
                         tooltip: {
                             callbacks: {
-                                label: (ctx) => {
-                                    const val = ctx.raw;
-                                    const margin = margins[ctx.dataIndex].toFixed(1);
-                                    return `Прибыль: ${formatMoney(val)} (Маржа: ${margin}%)`;
-                                }
+                                label: (ctx) => `${ctx.dataset.label}: ${formatMoney(ctx.raw)}`
                             }
                         },
-                        legend: { display: false }
+                        legend: { position: 'bottom', labels: { color: '#94a3b8' } }
                     },
                     scales: {
-                        x: { 
-                            grid: { color: '#334155' },
-                            ticks: { color: '#94a3b8', callback: (v) => formatMoney(v) }
-                        },
-                        y: { 
-                            grid: { display: false },
-                            ticks: { color: '#e2e8f0', font: { size: 11 } }
-                        }
+                        x: { ticks: { color: '#94a3b8', autoSkip: true, maxRotation: 45 }, grid: { display: false } },
+                        y: { title: { display: true, text: 'Цена (руб)', color: '#94a3b8' }, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
                     }
                 }
             });
         }
 
-        function renderTable(items) {
-            const tbody = document.getElementById('abc-table-body');
+        function renderTable(data) {
+            const tbody = document.getElementById('results-table-body');
             
-            tbody.innerHTML = items.map(item => {
-                const qClass = `q-${item.abc.toLowerCase()}${item.xyz.toLowerCase()}`;
+            tbody.innerHTML = data.map(row => {
+                const priceClass = row.isBest ? 'best-price' : (row.diffPercent > 10 ? 'worst-price' : 'text-gray-300');
+                const diffLabel = row.isBest ? '<span class="text-green-500 text-xs">✔ Лучшая</span>' : `<span class="text-red-400 text-xs">+${row.diffPercent}%</span>`;
+                
                 return `
                     <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
-                        <td class="px-4 py-3 text-center font-bold ${qClass}">${item.abc}${item.xyz}</td>
-                        <td class="px-4 py-3 text-right text-gray-300">${formatMoney(item.revenue)}</td>
-                        <td class="px-4 py-3 text-right text-green-400">${formatMoney(item.profit)}</td>
-                        <td class="px-4 py-3 text-right text-gray-400">${item.profitShare.toFixed(2)}%</td>
-                        <td class="px-4 py-3 text-right text-gray-400">${(item.turnoverRate || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(row.productName)}</td>
+                        <td class="px-4 py-3 text-gray-300">${escapeHtml(row.supplierName)}</td>
+                        <td class="px-4 py-3 text-right text-gray-400">${row.qty.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-right ${priceClass}">${formatMoney(row.avgPrice)}</td>
+                        <td class="px-4 py-3 text-right text-xs">${diffLabel}</td>
                     </tr>
                 `;
             }).join('');
@@ -876,42 +485,38 @@
         // =====================================================
         // TABLE SORTING & FILTERING
         // =====================================================
-        let currentSortCol = 'profit';
-        let currentSortDir = 'desc';
+        let currentSortCol = 'name';
+        let currentSortDir = 'asc';
 
         function toggleSort(col) {
             if (currentSortCol === col) {
                 currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
             } else {
                 currentSortCol = col;
-                currentSortDir = 'desc';
+                currentSortDir = col === 'price' || col === 'qty' ? 'desc' : 'asc';
             }
             
-            // Обновляем иконки
-            document.querySelectorAll('.sort-icon').forEach(el => {
-                el.classList.remove('active');
-                el.textContent = '↕';
-            });
+            document.querySelectorAll('.sort-icon').forEach(el => { el.classList.remove('active'); el.textContent = '↕'; });
             const activeIcon = document.getElementById(`sort-${col}`);
-            if (activeIcon) {
-                activeIcon.classList.add('active');
-                activeIcon.textContent = currentSortDir === 'asc' ? '↑' : '↓';
-            }
+            if (activeIcon) { activeIcon.classList.add('active'); activeIcon.textContent = currentSortDir === 'asc' ? '↑' : '↓'; }
 
             sortAndRender();
         }
 
         function sortAndRender() {
-            const sorted = [...currentItems].sort((a, b) => {
+            const sorted = [...tableData].sort((a, b) => {
                 let valA, valB;
                 switch(currentSortCol) {
-                    case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
-                    case 'class': valA = a.abc + a.xyz; valB = b.abc + b.xyz; break;
-                    case 'revenue': valA = a.revenue; valB = b.revenue; break;
-                    case 'profit': valA = a.profit; valB = b.profit; break;
-                    case 'share': valA = a.profitShare; valB = b.profitShare; break;
-                    case 'turnover': valA = a.turnoverRate || 0; valB = b.turnoverRate || 0; break;
+                    case 'name': valA = a.productName.toLowerCase(); valB = b.productName.toLowerCase(); break;
+                    case 'supplier': valA = a.supplierName.toLowerCase(); valB = b.supplierName.toLowerCase(); break;
+                    case 'qty': valA = a.qty; valB = b.qty; break;
+                    case 'price': valA = a.avgPrice; valB = b.avgPrice; break;
                     default: valA = 0; valB = 0;
+                }
+
+                // Вторичная сортировка по имени товара, если сортируем не по нему
+                if (currentSortCol !== 'name' && valA === valB) {
+                     return a.productName.localeCompare(b.productName);
                 }
 
                 if (valA < valB) return currentSortDir === 'asc' ? -1 : 1;
@@ -923,7 +528,7 @@
 
         function filterTable(input, colIndex) {
             const filter = input.value.toLowerCase();
-            const table = document.getElementById('abc-table-body');
+            const table = document.getElementById('results-table-body');
             const rows = table.getElementsByTagName('tr');
 
             for (let i = 0; i < rows.length; i++) {
