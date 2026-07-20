@@ -111,7 +111,13 @@
 
                     <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
                         <input type="checkbox" id="abc-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900">
-                        <span class="text-sm text-gray-300">Построить матрицу</span>
+                        <span class="text-sm text-gray-300">Матрица</span>
+                    </label>
+
+                    <!-- НОВЫЙ ЧЕКБОКС -->
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="hide-losses-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-red-500 focus:ring-red-500 focus:ring-offset-slate-900">
+                        <span class="text-sm text-gray-300">Скрыть убыточные</span>
                     </label>
                     
                     <button onclick="runAnalysis()" id="btn-analyze" disabled class="px-4 py-2 text-xs font-semibold bg-slate-700 text-gray-400 rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50">
@@ -321,13 +327,15 @@
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let apiToken = localStorage.getItem('moysklad_token') || '';
         let abcChart = null;
-        let currentItems = []; // Храним данные для перерисовки таблицы при сортировке
+        let rawItems = []; // Сырые данные после загрузки
+        let currentItems = []; // Отфильтрованные данные для отображения
 
         // UI Helpers
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
         const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
         const checkbox = document.getElementById('abc-checkbox');
+        const hideLossesCheckbox = document.getElementById('hide-losses-checkbox');
         const btnAnalyze = document.getElementById('btn-analyze');
         const btnResetZoom = document.getElementById('btn-reset-zoom');
 
@@ -353,6 +361,13 @@
             } else {
                 btnAnalyze.classList.remove('bg-slate-700', 'text-gray-400');
                 btnAnalyze.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+            }
+        });
+
+        // Слушатель изменения чекбокса "Скрыть убыточные"
+        hideLossesCheckbox.addEventListener('change', () => {
+            if (rawItems.length > 0) {
+                applyFiltersAndRender();
             }
         });
 
@@ -439,7 +454,8 @@
                     fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)
                 ]);
 
-                processData(profitRows, turnoverRows);
+                processRawData(profitRows, turnoverRows);
+                applyFiltersAndRender();
 
             } catch (err) {
                 console.error(err);
@@ -449,10 +465,11 @@
             }
         }
 
-        function processData(profitRows, turnoverRows) {
+        // Этап 1: Сбор и объединение данных (без классификации ABC)
+        function processRawData(profitRows, turnoverRows) {
             const productMap = new Map();
 
-            // 1. Прибыльность (ABC)
+            // 1. Прибыльность
             profitRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
@@ -468,7 +485,7 @@
                 });
             });
 
-            // 2. Оборачиваемость (XYZ Proxy)
+            // 2. Оборачиваемость
             turnoverRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
@@ -481,7 +498,6 @@
                 let avgStock = (startQty + endQty) / 2;
                 if (avgStock <= 0) avgStock = 0.1; // Защита от деления на 0
                 
-                // Оборачиваемость = Продажи / Средний остаток
                 const turnoverRate = outcomeQty > 0 ? (outcomeQty / avgStock) : 0;
 
                 if (productMap.has(id)) {
@@ -498,17 +514,33 @@
                 }
             });
 
-            // 3. Классификация
-            const items = Array.from(productMap.values()).filter(i => i.revenue > 0 || i.profit !== 0 || i.turnoverRate > 0);
+            rawItems = Array.from(productMap.values());
             
-            // Сортировка по прибыли для ABC
-            items.sort((a, b) => b.profit - a.profit);
+            document.getElementById('analysis-placeholder').classList.add('hidden');
+            document.getElementById('analysis-results').classList.remove('hidden');
+        }
+
+        // Этап 2: Фильтрация и пересчет ABC (вызывается при изменении чекбокса)
+        function applyFiltersAndRender() {
+            const hideLosses = hideLossesCheckbox.checked;
             
-            const totalProfit = items.reduce((sum, i) => sum + Math.max(0, i.profit), 0);
+            // 1. Фильтрация
+            let filtered = rawItems.filter(i => i.revenue > 0 || i.profit !== 0 || i.turnoverRate > 0);
+            
+            if (hideLosses) {
+                filtered = filtered.filter(i => i.profit > 0);
+            }
+
+            // 2. Пересчет ABC на основе отфильтрованного списка
+            // Сортировка по убыванию прибыли
+            filtered.sort((a, b) => b.profit - a.profit);
+            
+            // Сумма прибыли только положительных товаров (для корректного расчета долей)
+            const totalProfit = filtered.reduce((sum, i) => sum + Math.max(0, i.profit), 0);
             let cumulativeProfit = 0;
             
-            items.forEach(item => {
-                // ABC
+            filtered.forEach(item => {
+                // ABC Logic
                 const profitShare = totalProfit > 0 ? (Math.max(0, item.profit) / totalProfit) * 100 : 0;
                 cumulativeProfit += profitShare;
                 
@@ -518,19 +550,16 @@
                 
                 item.profitShare = profitShare;
 
-                // XYZ (по оборачиваемости)
+                // XYZ Logic (не зависит от фильтра прибыли, зависит от оборачиваемости)
                 const tr = item.turnoverRate || 0;
                 if (tr > 3) item.xyz = 'X';
                 else if (tr >= 1) item.xyz = 'Y';
                 else item.xyz = 'Z';
             });
 
-            currentItems = items; // Сохраняем для сортировки
-            renderChart(items);
-            renderTable(items);
-
-            document.getElementById('analysis-placeholder').classList.add('hidden');
-            document.getElementById('analysis-results').classList.remove('hidden');
+            currentItems = filtered;
+            renderChart(currentItems);
+            renderTable(currentItems);
         }
 
         function resetZoom() {
