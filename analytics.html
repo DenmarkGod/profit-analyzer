@@ -6,9 +6,6 @@
     <title>ABC-XYZ Анализ | Profit Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Плагин для зума и панорамирования -->
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
@@ -19,19 +16,28 @@
         .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        input[type="date"] { color-scheme: dark; }
-        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        .chart-container { position: relative; height: 600px; width: 100%; }
+        .chart-container { position: relative; height: 500px; width: 100%; }
         .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         
         /* Цвета квадрантов */
         .q-ax { color: #4ade80; } .q-ay { color: #facc15; } .q-az { color: #f87171; }
         .q-bx { color: #60a5fa; } .q-by { color: #a78bfa; } .q-bz { color: #fb923c; }
         .q-cx { color: #94a3b8; } .q-cy { color: #cbd5e1; } .q-cz { color: #64748b; }
+        
+        /* Стили для фильтров таблицы */
+        .table-filter-input {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: #e2e8f0;
+            font-size: 11px;
+            padding: 4px 6px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .table-filter-input:focus { border-color: #3b82f6; }
+        .table-filter-input::placeholder { color: #475569; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -42,7 +48,7 @@
             <h1 class="text-xl font-bold gradient-text">Profit Analyzer</h1>
             <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
         </div>
-        <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+        <nav class="flex-1 py-4 space-y-1 overflow-y-auto">
             <a href="index.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">📊</span> Главная
             </a>
@@ -79,20 +85,11 @@
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h2 class="text-xl md:text-2xl font-bold text-white">ABC-XYZ Анализ</h2>
-                
-                <div class="flex flex-wrap items-center gap-3">
-                    <!-- РУЧНОЙ ВЫБОР ДИАПАЗОНА -->
-                    <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
-                        <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
-                        <span class="text-gray-500">—</span>
-                        <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
-                    </div>
-
-                    <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
+                <div class="flex items-center gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
                         <input type="checkbox" id="abc-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900">
                         <span class="text-sm text-gray-300">Построить матрицу</span>
                     </label>
-                    
                     <button onclick="runAnalysis()" id="btn-analyze" disabled class="px-4 py-2 text-xs font-semibold bg-slate-700 text-gray-400 rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50">
                         🚀 Сформировать
                     </button>
@@ -100,13 +97,13 @@
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6">
             
             <!-- Плейсхолдер -->
             <div id="analysis-placeholder" class="flex flex-col items-center justify-center h-[60vh] text-center">
                 <div class="text-6xl mb-4">📉</div>
-                <h3 class="text-2xl font-bold text-white mb-2">Выберите период и запустите анализ</h3>
-                <p class="text-gray-400 max-w-md">Для корректного XYZ-анализа рекомендуется выбирать период не менее 30 дней.</p>
+                <h3 class="text-2xl font-bold text-white mb-2">Анализ еще не запущен</h3>
+                <p class="text-gray-400 max-w-md">Отметьте чекбокс выше и нажмите «Сформировать», чтобы загрузить данные из МойСклад и построить матрицу ABC-XYZ.</p>
             </div>
 
             <!-- Результаты анализа -->
@@ -114,17 +111,28 @@
                 
                 <!-- График -->
                 <div class="glass p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-white">Матрица ABC-XYZ</h3>
-                            <p class="text-xs text-gray-400 mt-1">Ось X: Оборачиваемость (стабильность) | Ось Y: Вклад в прибыль (%)</p>
-                        </div>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                        <h3 class="text-lg font-bold text-white">Матрица ABC-XYZ</h3>
                         <button onclick="resetZoom()" id="btn-reset-zoom" class="hidden px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition">
                             🔍 Сброс зума
                         </button>
                     </div>
-                    <div class="chart-container">
+                    
+                    <div class="chart-container mb-6">
                         <canvas id="abc-chart"></canvas>
+                    </div>
+
+                    <!-- Легенда графика -->
+                    <div class="grid grid-cols-3 sm:grid-cols-9 gap-2 text-xs border-t border-slate-700 pt-4">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#4ade80]"></span><span class="q-ax font-bold">AX</span> <span class="text-gray-400">Локомотивы</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#facc15]"></span><span class="q-ay font-bold">AY</span> <span class="text-gray-400">Стабильные</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#f87171]"></span><span class="q-az font-bold">AZ</span> <span class="text-gray-400">Рисковые</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#60a5fa]"></span><span class="q-bx font-bold">BX</span> <span class="text-gray-400">Средние+</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#a78bfa]"></span><span class="q-by font-bold">BY</span> <span class="text-gray-400">Середняки</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#fb923c]"></span><span class="q-bz font-bold">BZ</span> <span class="text-gray-400">Средние-</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#94a3b8]"></span><span class="q-cx font-bold">CX</span> <span class="text-gray-400">Аутсайдеры+</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#cbd5e1]"></span><span class="q-cy font-bold">CY</span> <span class="text-gray-400">Балласт</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#64748b]"></span><span class="q-cz font-bold">CZ</span> <span class="text-gray-400">Кандидаты на вывод</span></div>
                     </div>
                 </div>
 
@@ -135,16 +143,34 @@
                         <table class="w-full text-sm text-left">
                             <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
                                 <tr>
-                                    <th class="px-4 py-3">Товар</th>
-                                    <th class="px-4 py-3 text-center">Класс</th>
-                                    <th class="px-4 py-3 text-right">Выручка</th>
-                                    <th class="px-4 py-3 text-right">Прибыль</th>
-                                    <th class="px-4 py-3 text-right">Доля прибыли</th>
-                                    <th class="px-4 py-3 text-right">Оборачиваемость</th>
+                                    <th class="px-4 py-3">
+                                        Товар
+                                        <input type="text" placeholder="Поиск..." class="table-filter-input mt-2" oninput="filterTable(this, 0)">
+                                    </th>
+                                    <th class="px-4 py-3 text-center">
+                                        Класс
+                                        <input type="text" placeholder="Напр. AX" class="table-filter-input mt-2" oninput="filterTable(this, 1)">
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        Выручка
+                                        <input type="text" placeholder="₽" class="table-filter-input mt-2" oninput="filterTable(this, 2)">
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        Прибыль
+                                        <input type="text" placeholder="₽" class="table-filter-input mt-2" oninput="filterTable(this, 3)">
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        Доля прибыли
+                                        <input type="text" placeholder="%" class="table-filter-input mt-2" oninput="filterTable(this, 4)">
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        Оборачиваемость
+                                        <input type="text" placeholder="Коэф." class="table-filter-input mt-2" oninput="filterTable(this, 5)">
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="abc-table-body" class="divide-y divide-slate-700">
-                                <!-- Rows injected here -->
+                                <!-- Rows will be injected here -->
                             </tbody>
                         </table>
                     </div>
@@ -181,29 +207,24 @@
         let apiToken = localStorage.getItem('moysklad_token') || '';
         let abcChart = null;
 
-        // UI Helpers
+        // =====================================================
+        // UTILS
+        // =====================================================
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
         const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
+        function dateToLocalISO(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // =====================================================
+        // UI HANDLERS
+        // =====================================================
         const checkbox = document.getElementById('abc-checkbox');
         const btnAnalyze = document.getElementById('btn-analyze');
-        const btnResetZoom = document.getElementById('btn-reset-zoom');
-
-        // Инициализация дат (последние 90 дней по умолчанию)
-        window.addEventListener('DOMContentLoaded', () => {
-            const today = new Date();
-            const past = new Date();
-            past.setDate(today.getDate() - 90);
-            
-            document.getElementById('date-to').valueAsDate = today;
-            document.getElementById('date-from').valueAsDate = past;
-
-            if (apiToken) {
-                // Можно автозапускать, но оставим ручным по требованию чекбокса
-            } else {
-                showConnectionModal();
-            }
-        });
 
         checkbox.addEventListener('change', () => {
             btnAnalyze.disabled = !checkbox.checked;
@@ -231,7 +252,7 @@
         }
 
         // =====================================================
-        // API LAYER
+        // API
         // =====================================================
         function getAuthHeaders() {
             let auth = apiToken;
@@ -277,19 +298,20 @@
         async function runAnalysis() {
             if (!apiToken) { showConnectionModal(); return; }
             
-            const dateFrom = document.getElementById('date-from').value;
-            const dateTo = document.getElementById('date-to').value;
-            
-            if (!dateFrom || !dateTo) { alert('Выберите диапазон дат'); return; }
+            // Период по умолчанию: последние 90 дней
+            const now = new Date();
+            const to = dateToLocalISO(now);
+            const fromD = new Date(now); 
+            fromD.setDate(fromD.getDate() - 90);
+            const from = dateToLocalISO(fromD);
 
-            showLoader('Загрузка данных...', 'Сбор информации о прибыльности и оборотах');
+            showLoader('Загрузка данных...', 'Обработка прибыльности и оборотов');
             
             try {
-                const momentFrom = `${dateFrom} 00:00:00`;
-                const momentTo = `${dateTo} 23:59:59`;
+                const momentFrom = `${from} 00:00:00`;
+                const momentTo = `${to} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Параллельная загрузка
                 const [profitRows, turnoverRows] = await Promise.all([
                     fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers),
                     fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)
@@ -324,29 +346,24 @@
                 });
             });
 
-            // 2. Оборачиваемость (XYZ Proxy)
-            // Используем turnover/all. 
-            // Формула: Оборот / Средний остаток.
+            // 2. Оборачиваемость (XYZ)
             turnoverRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
 
-                const incomeQty = row.income?.quantity || 0;
                 const outcomeQty = row.outcome?.quantity || 0;
                 const startQty = row.onPeriodStart?.quantity || 0;
                 const endQty = row.onPeriodEnd?.quantity || 0;
 
                 let avgStock = (startQty + endQty) / 2;
-                if (avgStock <= 0) avgStock = 0.1; // Защита от деления на 0
+                if (avgStock <= 0) avgStock = 0.1; 
                 
-                // Оборачиваемость = Продажи / Средний остаток
                 const turnoverRate = outcomeQty > 0 ? (outcomeQty / avgStock) : 0;
 
                 if (productMap.has(id)) {
                     const item = productMap.get(id);
                     item.turnoverRate = turnoverRate;
                 } else {
-                    // Товар есть в оборотах, но нет в прибыльности (например, убыточный или продан в 0)
                     productMap.set(id, {
                         name: row.assortment.name || 'Без названия',
                         profit: 0,
@@ -358,7 +375,7 @@
             });
 
             // 3. Классификация
-            const items = Array.from(productMap.values()).filter(i => i.revenue > 0 || i.profit !== 0 || i.turnoverRate > 0);
+            const items = Array.from(productMap.values());
             
             // Сортировка по прибыли для ABC
             items.sort((a, b) => b.profit - a.profit);
@@ -378,8 +395,6 @@
                 item.profitShare = profitShare;
 
                 // XYZ (по оборачиваемости)
-                // X: Высокая (> 3), Y: Средняя (1-3), Z: Низкая (< 1)
-                // Примечание: пороги условные, зависят от длины выбранного периода
                 const tr = item.turnoverRate || 0;
                 if (tr > 3) item.xyz = 'X';
                 else if (tr >= 1) item.xyz = 'Y';
@@ -391,13 +406,6 @@
 
             document.getElementById('analysis-placeholder').classList.add('hidden');
             document.getElementById('analysis-results').classList.remove('hidden');
-        }
-
-        function resetZoom() {
-            if (abcChart) {
-                abcChart.resetZoom();
-                btnResetZoom.classList.add('hidden');
-            }
         }
 
         function renderChart(items) {
@@ -443,18 +451,19 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: { duration: 500 },
                     plugins: {
                         zoom: {
                             zoom: {
                                 wheel: { enabled: true },
                                 pinch: { enabled: true },
                                 mode: 'xy',
-                                onZoom: () => btnResetZoom.classList.remove('hidden')
+                                onZoom: () => document.getElementById('btn-reset-zoom').classList.remove('hidden')
                             },
                             pan: {
                                 enabled: true,
                                 mode: 'xy',
-                                onPan: () => btnResetZoom.classList.remove('hidden')
+                                onPan: () => document.getElementById('btn-reset-zoom').classList.remove('hidden')
                             }
                         },
                         tooltip: {
@@ -465,7 +474,7 @@
                                 }
                             }
                         },
-                        legend: { position: 'bottom', labels: { color: '#94a3b8' } }
+                        legend: { display: false } // Скрываем стандартную легенду, используем кастомную HTML
                     },
                     scales: {
                         x: { 
@@ -483,8 +492,16 @@
             });
         }
 
+        function resetZoom() {
+            if (abcChart) {
+                abcChart.resetZoom();
+                document.getElementById('btn-reset-zoom').classList.add('hidden');
+            }
+        }
+
         function renderTable(items) {
             const tbody = document.getElementById('abc-table-body');
+            
             // Сортировка: A -> B -> C, внутри по прибыли
             const sorted = [...items].sort((a, b) => {
                 if (a.abc < b.abc) return -1;
@@ -495,7 +512,7 @@
             tbody.innerHTML = sorted.map(item => {
                 const qClass = `q-${item.abc.toLowerCase()}${item.xyz.toLowerCase()}`;
                 return `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                    <tr class="border-b border-slate-700 hover:bg-slate-800/50 transition">
                         <td class="px-4 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
                         <td class="px-4 py-3 text-center font-bold ${qClass}">${item.abc}${item.xyz}</td>
                         <td class="px-4 py-3 text-right text-gray-300">${formatMoney(item.revenue)}</td>
@@ -505,6 +522,27 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        // =====================================================
+        // TABLE FILTERING
+        // =====================================================
+        function filterTable(input, colIndex) {
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('abc-table-body');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const cell = rows[i].getElementsByTagName('td')[colIndex];
+                if (cell) {
+                    const txtValue = cell.textContent || cell.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
         }
     </script>
 </body>
