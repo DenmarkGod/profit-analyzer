@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro</title>
+    <title>Profit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,7 +19,8 @@
         .trend-up { color: #4ade80; }
         .trend-down { color: #f87171; }
         .trend-neutral { color: #94a3b8; }
-        .check-item { transition: all 0.2s ease; }
+        .check-item { transition: all 0.2s ease; cursor: pointer; }
+        .check-item:hover { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); transform: translateX(4px); }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -98,7 +99,11 @@
                     </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- БЫСТРЫЕ ФИЛЬТРЫ УДАЛЕНЫ -->
+                    <div class="flex bg-slate-800 rounded-lg p-1 gap-1">
+                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Сегодня</button>
+                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition bg-blue-600 text-white">Неделя</button>
+                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Месяц</button>
+                    </div>
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
                         <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                         <span class="text-gray-500">—</span>
@@ -128,7 +133,7 @@
                         <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
                         <div id="kpi-profit-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-                    <div class="kpi-card glass p-5">
+                    <div class="kpi-card glass p-5" onclick="showChecksList()">
                         <div class="text-xs text-gray-400 uppercase">Чеки</div>
                         <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
                         <div id="kpi-checks-trend" class="text-xs mt-2 trend-neutral">—</div>
@@ -148,7 +153,7 @@
                 <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки и прибыли</h3>
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
@@ -255,16 +260,8 @@
             const now = new Date();
             const from = new Date(now);
             const to = new Date(now);
-            
-            if (period === 'today') {
-                return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
-            }
-            if (period === 'week') {
-                from.setDate(from.getDate() - 6);
-            }
-            if (period === 'month') {
-                from.setDate(from.getDate() - 29);
-            }
+            if (period === 'week') from.setDate(from.getDate() - 6);
+            if (period === 'month') from.setDate(from.getDate() - 29);
             return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
         }
 
@@ -376,17 +373,20 @@
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
+                // ИСПРАВЛЕНИЕ: Добавлен запрос на получение точного количества чеков (meta.size)
+                const [dashboardData, salesSeries, profitData, checksData, totalChecksResponse] = await Promise.all([
                     loadDashboardMetrics(headers),
                     loadSalesSeries(headers, momentFrom, momentTo),
                     loadProfitByProduct(headers, momentFrom, momentTo),
-                    loadRecentChecks(headers, momentFrom, momentTo)
+                    loadRecentChecks(headers, momentFrom, momentTo),
+                    loadTotalChecksCount(headers, momentFrom, momentTo)
                 ]);
 
                 dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
-                updateKPIs(dashboardData, salesSeries, profitData, checksData);
-                updateMainChart(salesSeries, profitData);
+                // Передаем точное количество чеков
+                updateKPIs(dashboardData, salesSeries, profitData, totalChecksResponse.meta?.size || 0);
+                updateMainChart(salesSeries);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
@@ -431,16 +431,25 @@
             return data.rows || [];
         }
 
+        // НОВАЯ ФУНКЦИЯ: Получение точного количества чеков за период
+        async function loadTotalChecksCount(headers, momentFrom, momentTo) {
+            const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
+            // Запрашиваем limit=1 только для получения meta.size
+            const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=1`;
+            const response = await proxyFetch(url, headers);
+            return await response.json();
+        }
+
         // =====================================================
         // ОБНОВЛЕНИЕ UI
         // =====================================================
-        function updateKPIs(dashboardData, salesSeries, profitData, checksData) {
+        // ИСПРАВЛЕНИЕ: Добавлен параметр totalChecksCount
+        function updateKPIs(dashboardData, salesSeries, profitData, totalChecksCount) {
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
             const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
             
-            const loadedChecksCount = checksData.length;
-            const dashboardChecks = dashboardData?.sales?.count || 0;
-            const totalChecks = (loadedChecksCount < 20) ? loadedChecksCount : dashboardChecks;
+            // ИСПРАВЛЕНИЕ: Используем точное количество чеков из meta.size
+            const totalChecks = totalChecksCount;
             
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
@@ -450,9 +459,13 @@
             document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
             document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
+            
+            ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
+                document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
+            });
         }
 
-        function updateMainChart(salesSeries, profitData) {
+        function updateMainChart(salesSeries) {
             const canvas = document.getElementById('main-chart');
             if (charts.main) charts.main.destroy();
 
@@ -468,51 +481,29 @@
 
             const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
             const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
-            
-            const totalRevenueRaw = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0), 0);
-            const totalProfitRaw = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0), 0);
-            const profitRatio = totalRevenueRaw > 0 ? (totalProfitRaw / totalRevenueRaw) : 0;
-            
-            const profitByDay = revenue.map(val => val * profitRatio);
 
             charts.main = new Chart(canvas, {
                 type: 'line',
                 data: {
                     labels,
-                    datasets: [
-                        {
-                            label: 'Выручка',
-                            data: revenue,
-                            borderColor: '#4ade80',
-                            backgroundColor: 'rgba(74,222,128,0.1)',
-                            fill: true,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        },
-                        {
-                            label: 'Прибыль',
-                            data: profitByDay,
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'transparent',
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Выручка',
+                        data: revenue,
+                        borderColor: '#4ade80',
+                        backgroundColor: 'rgba(74,222,128,0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: { duration: 500 },
-                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         tooltip: {
-                            callbacks: { 
-                                label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` 
-                            }
+                            callbacks: { label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` }
                         }
                     },
                     scales: {
@@ -532,19 +523,12 @@
                 return;
             }
             
-            container.innerHTML = rows.map(row => {
-                const profit = (row.profit || 0) / 100;
-                const cost = (row.sellCostSum || 0) / 100;
-                return `
-                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                        <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
-                        <div class="flex justify-between items-center mt-1">
-                            <div class="text-xs text-orange-400">Себест.: ${formatMoney(cost)}</div>
-                            <div class="text-sm text-blue-400">+${formatMoney(profit)}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = rows.map(row => `
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                    <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
+                    <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
+                </div>
+            `).join('');
         }
 
         function updateRecentChecks(checks) {
@@ -554,7 +538,7 @@
                 return;
             }
             container.innerHTML = checks.map(check => `
-                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
                     <div class="flex justify-between items-center">
                         <div>
                             <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
@@ -597,26 +581,61 @@
         }
 
         // =====================================================
-        // СПИСОК ЧЕКОВ (Модальное окно)
+        // ДЕТАЛИЗАЦИЯ ЧЕКОВ
         // =====================================================
+        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка позиций чека...</div>');
+            try {
+                const headers = getAuthHeaders();
+                const url = `${MOYSKLAD_API}/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
+                const response = await proxyFetch(url, headers);
+                const data = await response.json();
+                const positions = data.positions?.rows || [];
+
+                const items = positions.map(position => `
+                    <div class="bg-slate-900 rounded-lg p-4 mb-2 border border-slate-800">
+                        <div class="font-medium text-white">${escapeHtml(position.assortment?.name || 'Товар')}</div>
+                        <div class="text-sm text-gray-400 mt-1">${formatNumber(position.quantity)} шт × ${formatMoney((position.price || 0) / 100)}</div>
+                        <div class="text-green-400 font-bold mt-2">${formatMoney((position.sum || 0) / 100)}</div>
+                    </div>
+                `).join('');
+
+                openDetailsModal(`Чек: ${checkName}`, `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+                            <div class="text-sm text-gray-400">${checkMoment}</div>
+                            <div class="text-3xl font-bold text-green-400 mt-2">${formatMoney(checkSum)}</div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white mb-3">Товары в чеке</h3>
+                            ${items || '<div class="text-gray-500">Нет позиций</div>'}
+                        </div>
+                    </div>
+                `);
+            } catch (error) {
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
+            }
+        }
+
         async function showChecksList() {
-            openDetailsModal('Загрузка...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка чеков...</div>');
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка чеков...</div>');
             try {
                 const dateFrom = document.getElementById('date-from').value;
                 const dateTo = document.getElementById('date-to').value;
                 const headers = getAuthHeaders();
                 
+                // Для списка "Показать все" загружаем до 1000 чеков
                 const filter = `moment>=${encodeURIComponent(`${dateFrom} 00:00:00`)};moment<=${encodeURIComponent(`${dateTo} 23:59:59`)};applicable=true`;
                 const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=1000&order=moment,desc`;
                 const response = await proxyFetch(url, headers);
                 const data = await response.json();
                 const checks = data.rows || [];
                 
-                openDetailsModal(`Чеки за период (${checks.length})`, `
+                openDetailsModal(`Чеки за период (${data.meta?.size || checks.length})`, `
                     <div class="space-y-2 max-h-[70vh] overflow-y-auto scrollbar-thin">
                         ${checks.length === 0 ? '<div class="text-gray-500 text-center py-8">Нет чеков за выбранный период</div>' : ''}
                         ${checks.map(check => `
-                            <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                            <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
