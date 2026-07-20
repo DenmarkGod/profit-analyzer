@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DNMRK</title>
+    <title>Profit Analyzer Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -33,9 +33,13 @@
         .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
         .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
+
     <!-- БОКОВОЕ МЕНЮ -->
     <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col hidden md:flex z-20">
         <div class="p-6 border-b border-slate-800">
@@ -43,21 +47,21 @@
             <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
         </div>
         <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-            <a href="index.html" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
                 <span class="text-lg">📊</span> Главная
-            </a>
-            <a href="analytics.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            </button>
+            <button onclick="switchView('analytics')" id="nav-analytics" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">🔍</span> Аналитика
-            </a>
-            <a href="finance.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            </button>
+            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">💰</span> Финансы
-            </a>
-            <a href="stock.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            </button>
+            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">📦</span> Склад
-            </a>
-            <a href="clients.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            </button>
+            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">👥</span> Клиенты
-            </a>
+            </button>
         </nav>
         <div class="p-4 border-t border-slate-800">
             <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition">
@@ -68,18 +72,18 @@
 
     <!-- МОБИЛЬНОЕ МЕНЮ -->
     <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto">
-        <a href="index.html" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]">
+        <button onclick="switchView('dashboard')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]">
             <span class="text-lg">📊</span> Главная
-        </a>
-        <a href="analytics.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+        </button>
+        <button onclick="switchView('analytics')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
             <span class="text-lg">🔍</span> Аналитика
-        </a>
-        <a href="finance.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+        </button>
+        <button onclick="switchView('finance')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
             <span class="text-lg">💰</span> Финансы
-        </a>
-        <a href="stock.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+        </button>
+        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
             <span class="text-lg">📦</span> Склад
-        </a>
+        </button>
     </div>
 
     <!-- ОСНОВНОЙ КОНТЕНТ -->
@@ -89,7 +93,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     <div class="pulse-dot"></div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white">Главная</h2>
+                    <h2 id="page-title" class="text-xl md:text-2xl font-bold text-white">Главная</h2>
                     <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
                         Обновлено: <span id="last-update">-</span>
                     </span>
@@ -114,7 +118,9 @@
 
         <!-- Область контента -->
         <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
-            <div class="space-y-6">
+            
+            <!-- ГЛАВНАЯ СТРАНИЦА -->
+            <div id="view-dashboard" class="view-section active space-y-6">
                 <!-- KPI Карточки -->
                 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
                     <div class="kpi-card glass p-5" onclick="showKpiDetail('revenue')">
@@ -127,14 +133,11 @@
                         <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
                         <div id="kpi-profit-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-                    
-                    <!-- ИСПРАВЛЕНО: Убран onclick, карточка теперь информационная -->
-                    <div class="kpi-card glass p-5 cursor-default hover:transform-none hover:shadow-none hover:border-transparent">
+                    <div class="kpi-card glass p-5" onclick="showChecksList()">
                         <div class="text-xs text-gray-400 uppercase">Чеки</div>
                         <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
                         <div id="kpi-checks-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-
                     <div class="kpi-card glass p-5" onclick="showKpiDetail('avgCheck')">
                         <div class="text-xs text-gray-400 uppercase">Средний чек</div>
                         <div id="kpi-avg-check" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
@@ -167,7 +170,7 @@
                 <div class="glass p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold text-white">🧾 Последние чеки</h3>
-                        <!-- Кнопка "Показать все" удалена для снижения нагрузки -->
+                        <button onclick="showChecksList()" class="text-xs text-blue-400 hover:text-blue-300 transition">Показать все</button>
                     </div>
                     <div id="recent-checks-list" class="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
                         <div class="text-gray-500 text-center py-8">Загрузка...</div>
@@ -182,6 +185,32 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Заглушки для остальных разделов -->
+            <div id="view-analytics" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">🔍 Раздел «Аналитика»</h2>
+                    <p class="text-gray-400">В разработке</p>
+                </div>
+            </div>
+            <div id="view-finance" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">💰 Раздел «Финансы»</h2>
+                    <p class="text-gray-400">В разработке</p>
+                </div>
+            </div>
+            <div id="view-stock" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">📦 Раздел «Склад»</h2>
+                    <p class="text-gray-400">В разработке</p>
+                </div>
+            </div>
+            <div id="view-clients" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">👥 Раздел «Клиенты»</h2>
+                    <p class="text-gray-400">В разработке</p>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -190,9 +219,9 @@
         <div class="glass p-8 max-w-md w-full shadow-2xl">
             <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
             <p class="text-sm text-gray-400 mb-6">Введите API-токен или логин:пароль</p>
-            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none mb-4" placeholder="user@domain.com:password">
-            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">Сохранить и подключить</button>
-            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3 mt-2">Отмена</button>
+            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none" placeholder="user@domain.com:password">
+            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mt-4">Сохранить и подключить</button>
+            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3">Отмена</button>
         </div>
     </div>
 
@@ -236,6 +265,10 @@
         function formatNumber(number) {
             return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(number) || 0);
         }
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('ru-RU');
+        }
         function formatDateTime(dateStr) {
             if (!dateStr) return '-';
             return new Date(dateStr).toLocaleString('ru-RU');
@@ -253,7 +286,6 @@
             const now = new Date();
             const from = new Date(now);
             const to = new Date(now);
-            if (period === 'today') return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
             if (period === 'week') from.setDate(from.getDate() - 6);
             if (period === 'month') from.setDate(from.getDate() - 29);
             return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
@@ -262,6 +294,25 @@
         // =====================================================
         // UI
         // =====================================================
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('view-' + view);
+            if (target) target.classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'text-blue-400');
+                el.classList.add('text-gray-400');
+            });
+            const nav = document.getElementById('nav-' + view);
+            if (nav) {
+                nav.classList.add('active', 'text-blue-400');
+                nav.classList.remove('text-gray-400');
+            }
+            
+            const titles = { dashboard: 'Главная', analytics: 'Аналитика', finance: 'Финансы', stock: 'Склад', clients: 'Клиенты' };
+            document.getElementById('page-title').textContent = titles[view] || 'Главная';
+        }
+
         function setPeriod(period) {
             currentPeriod = period;
             document.querySelectorAll('.period-btn').forEach(btn => {
@@ -360,17 +411,17 @@
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Параллельная загрузка только необходимых данных
+                // Параллельная загрузка
                 const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
                     loadDashboardMetrics(headers),
                     loadSalesSeries(headers, momentFrom, momentTo),
                     loadProfitByProduct(headers, momentFrom, momentTo),
-                    loadRecentChecks(headers, momentFrom, momentTo) // Оставляем только для списка последних чеков
+                    loadRecentChecks(headers, momentFrom, momentTo)
                 ]);
 
                 dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
-                updateKPIs(dashboardData, salesSeries, profitData);
+                updateKPIs(dashboardData, salesSeries, profitData, checksData);
                 updateMainChart(salesSeries);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
@@ -415,14 +466,18 @@
         }
 
         // =====================================================
-        // ОБНОВЛЕНИЕ UI
+        // ОБНОВЛЕНИЕ UI (ИСПРАВЛЕНО)
         // =====================================================
-        function updateKPIs(dashboardData, salesSeries, profitData) {
+        function updateKPIs(dashboardData, salesSeries, profitData, checksData) {
+            // Считаем выручку из salesSeries (точные данные за выбранный период)
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
+            
+            // Считаем прибыль из profitData (точные данные за выбранный период)
             const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
             
-            // ИСПРАВЛЕНО: Берем точное количество из отчета dashboard, а не из длины массива
-            const totalChecks = dashboardData?.sales?.count || 0;
+            // ИСПРАВЛЕНО: Берем количество чеков из checksData (загружено за выбранный период)
+            // Раньше бралось из dashboardData.sales.count, что вызывало рассинхронизацию
+            const totalChecks = checksData.length;
             
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
@@ -432,6 +487,11 @@
             document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
             document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
+            
+            // Тренды пока оставляем заглушками, т.к. для них нужен запрос за прошлый период
+            ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
+                document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
+            });
         }
 
         function updateMainChart(salesSeries) {
@@ -496,9 +556,8 @@
                 container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет чеков за период</div>';
                 return;
             }
-            // Убран onclick для снижения нагрузки, клик по чеку больше не открывает детали
             container.innerHTML = checks.map(check => `
-                <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
                     <div class="flex justify-between items-center">
                         <div>
                             <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
@@ -540,6 +599,77 @@
             `).join('');
         }
 
+        // =====================================================
+        // ДЕТАЛИЗАЦИЯ ЧЕКОВ
+        // =====================================================
+        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка позиций чека...</div>');
+            try {
+                const headers = getAuthHeaders();
+                const url = `${MOYSKLAD_API}/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
+                const response = await proxyFetch(url, headers);
+                const data = await response.json();
+                const positions = data.positions?.rows || [];
+
+                const items = positions.map(position => `
+                    <div class="bg-slate-900 rounded-lg p-4 mb-2 border border-slate-800">
+                        <div class="font-medium text-white">${escapeHtml(position.assortment?.name || 'Товар')}</div>
+                        <div class="text-sm text-gray-400 mt-1">${formatNumber(position.quantity)} шт × ${formatMoney((position.price || 0) / 100)}</div>
+                        <div class="text-green-400 font-bold mt-2">${formatMoney((position.sum || 0) / 100)}</div>
+                    </div>
+                `).join('');
+
+                openDetailsModal(`Чек: ${checkName}`, `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+                            <div class="text-sm text-gray-400">${checkMoment}</div>
+                            <div class="text-3xl font-bold text-green-400 mt-2">${formatMoney(checkSum)}</div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white mb-3">Товары в чеке</h3>
+                            ${items || '<div class="text-gray-500">Нет позиций</div>'}
+                        </div>
+                    </div>
+                `);
+            } catch (error) {
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
+            }
+        }
+
+        async function showChecksList() {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка чеков...</div>');
+            try {
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                const headers = getAuthHeaders();
+                // Загружаем все чеки за период (до 1000)
+                const filter = `moment>=${encodeURIComponent(`${dateFrom} 00:00:00`)};moment<=${encodeURIComponent(`${dateTo} 23:59:59`)};applicable=true`;
+                const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=1000&order=moment,desc`;
+                const response = await proxyFetch(url, headers);
+                const data = await response.json();
+                const checks = data.rows || [];
+                
+                openDetailsModal(`Чеки (${checks.length})`, `
+                    <div class="space-y-2 max-h-[70vh] overflow-y-auto scrollbar-thin">
+                        ${checks.length === 0 ? '<div class="text-gray-500 text-center py-8">Нет чеков за выбранный период</div>' : ''}
+                        ${checks.map(check => `
+                            <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
+                                        <div class="text-xs text-gray-400">${formatDateTime(check.moment)}</div>
+                                    </div>
+                                    <div class="font-bold text-green-400">${formatMoney((check.sum || 0) / 100)}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `);
+            } catch (error) {
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
+            }
+        }
+
         function showKpiDetail(type) {
             const titles = { revenue: 'Детализация выручки', profit: 'Детализация прибыли', avgCheck: 'Средний чек', margin: 'Маржинальность' };
             const elements = {
@@ -563,6 +693,7 @@
             const dates = getPeriodDates('week');
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
+            
             if (apiToken) {
                 loadDashboard();
             } else {
