@@ -99,10 +99,10 @@
     <main class="flex-1 flex flex-col overflow-hidden">
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h2 class="text-xl md:text-2xl font-bold text-white">ABC-XYZ Анализ</h2>
+                <h2 class="text-xl md:text-2xl font-bold text-white">Аналитика</h2>
                 
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- РУЧНОЙ ВЫБОР ДИАПАЗОНА -->
+                    <!-- РУЧНОЙ ВЫБОР ДИАПАЗОНА (Для ABC-XYZ) -->
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
                         <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                         <span class="text-gray-500">—</span>
@@ -116,7 +116,7 @@
 
                     <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
                         <input type="checkbox" id="supplier-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-slate-900">
-                        <span class="text-sm text-gray-300">Анализ поставщиков</span>
+                        <span class="text-sm text-gray-300">Сравнение поставщиков</span>
                     </label>
                     
                     <button onclick="runAnalysis()" id="btn-analyze" disabled class="px-4 py-2 text-xs font-semibold bg-slate-700 text-gray-400 rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50">
@@ -131,7 +131,7 @@
             <!-- Плейсхолдер -->
             <div id="analysis-placeholder" class="flex flex-col items-center justify-center h-[60vh] text-center">
                 <div class="text-6xl mb-4">📉</div>
-                <h3 class="text-2xl font-bold text-white mb-2">Выберите период и запустите анализ</h3>
+                <h3 class="text-2xl font-bold text-white mb-2">Выберите отчет и запустите анализ</h3>
                 <p class="text-gray-400 max-w-md">Отметьте галочками нужные отчеты и нажмите «Сформировать».</p>
             </div>
 
@@ -220,14 +220,10 @@
                     </div>
                 </div>
 
-                <!-- БЛОК АНАЛИЗА ПОСТАВЩИКОВ -->
+                <!-- БЛОК СРАВНЕНИЯ ПОСТАВЩИКОВ -->
                 <div id="supplier-analysis-container" class="glass p-6 hidden">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-white">Сравнение цен поставщиков</h3>
-                            <p class="text-xs text-gray-400 mt-1">Товары с несколькими поставщиками. Анализ за всё время.</p>
-                        </div>
-                    </div>
+                    <h3 class="text-lg font-bold text-white mb-4">Сравнение цен поставщиков</h3>
+                    <p class="text-xs text-gray-400 mb-4">Анализ всех поступлений за всё время. Показаны только товары с несколькими поставщиками.</p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
                             <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
@@ -237,7 +233,7 @@
                                             Товар
                                             <span class="sort-icon" onclick="toggleSupplierSort('name')" id="sup-sort-name">↕</span>
                                         </div>
-                                        <input type="text" placeholder="Поиск..." class="table-filter-input" oninput="filterSupplierTable(this, 0)">
+                                        <input type="text" placeholder="Поиск товара..." class="table-filter-input" oninput="filterSupplierTable(this, 0)">
                                     </th>
                                     <th class="px-4 py-3">
                                         <div class="flex items-center justify-between">
@@ -379,8 +375,8 @@
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
         const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
-        const abcCheckbox = document.getElementById('abc-checkbox');
-        const supplierCheckbox = document.getElementById('supplier-checkbox');
+        const checkboxAbc = document.getElementById('abc-checkbox');
+        const checkboxSupplier = document.getElementById('supplier-checkbox');
         const btnAnalyze = document.getElementById('btn-analyze');
         const btnResetZoom = document.getElementById('btn-reset-zoom');
 
@@ -400,7 +396,7 @@
         });
 
         function updateAnalyzeButtonState() {
-            const anyChecked = abcCheckbox.checked || supplierCheckbox.checked;
+            const anyChecked = checkboxAbc.checked || checkboxSupplier.checked;
             btnAnalyze.disabled = !anyChecked;
             if (!anyChecked) {
                 btnAnalyze.classList.add('bg-slate-700', 'text-gray-400');
@@ -411,8 +407,8 @@
             }
         }
 
-        abcCheckbox.addEventListener('change', updateAnalyzeButtonState);
-        supplierCheckbox.addEventListener('change', updateAnalyzeButtonState);
+        checkboxAbc.addEventListener('change', updateAnalyzeButtonState);
+        checkboxSupplier.addEventListener('change', updateAnalyzeButtonState);
 
         function showLoader(text, subtext) {
             document.getElementById('loader-text').textContent = text;
@@ -479,10 +475,10 @@
         async function runAnalysis() {
             if (!apiToken) { showConnectionModal(); return; }
             
-            const doAbc = abcCheckbox.checked;
-            const doSuppliers = supplierCheckbox.checked;
+            const doAbc = checkboxAbc.checked;
+            const doSupplier = checkboxSupplier.checked;
 
-            if (!doAbc && !doSuppliers) return;
+            if (!doAbc && !doSupplier) return;
 
             showLoader('Загрузка данных...', 'Сбор информации из МойСклад');
             
@@ -494,7 +490,7 @@
                 const headers = getAuthHeaders();
 
                 const promises = [];
-                
+
                 // ABC Analysis Data
                 if (doAbc) {
                     promises.push(fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers));
@@ -504,10 +500,10 @@
                     promises.push(Promise.resolve(null));
                 }
 
-                // Supplier Analysis Data (Always all time)
-                if (doSuppliers) {
-                    // Expand positions to get product details and prices
-                    // Note: supply entity contains agent (supplier) info directly
+                // Supplier Analysis Data (All time, no date filter)
+                if (doSupplier) {
+                    // Загружаем все приемки за всё время с expand=positions.assortment
+                    // Важно: это может быть тяжелый запрос, если приемок очень много
                     promises.push(fetchAllPages(`${MOYSKLAD_API}/entity/supply?expand=positions.assortment`, headers));
                 } else {
                     promises.push(Promise.resolve(null));
@@ -516,7 +512,7 @@
                 const [profitRows, turnoverRows, supplies] = await Promise.all(promises);
 
                 if (doAbc) processData(profitRows, turnoverRows);
-                if (doSuppliers) processSupplierData(supplies);
+                if (doSupplier) processSupplierData(supplies);
 
             } catch (err) {
                 console.error(err);
@@ -715,22 +711,20 @@
 
         // --- Supplier Logic ---
         function processSupplierData(supplies) {
-            // Structure: Map<productId, Map<supplierName, {price, date}>>
+            // Structure: Map<productId, Map<supplierId, {name, price, date}>>
             const productSuppliers = new Map();
 
             supplies.forEach(supply => {
                 const supplierName = supply.agent?.name || 'Неизвестный поставщик';
                 const supplyDate = new Date(supply.moment);
-                
-                // Expand might not be fully populated if limit reached or error, but assuming valid expand
                 const positions = supply.positions?.rows || [];
-                
+
                 positions.forEach(pos => {
                     const productId = pos.assortment?.meta?.href;
                     if (!productId) return;
 
                     const productName = pos.assortment?.name || 'Без названия';
-                    const price = (pos.price || 0) / 100; // Price in supply is usually purchase price
+                    const price = (pos.price || 0) / 100;
 
                     if (!productSuppliers.has(productId)) {
                         productSuppliers.set(productId, {
@@ -742,7 +736,7 @@
                     const prodData = productSuppliers.get(productId);
                     const existing = prodData.suppliers.get(supplierName);
 
-                    // Keep the latest price for this supplier
+                    // Keep latest price for this supplier
                     if (!existing || new Date(existing.date) < supplyDate) {
                         prodData.suppliers.set(supplierName, {
                             price: price,
@@ -756,10 +750,9 @@
             supplierItems = [];
             productSuppliers.forEach((data, id) => {
                 if (data.suppliers.size > 1) {
-                    // Convert map to array and sort by price to find best
                     const supList = Array.from(data.suppliers.entries())
                         .map(([name, info]) => ({ name, ...info }))
-                        .sort((a, b) => a.price - b.price); // Ascending price
+                        .sort((a, b) => a.price - b.price); // Sort by price ascending
 
                     const best = supList[0];
                     const alternatives = supList.slice(1);
@@ -778,14 +771,17 @@
             supplierItems.sort((a, b) => a.name.localeCompare(b.name));
 
             renderSupplierTable();
+            
             document.getElementById('analysis-placeholder').classList.add('hidden');
             document.getElementById('analysis-results').classList.remove('hidden');
             document.getElementById('supplier-analysis-container').classList.remove('hidden');
         }
 
-        function renderSupplierTable() {
+        function renderSupplierTable(items) {
             const tbody = document.getElementById('supplier-table-body');
-            tbody.innerHTML = supplierItems.map(item => {
+            const list = items || supplierItems;
+            
+            tbody.innerHTML = list.map(item => {
                 const altText = item.alternatives.map(a => 
                     `<span class="block text-xs text-gray-400">${escapeHtml(a.name)}: ${formatMoney(a.price)}</span>`
                 ).join('');
@@ -801,9 +797,9 @@
             }).join('');
         }
 
-        // --- Sorting & Filtering ---
-        
-        // ABC Table Sorting
+        // =====================================================
+        // TABLE SORTING & FILTERING (ABC)
+        // =====================================================
         let currentSortCol = 'profit';
         let currentSortDir = 'desc';
 
@@ -815,7 +811,7 @@
                 currentSortDir = 'desc';
             }
             
-            document.querySelectorAll('.sort-icon').forEach(el => {
+            document.querySelectorAll('#abc-table-container .sort-icon').forEach(el => {
                 el.classList.remove('active');
                 el.textContent = '↕';
             });
@@ -866,7 +862,9 @@
             }
         }
 
-        // Supplier Table Sorting
+        // =====================================================
+        // SUPPLIER TABLE SORTING & FILTERING
+        // =====================================================
         let currentSupSortCol = 'name';
         let currentSupSortDir = 'asc';
 
@@ -905,28 +903,7 @@
                 if (valA > valB) return currentSupSortDir === 'asc' ? 1 : -1;
                 return 0;
             });
-            renderSupplierTable(sorted); // Pass sorted array explicitly or reassign global
-        }
-        
-        // Overwrite renderSupplierTable to accept optional sorted array
-        const _origRenderSupplier = renderSupplierTable;
-        renderSupplierTable = function(itemsToRender) {
-            const list = itemsToRender || supplierItems;
-            const tbody = document.getElementById('supplier-table-body');
-            tbody.innerHTML = list.map(item => {
-                const altText = item.alternatives.map(a => 
-                    `<span class="block text-xs text-gray-400">${escapeHtml(a.name)}: ${formatMoney(a.price)}</span>`
-                ).join('');
-
-                return `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
-                        <td class="px-4 py-3 text-green-400 font-medium">${escapeHtml(item.bestSupplier)}</td>
-                        <td class="px-4 py-3 text-right text-green-400 font-bold">${formatMoney(item.bestPrice)}</td>
-                        <td class="px-4 py-3 text-right text-xs">${altText || '<span class="text-gray-600">-</span>'}</td>
-                    </tr>
-                `;
-            }).join('');
+            renderSupplierTable(sorted);
         }
 
         function filterSupplierTable(input, colIndex) {
