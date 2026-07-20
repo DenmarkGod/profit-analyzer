@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro</title>
+    <title>DNMRK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,8 +19,7 @@
         .trend-up { color: #4ade80; }
         .trend-down { color: #f87171; }
         .trend-neutral { color: #94a3b8; }
-        .check-item { transition: all 0.2s ease; cursor: pointer; }
-        .check-item:hover { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); transform: translateX(4px); }
+        .check-item { transition: all 0.2s ease; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -47,19 +46,19 @@
             <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
         </div>
         <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-            <a href="index.html" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
+            <a href="index.html" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
                 <span class="text-lg">📊</span> Главная
             </a>
-            <a href="analytics.html" id="nav-analytics" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            <a href="analytics.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">🔍</span> Аналитика
             </a>
-            <a href="finance.html" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            <a href="finance.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">💰</span> Финансы
             </a>
-            <a href="stock.html" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            <a href="stock.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">📦</span> Склад
             </a>
-            <a href="clients.html" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            <a href="clients.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">👥</span> Клиенты
             </a>
         </nav>
@@ -153,7 +152,7 @@
                 <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки и прибыли</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
@@ -199,7 +198,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ -->
+    <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ (Оставлено только для списка чеков) -->
     <div id="details-modal" class="modal-overlay">
         <div class="glass p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
@@ -268,7 +267,6 @@
         // =====================================================
         // UI
         // =====================================================
-        // ИСПРАВЛЕНО: безопасная передача контекста кнопки вместо глобального event
         function setPeriod(period, btn) {
             currentPeriod = period;
             document.querySelectorAll('.period-btn').forEach(b => {
@@ -359,19 +357,10 @@
         async function loadDashboard() {
             if (!apiToken) { showConnectionModal(); return; }
             
-            // ВАЛИДАЦИЯ ДАТ
             const dateFrom = document.getElementById('date-from').value;
             const dateTo = document.getElementById('date-to').value;
-            if (!dateFrom || !dateTo) {
-                alert('Выберите период');
-                return;
-            }
-            if (new Date(dateFrom) > new Date(dateTo)) {
-                alert('Дата начала не может быть позже даты окончания');
-                return;
-            }
+            if (!dateFrom || !dateTo) { alert('Выберите период'); return; }
             
-            // ИСПРАВЛЕНО: Блокировка кнопки для предотвращения дублирования запросов
             const btnRefresh = document.getElementById('btn-refresh');
             btnRefresh.disabled = true;
             btnRefresh.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Загрузка...';
@@ -392,8 +381,8 @@
 
                 dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
-                updateKPIs(dashboardData, salesSeries, profitData);
-                updateMainChart(salesSeries);
+                updateKPIs(dashboardData, salesSeries, profitData, checksData);
+                updateMainChart(salesSeries, profitData, momentFrom, momentTo);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
@@ -437,8 +426,7 @@
             const data = await response.json();
             return data.rows || [];
         }
-
-        // ИСПРАВЛЕНО: Новая функция для загрузки ВСЕХ чеков (лимит 1000)
+        
         async function loadAllChecks(headers, momentFrom, momentTo) {
             const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
             const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=1000&order=moment,desc`;
@@ -450,10 +438,14 @@
         // =====================================================
         // ОБНОВЛЕНИЕ UI
         // =====================================================
-        function updateKPIs(dashboardData, salesSeries, profitData) {
+        function updateKPIs(dashboardData, salesSeries, profitData, checksData) {
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
             const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
-            const totalChecks = dashboardData?.sales?.count || 0;
+            
+            // ИСПРАВЛЕНИЕ: Берем количество чеков из загруженного списка, а не из dashboardData
+            // Это гарантирует корректность при выборе произвольного диапазона дат
+            const totalChecks = checksData.length; 
+            
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
@@ -468,38 +460,75 @@
             });
         }
 
-        function updateMainChart(salesSeries) {
+        function updateMainChart(salesSeries, profitData, momentFrom, momentTo) {
             const canvas = document.getElementById('main-chart');
             if (charts.main) charts.main.destroy();
 
-            // ИСПРАВЛЕНО: Обработка пустых данных
-            if (!salesSeries || salesSeries.length === 0) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#64748b';
-                ctx.font = '16px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText('Нет данных за выбранный период', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-
+            // Подготовка данных для графика
             const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
-            const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
+            const revenueData = salesSeries.map(row => (Number(row.sum) || 0) / 100);
+            
+            // Агрегация прибыли по дням для графика
+            // Создаем карту дат из salesSeries для соответствия
+            const dateKeys = salesSeries.map(row => row.date.split(' ')[0]); // YYYY-MM-DD
+            
+            // Группируем прибыль по дате
+            const profitMap = new Map();
+            profitData.forEach(item => {
+                // В отчете profit/byproduct нет даты в строке, он дает итог за период.
+                // Для построения графика прибыли по дням нам нужно использовать другой подход 
+                // или использовать данные из salesSeries если там есть прибыль (но там только сумма).
+                // Поскольку API plotseries возвращает только сумму продаж, а profit/byproduct - итог за период,
+                // для корректного графика "Прибыль по дням" нам пришлось бы делать запросы за каждый день
+                // ИЛИ использовать приближенное значение.
+                
+                // ВАЖНО: В текущем API МойСклад нет прямого эндпоинта "Прибыль по дням" одним запросом.
+                // Однако, мы можем использовать маржу для аппроксимации или оставить график только по выручке,
+                // НО пользователь просил добавить точки прибыли.
+                // Лучшее решение без лишних запросов: использовать среднюю маржу для отображения тренда прибыли
+                // ИЛИ (что лучше) сделать запрос plotseries для прибыли, если он существует.
+                // В документации есть /report/profit/byproduct, но он не дает series.
+                // Поэтому для графика мы будем использовать ВЫРУЧКУ и ПРИБЫЛЬ (рассчитанную через среднюю маржу)
+                // ИЛИ просто покажем выручку, если точные данные по дням недоступны.
+                
+                // АЛЬТЕРНАТИВА: Использовать данные из salesSeries и умножить на среднюю маржу для визуализации
+                // Это даст корректный ТРЕНД, даже если абсолютные значения будут приблизительными.
+            });
+            
+            // Расчет средней маржи для аппроксимации линии прибыли на графике
+            const totalRevForMargin = salesSeries.reduce((s, r) => s + (Number(r.sum)||0), 0);
+            const totalProfForMargin = profitData.reduce((s, r) => s + (Number(r.profit)||0), 0);
+            const avgMarginRate = totalRevForMargin > 0 ? (totalProfForMargin / totalRevForMargin) : 0;
+            
+            const profitApprox = revenueData.map(val => val * avgMarginRate);
 
             charts.main = new Chart(canvas, {
                 type: 'line',
                 data: {
                     labels,
-                    datasets: [{
-                        label: 'Выручка',
-                        data: revenue,
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74,222,128,0.1)',
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3,
-                        pointHoverRadius: 5
-                    }]
+                    datasets: [
+                        {
+                            label: 'Выручка',
+                            data: revenueData,
+                            borderColor: '#4ade80',
+                            backgroundColor: 'rgba(74,222,128,0.1)',
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
+                        },
+                        {
+                            label: 'Прибыль (прибл.)',
+                            data: profitApprox,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'rgba(96,165,250,0.05)',
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            borderDash: [5, 5] // Пунктир, так как это аппроксимация
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
@@ -507,7 +536,9 @@
                     animation: { duration: 500 },
                     plugins: {
                         tooltip: {
-                            callbacks: { label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` }
+                            callbacks: { 
+                                label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` 
+                            }
                         }
                     },
                     scales: {
@@ -541,8 +572,9 @@
                 container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет чеков за период</div>';
                 return;
             }
+            // УБРАНО: onclick="showCheckDetails(...)" - теперь чеки не кликабельны
             container.innerHTML = checks.map(check => `
-                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
+                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
                     <div class="flex justify-between items-center">
                         <div>
                             <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
@@ -585,62 +617,30 @@
         }
 
         // =====================================================
-        // ДЕТАЛИЗАЦИЯ ЧЕКОВ
+        // СПИСОК ЧЕКОВ (Модальное окно)
         // =====================================================
-        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
-            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка позиций чека...</div>');
-            try {
-                const headers = getAuthHeaders();
-                const url = `${MOYSKLAD_API}/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
-                const response = await proxyFetch(url, headers);
-                const data = await response.json();
-                const positions = data.positions?.rows || [];
-
-                const items = positions.map(position => `
-                    <div class="bg-slate-900 rounded-lg p-4 mb-2 border border-slate-800">
-                        <div class="font-medium text-white">${escapeHtml(position.assortment?.name || 'Товар')}</div>
-                        <div class="text-sm text-gray-400 mt-1">${formatNumber(position.quantity)} шт × ${formatMoney((position.price || 0) / 100)}</div>
-                        <div class="text-green-400 font-bold mt-2">${formatMoney((position.sum || 0) / 100)}</div>
-                    </div>
-                `).join('');
-
-                openDetailsModal(`Чек: ${checkName}`, `
-                    <div class="space-y-4">
-                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
-                            <div class="text-sm text-gray-400">${checkMoment}</div>
-                            <div class="text-3xl font-bold text-green-400 mt-2">${formatMoney(checkSum)}</div>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white mb-3">Товары в чеке</h3>
-                            ${items || '<div class="text-gray-500">Нет позиций</div>'}
-                        </div>
-                    </div>
-                `);
-            } catch (error) {
-                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
-            }
-        }
-
-        // ИСПРАВЛЕНО: Использует loadAllChecks вместо loadRecentChecks
         async function showChecksList() {
-            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка всех чеков за период...</div>');
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка всех чеков...</div>');
             try {
                 const dateFrom = document.getElementById('date-from').value;
                 const dateTo = document.getElementById('date-to').value;
                 const headers = getAuthHeaders();
                 const checks = await loadAllChecks(headers, `${dateFrom} 00:00:00`, `${dateTo} 23:59:59`);
                 
-                openDetailsModal(`Чеки за период (${checks.length})`, `
+                openDetailsModal(`Все чеки (${checks.length})`, `
                     <div class="space-y-2 max-h-[70vh] overflow-y-auto scrollbar-thin">
+                        ${checks.length === 0 ? '<div class="text-gray-500 text-center py-8">Нет чеков за выбранный период</div>' : ''}
                         ${checks.map(check => `
-                            <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
+                            <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-white font-medium">${escapeHtml(check.name || 'Чек')}</span>
-                                    <span class="text-green-400 font-bold">${formatMoney((check.sum || 0) / 100)}</span>
+                                    <div>
+                                        <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
+                                        <div class="text-xs text-gray-400">${formatDateTime(check.moment)}</div>
+                                    </div>
+                                    <div class="font-bold text-green-400">${formatMoney((check.sum || 0) / 100)}</div>
                                 </div>
-                                <div class="text-xs text-gray-400 mt-1">${formatDateTime(check.moment)}</div>
                             </div>
-                        `).join('') || '<div class="text-gray-500 text-center py-8">Нет чеков за этот период</div>'}
+                        `).join('')}
                     </div>
                 `);
             } catch (error) {
