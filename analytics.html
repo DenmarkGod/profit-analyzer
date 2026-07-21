@@ -99,7 +99,7 @@
     <main class="flex-1 flex flex-col overflow-hidden">
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h2 class="text-xl md:text-2xl font-bold text-white">ABC-XYZ Анализ</h2>
+                <h2 class="text-xl md:text-2xl font-bold text-white">Аналитика</h2>
                 
                 <div class="flex flex-wrap items-center gap-3">
                     <!-- РУЧНОЙ ВЫБОР ДИАПАЗОНА -->
@@ -111,7 +111,12 @@
 
                     <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
                         <input type="checkbox" id="abc-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900">
-                        <span class="text-sm text-gray-300">Построить матрицу</span>
+                        <span class="text-sm text-gray-300">Матрица ABC-XYZ</span>
+                    </label>
+
+                    <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
+                        <input type="checkbox" id="supplier-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-slate-900">
+                        <span class="text-sm text-gray-300">Сравнение поставщиков</span>
                     </label>
                     
                     <button onclick="runAnalysis()" id="btn-analyze" disabled class="px-4 py-2 text-xs font-semibold bg-slate-700 text-gray-400 rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50">
@@ -126,15 +131,15 @@
             <!-- Плейсхолдер -->
             <div id="analysis-placeholder" class="flex flex-col items-center justify-center h-[60vh] text-center">
                 <div class="text-6xl mb-4">📉</div>
-                <h3 class="text-2xl font-bold text-white mb-2">Выберите период и запустите анализ</h3>
-                <p class="text-gray-400 max-w-md">Для корректного XYZ-анализа рекомендуется выбирать период не менее 30 дней.</p>
+                <h3 class="text-2xl font-bold text-white mb-2">Выберите отчет и запустите анализ</h3>
+                <p class="text-gray-400 max-w-md">Отметьте галочками нужные отчеты и нажмите «Сформировать».</p>
             </div>
 
             <!-- Результаты анализа -->
             <div id="analysis-results" class="hidden space-y-6">
                 
-                <!-- График -->
-                <div class="glass p-6">
+                <!-- График ABC-XYZ -->
+                <div id="abc-chart-container" class="glass p-6 hidden">
                     <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center gap-3">
                             <div>
@@ -157,9 +162,9 @@
                     </div>
                 </div>
 
-                <!-- Таблица с фильтрами и сортировкой -->
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold text-white mb-4">Детальная таблица</h3>
+                <!-- Таблица ABC-XYZ -->
+                <div id="abc-table-container" class="glass p-6 hidden">
+                    <h3 class="text-lg font-bold text-white mb-4">Детальная таблица ABC-XYZ</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
                             <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
@@ -214,6 +219,54 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- БЛОК СРАВНЕНИЯ ПОСТАВЩИКОВ -->
+                <div id="supplier-analysis-container" class="glass p-6 hidden">
+                    <h3 class="text-lg font-bold text-white mb-4">Сравнение цен поставщиков</h3>
+                    <p class="text-xs text-gray-400 mb-4">Анализ всех поступлений за всё время. Показаны только товары с несколькими поставщиками.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
+                                <tr>
+                                    <th class="px-4 py-3">
+                                        <div class="flex items-center justify-between">
+                                            Товар
+                                            <span class="sort-icon" onclick="toggleSupplierSort('name')" id="sup-sort-name">↕</span>
+                                        </div>
+                                        <input type="text" placeholder="Поиск товара..." class="table-filter-input" oninput="filterSupplierTable(this, 0)">
+                                    </th>
+                                    <th class="px-4 py-3">
+                                        <div class="flex items-center justify-between">
+                                            Лучший поставщик
+                                            <span class="sort-icon" onclick="toggleSupplierSort('bestSupplier')" id="sup-sort-best">↕</span>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            Лучшая цена
+                                            <span class="sort-icon" onclick="toggleSupplierSort('bestPrice')" id="sup-sort-price">↕</span>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3">
+                                        <div class="flex items-center justify-between">
+                                            Последний поставщик
+                                            <span class="sort-icon" onclick="toggleSupplierSort('lastSupplier')" id="sup-sort-last">↕</span>
+                                        </div>
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            Альтернативы
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="supplier-table-body" class="divide-y divide-slate-700">
+                                <!-- Supplier rows injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -321,13 +374,15 @@
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let apiToken = localStorage.getItem('moysklad_token') || '';
         let abcChart = null;
-        let currentItems = []; // Храним данные для перерисовки таблицы при сортировке
+        let currentItems = []; 
+        let supplierItems = [];
 
         // UI Helpers
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
         const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
-        const checkbox = document.getElementById('abc-checkbox');
+        const checkboxAbc = document.getElementById('abc-checkbox');
+        const checkboxSupplier = document.getElementById('supplier-checkbox');
         const btnAnalyze = document.getElementById('btn-analyze');
         const btnResetZoom = document.getElementById('btn-reset-zoom');
 
@@ -343,18 +398,23 @@
             if (!apiToken) {
                 showConnectionModal();
             }
+            updateAnalyzeButtonState();
         });
 
-        checkbox.addEventListener('change', () => {
-            btnAnalyze.disabled = !checkbox.checked;
-            if (!checkbox.checked) {
+        function updateAnalyzeButtonState() {
+            const anyChecked = checkboxAbc.checked || checkboxSupplier.checked;
+            btnAnalyze.disabled = !anyChecked;
+            if (!anyChecked) {
                 btnAnalyze.classList.add('bg-slate-700', 'text-gray-400');
                 btnAnalyze.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
             } else {
                 btnAnalyze.classList.remove('bg-slate-700', 'text-gray-400');
                 btnAnalyze.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
             }
-        });
+        }
+
+        checkboxAbc.addEventListener('change', updateAnalyzeButtonState);
+        checkboxSupplier.addEventListener('change', updateAnalyzeButtonState);
 
         function showLoader(text, subtext) {
             document.getElementById('loader-text').textContent = text;
@@ -421,25 +481,43 @@
         async function runAnalysis() {
             if (!apiToken) { showConnectionModal(); return; }
             
-            const dateFrom = document.getElementById('date-from').value;
-            const dateTo = document.getElementById('date-to').value;
-            
-            if (!dateFrom || !dateTo) { alert('Выберите диапазон дат'); return; }
+            const doAbc = checkboxAbc.checked;
+            const doSupplier = checkboxSupplier.checked;
 
-            showLoader('Загрузка данных...', 'Сбор информации о прибыльности и оборотах');
+            if (!doAbc && !doSupplier) return;
+
+            showLoader('Загрузка данных...', 'Сбор информации из МойСклад');
             
             try {
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Параллельная загрузка
-                const [profitRows, turnoverRows] = await Promise.all([
-                    fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers),
-                    fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)
-                ]);
+                const promises = [];
 
-                processData(profitRows, turnoverRows);
+                // ABC Analysis Data
+                if (doAbc) {
+                    promises.push(fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers));
+                    promises.push(fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers));
+                } else {
+                    promises.push(Promise.resolve(null));
+                    promises.push(Promise.resolve(null));
+                }
+
+                // Supplier Analysis Data (All time, no date filter)
+                if (doSupplier) {
+                    // Загружаем все приемки за всё время с expand=positions.assortment
+                    promises.push(fetchAllPages(`${MOYSKLAD_API}/entity/supply?expand=positions.assortment`, headers));
+                } else {
+                    promises.push(Promise.resolve(null));
+                }
+
+                const [profitRows, turnoverRows, supplies] = await Promise.all(promises);
+
+                if (doAbc) processData(profitRows, turnoverRows);
+                if (doSupplier) processSupplierData(supplies);
 
             } catch (err) {
                 console.error(err);
@@ -449,10 +527,10 @@
             }
         }
 
+        // --- ABC Logic ---
         function processData(profitRows, turnoverRows) {
             const productMap = new Map();
 
-            // 1. Прибыльность (ABC)
             profitRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
@@ -468,7 +546,6 @@
                 });
             });
 
-            // 2. Оборачиваемость (XYZ Proxy)
             turnoverRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
@@ -479,9 +556,8 @@
                 const endQty = row.onPeriodEnd?.quantity || 0;
 
                 let avgStock = (startQty + endQty) / 2;
-                if (avgStock <= 0) avgStock = 0.1; // Защита от деления на 0
+                if (avgStock <= 0) avgStock = 0.1; 
                 
-                // Оборачиваемость = Продажи / Средний остаток
                 const turnoverRate = outcomeQty > 0 ? (outcomeQty / avgStock) : 0;
 
                 if (productMap.has(id)) {
@@ -498,17 +574,13 @@
                 }
             });
 
-            // 3. Классификация
             const items = Array.from(productMap.values()).filter(i => i.revenue > 0 || i.profit !== 0 || i.turnoverRate > 0);
-            
-            // Сортировка по прибыли для ABC
             items.sort((a, b) => b.profit - a.profit);
             
             const totalProfit = items.reduce((sum, i) => sum + Math.max(0, i.profit), 0);
             let cumulativeProfit = 0;
             
             items.forEach(item => {
-                // ABC
                 const profitShare = totalProfit > 0 ? (Math.max(0, item.profit) / totalProfit) * 100 : 0;
                 cumulativeProfit += profitShare;
                 
@@ -518,19 +590,20 @@
                 
                 item.profitShare = profitShare;
 
-                // XYZ (по оборачиваемости)
                 const tr = item.turnoverRate || 0;
                 if (tr > 3) item.xyz = 'X';
                 else if (tr >= 1) item.xyz = 'Y';
                 else item.xyz = 'Z';
             });
 
-            currentItems = items; // Сохраняем для сортировки
+            currentItems = items;
             renderChart(items);
             renderTable(items);
 
             document.getElementById('analysis-placeholder').classList.add('hidden');
             document.getElementById('analysis-results').classList.remove('hidden');
+            document.getElementById('abc-chart-container').classList.remove('hidden');
+            document.getElementById('abc-table-container').classList.remove('hidden');
         }
 
         function resetZoom() {
@@ -641,8 +714,106 @@
             }).join('');
         }
 
+        // --- Supplier Logic ---
+        function processSupplierData(supplies) {
+            // Structure: Map<productId, Map<supplierName, {price, date}>>
+            const productSuppliers = new Map();
+
+            supplies.forEach(supply => {
+                const supplierName = supply.agent?.name || 'Неизвестный поставщик';
+                const supplyDate = new Date(supply.moment);
+                const positions = supply.positions?.rows || [];
+
+                positions.forEach(pos => {
+                    const productId = pos.assortment?.meta?.href;
+                    if (!productId) return;
+
+                    const productName = pos.assortment?.name || 'Без названия';
+                    const price = (pos.price || 0) / 100;
+
+                    if (!productSuppliers.has(productId)) {
+                        productSuppliers.set(productId, {
+                            name: productName,
+                            suppliers: new Map()
+                        });
+                    }
+
+                    const prodData = productSuppliers.get(productId);
+                    const existing = prodData.suppliers.get(supplierName);
+
+                    // Keep latest price for this supplier based on supply date
+                    if (!existing || existing.date < supplyDate) {
+                        prodData.suppliers.set(supplierName, {
+                            price: price,
+                            date: supplyDate
+                        });
+                    }
+                });
+            });
+
+            // Filter products with > 1 supplier
+            supplierItems = [];
+            productSuppliers.forEach((data, id) => {
+                if (data.suppliers.size > 1) {
+                    const supList = Array.from(data.suppliers.entries())
+                        .map(([name, info]) => ({ name, ...info }));
+                    
+                    // Find best price
+                    const sortedByPrice = [...supList].sort((a, b) => a.price - b.price);
+                    const best = sortedByPrice[0];
+                    
+                    // Find last supplier
+                    const sortedByDate = [...supList].sort((a, b) => b.date - a.date);
+                    const last = sortedByDate[0];
+
+                    // Alternatives are everyone except the best one
+                    const alternatives = sortedByPrice.slice(1);
+
+                    supplierItems.push({
+                        id: id,
+                        name: data.name,
+                        bestSupplier: best.name,
+                        bestPrice: best.price,
+                        lastSupplier: last.name,
+                        lastDate: last.date,
+                        alternatives: alternatives
+                    });
+                }
+            });
+
+            // Sort by name initially
+            supplierItems.sort((a, b) => a.name.localeCompare(b.name));
+
+            renderSupplierTable();
+            
+            document.getElementById('analysis-placeholder').classList.add('hidden');
+            document.getElementById('analysis-results').classList.remove('hidden');
+            document.getElementById('supplier-analysis-container').classList.remove('hidden');
+        }
+
+        function renderSupplierTable(items) {
+            const tbody = document.getElementById('supplier-table-body');
+            const list = items || supplierItems;
+            
+            tbody.innerHTML = list.map(item => {
+                const altText = item.alternatives.map(a => 
+                    `<span class="block text-xs text-gray-400">${escapeHtml(a.name)}: ${formatMoney(a.price)}</span>`
+                ).join('');
+
+                return `
+                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
+                        <td class="px-4 py-3 text-green-400 font-medium">${escapeHtml(item.bestSupplier)}</td>
+                        <td class="px-4 py-3 text-right text-green-400 font-bold">${formatMoney(item.bestPrice)}</td>
+                        <td class="px-4 py-3 text-blue-300">${escapeHtml(item.lastSupplier)}</td>
+                        <td class="px-4 py-3 text-right text-xs">${altText || '<span class="text-gray-600">-</span>'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         // =====================================================
-        // TABLE SORTING & FILTERING
+        // TABLE SORTING & FILTERING (ABC)
         // =====================================================
         let currentSortCol = 'profit';
         let currentSortDir = 'desc';
@@ -655,8 +826,7 @@
                 currentSortDir = 'desc';
             }
             
-            // Обновляем иконки
-            document.querySelectorAll('.sort-icon').forEach(el => {
+            document.querySelectorAll('#abc-table-container .sort-icon').forEach(el => {
                 el.classList.remove('active');
                 el.textContent = '↕';
             });
@@ -706,7 +876,69 @@
                 }
             }
         }
+
+        // =====================================================
+        // SUPPLIER TABLE SORTING & FILTERING
+        // =====================================================
+        let currentSupSortCol = 'name';
+        let currentSupSortDir = 'asc';
+
+        function toggleSupplierSort(col) {
+            if (currentSupSortCol === col) {
+                currentSupSortDir = currentSupSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSupSortCol = col;
+                currentSupSortDir = col === 'name' || col === 'bestSupplier' || col === 'lastSupplier' ? 'asc' : 'desc';
+            }
+            
+            document.querySelectorAll('#supplier-analysis-container .sort-icon').forEach(el => {
+                el.classList.remove('active');
+                el.textContent = '↕';
+            });
+            const activeIcon = document.getElementById(`sup-sort-${col}`);
+            if (activeIcon) {
+                activeIcon.classList.add('active');
+                activeIcon.textContent = currentSupSortDir === 'asc' ? '↑' : '↓';
+            }
+
+            sortSupplierAndRender();
+        }
+
+        function sortSupplierAndRender() {
+            const sorted = [...supplierItems].sort((a, b) => {
+                let valA, valB;
+                switch(currentSupSortCol) {
+                    case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
+                    case 'bestSupplier': valA = a.bestSupplier.toLowerCase(); valB = b.bestSupplier.toLowerCase(); break;
+                    case 'bestPrice': valA = a.bestPrice; valB = b.bestPrice; break;
+                    case 'lastSupplier': valA = a.lastSupplier.toLowerCase(); valB = b.lastSupplier.toLowerCase(); break;
+                    default: valA = 0; valB = 0;
+                }
+
+                if (valA < valB) return currentSupSortDir === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSupSortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
+            renderSupplierTable(sorted);
+        }
+
+        function filterSupplierTable(input, colIndex) {
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('supplier-table-body');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const cell = rows[i].getElementsByTagName('td')[colIndex];
+                if (cell) {
+                    const txtValue = cell.textContent || cell.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
     </script>
 </body>
 </html>
-
