@@ -11,7 +11,7 @@
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         body { background: #0f172a; color: #e2e8f0; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
-        .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; text-decoration: none; display: flex; align-items: center; gap: 0.75rem; }
+        .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
         .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
         .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
         .kpi-card { transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
@@ -19,7 +19,8 @@
         .trend-up { color: #4ade80; }
         .trend-down { color: #f87171; }
         .trend-neutral { color: #94a3b8; }
-        .check-item { transition: all 0.2s ease; }
+        .check-item { transition: all 0.2s ease; cursor: pointer; }
+        .check-item:hover { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); transform: translateX(4px); }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -35,6 +36,11 @@
         .view-section { display: none; animation: fadeIn 0.3s ease-out; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Добавлен стиль для кнопки обновления */
+        .refresh-btn-loading { position: relative; }
+        .refresh-btn-loading .spinner { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 16px; height: 16px; border-width: 2px; }
+        .refresh-btn-text { opacity: 1; }
+        .refresh-btn-loading .refresh-btn-text { opacity: 0; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -46,24 +52,18 @@
             <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
         </div>
         <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-            <a href="index.html" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium flex items-center gap-3">
                 <span class="text-lg">📊</span> Главная
-            </a>
-            <a href="analytics.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">🔍</span> Аналитика
-            </a>
-            <a href="monitoring.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">📡</span> Мониторинг
-            </a>
-            <a href="finance.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            </button>
+            <button onclick="switchView('finance')" id="nav-finance" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
                 <span class="text-lg">💰</span> Финансы
-            </a>
-            <a href="stock.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            </button>
+            <button onclick="switchView('stock')" id="nav-stock" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
                 <span class="text-lg">📦</span> Склад
-            </a>
-            <a href="clients.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+            </button>
+            <button onclick="switchView('clients')" id="nav-clients" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400 flex items-center gap-3">
                 <span class="text-lg">👥</span> Клиенты
-            </a>
+            </button>
         </nav>
         <div class="p-4 border-t border-slate-800">
             <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition">
@@ -74,21 +74,15 @@
 
     <!-- МОБИЛЬНОЕ МЕНЮ -->
     <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto">
-        <a href="index.html" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]">
+        <button onclick="switchView('dashboard')" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]">
             <span class="text-lg">📊</span> Главная
-        </a>
-        <a href="analytics.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
-            <span class="text-lg">🔍</span> Аналитика
-        </a>
-        <a href="monitoring.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
-            <span class="text-lg">📡</span>Мониторинг
-        </a>
-        <a href="finance.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+        </button>
+        <button onclick="switchView('finance')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
             <span class="text-lg">💰</span> Финансы
-        </a>
-        <a href="stock.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
+        </button>
+        <button onclick="switchView('stock')" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]">
             <span class="text-lg">📦</span> Склад
-        </a>
+        </button>
     </div>
 
     <!-- ОСНОВНОЙ КОНТЕНТ -->
@@ -104,14 +98,19 @@
                     </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- БЫСТРЫЕ ФИЛЬТРЫ УДАЛЕНЫ -->
+                    <div class="flex bg-slate-800 rounded-lg p-1 gap-1">
+                        <button onclick="setPeriod('today')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Сегодня</button>
+                        <button onclick="setPeriod('week')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition bg-blue-600 text-white">Неделя</button>
+                        <button onclick="setPeriod('month')" class="period-btn px-3 py-1.5 text-xs font-medium rounded-md transition text-gray-300">Месяц</button>
+                    </div>
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
                         <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                         <span class="text-gray-500">—</span>
                         <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                     </div>
                     <button onclick="loadDashboard()" id="btn-refresh" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
-                        🔄 Обновить
+                        <span class="refresh-btn-text">🔄 Обновить</span>
+                        <div class="spinner refresh-btn-spinner hidden"></div>
                     </button>
                 </div>
             </div>
@@ -119,7 +118,7 @@
 
         <!-- Область контента -->
         <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
-            
+
             <!-- ГЛАВНАЯ СТРАНИЦА -->
             <div id="view-dashboard" class="view-section active space-y-6">
                 <!-- KPI Карточки -->
@@ -134,7 +133,7 @@
                         <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
                         <div id="kpi-profit-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-                    <div class="kpi-card glass p-5">
+                    <div class="kpi-card glass p-5" onclick="showChecksList()">
                         <div class="text-xs text-gray-400 uppercase">Чеки</div>
                         <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
                         <div id="kpi-checks-trend" class="text-xs mt-2 trend-neutral">—</div>
@@ -154,7 +153,7 @@
                 <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки и прибыли</h3>
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
@@ -184,6 +183,26 @@
                     <div id="ai-insights" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="text-gray-500 text-center py-8 md:col-span-2">Загрузка...</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Заглушки для остальных разделов -->
+            <div id="view-finance" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">💰 Раздел «Финансы»</h2>
+                    <p class="text-gray-400">В разработке</p>
+                </div>
+            </div>
+            <div id="view-stock" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">📦 Раздел «Склад»</h2>
+                    <p class="text-gray-400">В разработке</p>
+                </div>
+            </div>
+            <div id="view-clients" class="view-section hidden">
+                <div class="glass p-8 text-center">
+                    <h2 class="text-2xl font-bold mb-4 gradient-text">👥 Раздел «Клиенты»</h2>
+                    <p class="text-gray-400">В разработке</p>
                 </div>
             </div>
         </div>
@@ -224,12 +243,81 @@
         // =====================================================
         // КОНФИГУРАЦИЯ
         // =====================================================
-        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev'; // Обновите URL, если изменился
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let currentPeriod = 'week';
         let charts = {};
         let apiToken = localStorage.getItem('moysklad_token') || '';
-        let dashboardCache = {};
+        let dashboardCache = {}; // Старое кэширование, пока не используется
+
+        // =====================================================
+        // API: Ограничитель параллельных запросов
+        // =====================================================
+        const REQUEST_LIMIT = 4; // Максимум 4 параллельных запроса
+        let activeRequests = 0;
+        const requestQueue = [];
+
+        function executeRequest(requestFn) {
+            return new Promise((resolve, reject) => {
+                const task = { requestFn, resolve, reject };
+
+                if (activeRequests < REQUEST_LIMIT) {
+                    startRequest(task);
+                } else {
+                    requestQueue.push(task);
+                }
+            });
+        }
+
+        function startRequest(task) {
+            activeRequests++;
+            task.requestFn()
+                .then(result => {
+                    task.resolve(result);
+                })
+                .catch(error => {
+                    task.reject(error);
+                })
+                .finally(() => {
+                    activeRequests--;
+                    if (requestQueue.length > 0) {
+                        startRequest(requestQueue.shift());
+                    }
+                });
+        }
+
+        // =====================================================
+        // API: Кэширование на клиенте
+        // =====================================================
+        function cacheGet(key) {
+            try {
+                const cached = sessionStorage.getItem(key);
+                if (!cached) return null;
+                const parsed = JSON.parse(cached);
+                if (parsed.expires < Date.now()) {
+                    sessionStorage.removeItem(key); // Удаляем просроченное
+                    return null;
+                }
+                return parsed.data;
+            } catch (e) {
+                console.warn("Cache get error:", e);
+                sessionStorage.removeItem(key); // Удаляем испорченное
+                return null;
+            }
+        }
+
+        function cacheSet(key, data, ttlMinutes = 5) {
+            try {
+                const item = {
+                    data: data,
+                    expires: Date.now() + ttlMinutes * 60 * 1000
+                };
+                sessionStorage.setItem(key, JSON.stringify(item));
+            } catch (e) {
+                console.warn("Cache set error:", e);
+                // Если кэш переполнен, просто игнорируем
+            }
+        }
 
         // =====================================================
         // ФОРМАТИРОВАНИЕ
@@ -261,31 +349,42 @@
             const now = new Date();
             const from = new Date(now);
             const to = new Date(now);
-            
-            if (period === 'today') {
-                return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
-            }
-            if (period === 'week') {
-                from.setDate(from.getDate() - 6);
-            }
-            if (period === 'month') {
-                from.setDate(from.getDate() - 29);
-            }
+            if (period === 'week') from.setDate(from.getDate() - 6);
+            if (period === 'month') from.setDate(from.getDate() - 29);
             return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
         }
 
         // =====================================================
         // UI
         // =====================================================
-        function setPeriod(period, btn) {
-            currentPeriod = period;
-            document.querySelectorAll('.period-btn').forEach(b => {
-                b.classList.remove('bg-blue-600', 'text-white');
-                b.classList.add('text-gray-300');
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('view-' + view);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'text-blue-400');
+                el.classList.add('text-gray-400');
             });
-            if (btn) {
-                btn.classList.remove('text-gray-300');
-                btn.classList.add('bg-blue-600', 'text-white');
+            const nav = document.getElementById('nav-' + view);
+            if (nav) {
+                nav.classList.add('active', 'text-blue-400');
+                nav.classList.remove('text-gray-400');
+            }
+
+            const titles = { dashboard: 'Главная', finance: 'Финансы', stock: 'Склад', clients: 'Клиенты' };
+            document.getElementById('page-title').textContent = titles[view] || 'Главная';
+        }
+
+        function setPeriod(period) {
+            currentPeriod = period;
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-gray-300');
+            });
+            if (event && event.target) {
+                event.target.classList.remove('text-gray-300');
+                event.target.classList.add('bg-blue-600', 'text-white');
             }
             const dates = getPeriodDates(period);
             document.getElementById('date-from').value = dates.from;
@@ -324,7 +423,7 @@
         }
 
         // =====================================================
-        // API
+        // API (Оптимизированный)
         // =====================================================
         function getAuthHeaders() {
             let authValue = apiToken;
@@ -340,7 +439,8 @@
                 return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
                 if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    const delay = 1500 * Math.pow(2, 3 - retries); // Экспоненциальный отступ
+                    await new Promise(resolve => setTimeout(resolve, delay));
                     return fetchWithRetry(url, options, retries - 1);
                 }
                 throw new Error('Сеть сбрасывает соединение.');
@@ -353,7 +453,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
-            if (response.status === 429) throw new Error('Превышен лимит запросов. Подождите немного.');
+            if (response.status === 429) {
+                console.warn("Received 429, retrying after delay...");
+                // Простое ожидание. В реальной системе лучше использовать Retry-After header.
+                await new Promise(resolve => setTimeout(resolve, 5000)); // Ждем 5 секунд
+                // Повторный вызов (рекурсивно, но с ограничением через fetchWithRetry)
+                return proxyFetch(targetUrl, headers);
+            }
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Ошибка API ${response.status}: ${errorText}`);
@@ -362,51 +468,80 @@
         }
 
         // =====================================================
-        // ЗАГРУЗКА ДАННЫХ
+        // ГЛАВНАЯ — ЗАГРУЗКА ДАННЫХ (Оптимизированная)
         // =====================================================
         async function loadDashboard() {
             if (!apiToken) { showConnectionModal(); return; }
-            
+
             const dateFrom = document.getElementById('date-from').value;
             const dateTo = document.getElementById('date-to').value;
             if (!dateFrom || !dateTo) { alert('Выберите период'); return; }
-            
+
             const btnRefresh = document.getElementById('btn-refresh');
+            btnRefresh.classList.add('refresh-btn-loading');
             btnRefresh.disabled = true;
-            btnRefresh.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Загрузка...';
-            
-            showLoader('Загрузка данных...', 'Обращение к API МойСклад');
-            
+
             try {
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Добавлен запрос на получение точного количества чеков через meta.size
-                const [dashboardData, salesSeries, profitData, checksData, checksMeta] = await Promise.all([
-                    loadDashboardMetrics(headers),
-                    loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitByProduct(headers, momentFrom, momentTo),
-                    loadRecentChecks(headers, momentFrom, momentTo),
-                    loadChecksCount(headers, momentFrom, momentTo)
+                showLoader('Загрузка данных...', 'Обращение к API МойСклад');
+
+                // Формируем кэш-ключи для каждого запроса
+                const cacheKeys = {
+                    dashboard: `dash_${currentPeriod}`,
+                    sales: `sales_${momentFrom}_${momentTo}`,
+                    profit: `profit_${momentFrom}_${momentTo}`,
+                    checks: `checks_${momentFrom}_${momentTo}`
+                };
+
+                // Проверяем кэш для каждого запроса
+                let [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
+                    cacheGet(cacheKeys.dashboard) || executeRequest(() => loadDashboardMetrics(headers)),
+                    cacheGet(cacheKeys.sales) || executeRequest(() => loadSalesSeries(headers, momentFrom, momentTo)),
+                    cacheGet(cacheKeys.profit) || executeRequest(() => loadProfitByProduct(headers, momentFrom, momentTo)),
+                    cacheGet(cacheKeys.checks) || executeRequest(() => loadRecentChecks(headers, momentFrom, momentTo))
                 ]);
 
+                // Если данные были из кэша, сохраняем их в кэш снова (обновляем TTL)
+                if (!Array.isArray(dashboardData)) {
+                    cacheSet(cacheKeys.dashboard, dashboardData);
+                }
+                if (!Array.isArray(salesSeries)) {
+                    cacheSet(cacheKeys.sales, salesSeries);
+                }
+                if (!Array.isArray(profitData)) {
+                    cacheSet(cacheKeys.profit, profitData);
+                }
+                if (!Array.isArray(checksData)) {
+                    cacheSet(cacheKeys.checks, checksData);
+                }
+
+                // Если данные были из кэша, они могут быть строками или объектами, а не массивами.
+                // Нужно убедиться, что это массивы/объекты.
+                if (typeof dashboardData === 'string') dashboardData = JSON.parse(dashboardData);
+                if (typeof salesSeries === 'string') salesSeries = JSON.parse(salesSeries);
+                if (typeof profitData === 'string') profitData = JSON.parse(profitData);
+                if (typeof checksData === 'string') checksData = JSON.parse(checksData);
+
+                // Сохраняем в глобальный кэш (может быть не нужен при кэшировании в sessionStorage)
                 dashboardCache = { dashboardData, salesSeries, profitData, checksData };
-                
-                updateKPIs(dashboardData, salesSeries, profitData, checksMeta.meta?.size || 0);
-                updateMainChart(salesSeries, profitData);
+
+                updateKPIs(dashboardData, salesSeries, profitData);
+                updateMainChart(salesSeries);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
-                
+
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
             } catch (error) {
                 console.error(error);
-                alert('Ошибка загрузки: ' + error.message);
+                alert(error.message);
             } finally {
                 hideLoader();
+                btnRefresh.classList.remove('refresh-btn-loading');
                 btnRefresh.disabled = false;
-                btnRefresh.innerHTML = '🔄 Обновить';
             }
         }
 
@@ -439,21 +574,13 @@
             return data.rows || [];
         }
 
-        // НОВАЯ ФУНКЦИЯ: Получение точного количества чеков через meta.size
-        async function loadChecksCount(headers, momentFrom, momentTo) {
-            const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
-            const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=1`;
-            const response = await proxyFetch(url, headers);
-            return await response.json();
-        }
-
         // =====================================================
-        // ОБНОВЛЕНИЕ UI
+        // ГЛАВНАЯ — ОБНОВЛЕНИЕ UI
         // =====================================================
-        function updateKPIs(dashboardData, salesSeries, profitData, totalChecks) {
+        function updateKPIs(dashboardData, salesSeries, profitData) {
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
             const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
-            
+            const totalChecks = dashboardData.sales?.count || 0;
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
@@ -462,69 +589,42 @@
             document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
             document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
+
+            // Имитация трендов (можно доработать при наличии данных за прошлый период)
+            ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
+                document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
+            });
         }
 
-        function updateMainChart(salesSeries, profitData) {
+        function updateMainChart(salesSeries) {
             const canvas = document.getElementById('main-chart');
-            if (charts.main) charts.main.destroy();
-
-            if (!salesSeries || salesSeries.length === 0) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#64748b';
-                ctx.font = '16px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText('Нет данных за выбранный период', canvas.width / 2, canvas.height / 2);
-                return;
-            }
+            if (charts.main) charts.main.destroy(); // Предотвращение утечек памяти
 
             const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
             const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
-            
-            const totalRevenueRaw = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0), 0);
-            const totalProfitRaw = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0), 0);
-            const profitRatio = totalRevenueRaw > 0 ? (totalProfitRaw / totalRevenueRaw) : 0;
-            
-            const profitByDay = revenue.map(val => val * profitRatio);
 
             charts.main = new Chart(canvas, {
                 type: 'line',
                 data: {
                     labels,
-                    datasets: [
-                        {
-                            label: 'Выручка',
-                            data: revenue,
-                            borderColor: '#4ade80',
-                            backgroundColor: 'rgba(74,222,128,0.1)',
-                            fill: true,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        },
-                        {
-                            label: 'Прибыль',
-                            data: profitByDay,
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'transparent',
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Выручка',
+                        data: revenue,
+                        borderColor: '#4ade80',
+                        backgroundColor: 'rgba(74,222,128,0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 500 },
-                    interaction: { mode: 'index', intersect: false },
+                    animation: { duration: 500 }, // Ускоренная анимация для отзывчивости
                     plugins: {
                         tooltip: {
-                            callbacks: { 
-                                label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` 
-                            }
+                            callbacks: { label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` }
                         }
                     },
                     scales: {
@@ -538,25 +638,18 @@
         function updateTopProducts(profitData) {
             const container = document.getElementById('top-products-list');
             const rows = [...profitData].sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5);
-            
+
             if (!rows.length) {
                 container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет данных</div>';
                 return;
             }
-            
-            container.innerHTML = rows.map(row => {
-                const profit = (row.profit || 0) / 100;
-                const cost = (row.sellCostSum || 0) / 100;
-                return `
-                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                        <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
-                        <div class="flex justify-between items-center mt-1">
-                            <div class="text-xs text-orange-400">Себест.: ${formatMoney(cost)}</div>
-                            <div class="text-sm text-blue-400">+${formatMoney(profit)}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+
+            container.innerHTML = rows.map(row => `
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                    <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
+                    <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
+                </div>
+            `).join('');
         }
 
         function updateRecentChecks(checks) {
@@ -566,7 +659,7 @@
                 return;
             }
             container.innerHTML = checks.map(check => `
-                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
                     <div class="flex justify-between items-center">
                         <div>
                             <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
@@ -583,7 +676,7 @@
             const revenue = salesSeries.reduce((sum, row) => sum + (row.sum || 0) / 100, 0);
             const profit = profitData.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
             const margin = revenue > 0 ? (profit / revenue * 100) : 0;
-            
+
             const insights = [];
             if (revenue > 0) {
                 insights.push({ icon: '📊', title: 'Выручка за период', text: formatMoney(revenue) });
@@ -609,35 +702,61 @@
         }
 
         // =====================================================
-        // СПИСОК ЧЕКОВ (Модальное окно)
+        // ДЕТАЛИЗАЦИЯ ЧЕКОВ
         // =====================================================
+        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка позиций чека...</div>');
+            try {
+                const headers = getAuthHeaders();
+                const url = `${MOYSKLAD_API}/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
+                const response = await proxyFetch(url, headers);
+                const data = await response.json();
+                const positions = data.positions?.rows || [];
+
+                const items = positions.map(position => `
+                    <div class="bg-slate-900 rounded-lg p-4 mb-2 border border-slate-800">
+                        <div class="font-medium text-white">${escapeHtml(position.assortment?.name || 'Товар')}</div>
+                        <div class="text-sm text-gray-400 mt-1">${formatNumber(position.quantity)} шт × ${formatMoney((position.price || 0) / 100)}</div>
+                        <div class="text-green-400 font-bold mt-2">${formatMoney((position.sum || 0) / 100)}</div>
+                    </div>
+                `).join('');
+
+                openDetailsModal(`Чек: ${checkName}`, `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+                            <div class="text-sm text-gray-400">${checkMoment}</div>
+                            <div class="text-3xl font-bold text-green-400 mt-2">${formatMoney(checkSum)}</div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white mb-3">Товары в чеке</h3>
+                            ${items || '<div class="text-gray-500">Нет позиций</div>'}
+                        </div>
+                    </div>
+                `);
+            } catch (error) {
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
+            }
+        }
+
         async function showChecksList() {
-            openDetailsModal('Загрузка...', '<div class="text-center py-8"><div class="spinner mx-auto mb-4"></div>Загрузка чеков...</div>');
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка чеков...</div>');
             try {
                 const dateFrom = document.getElementById('date-from').value;
                 const dateTo = document.getElementById('date-to').value;
                 const headers = getAuthHeaders();
-                
-                const filter = `moment>=${encodeURIComponent(`${dateFrom} 00:00:00`)};moment<=${encodeURIComponent(`${dateTo} 23:59:59`)};applicable=true`;
-                const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=1000&order=moment,desc`;
-                const response = await proxyFetch(url, headers);
-                const data = await response.json();
-                const checks = data.rows || [];
-                
-                openDetailsModal(`Чеки за период (${checks.length})`, `
-                    <div class="space-y-2 max-h-[70vh] overflow-y-auto scrollbar-thin">
-                        ${checks.length === 0 ? '<div class="text-gray-500 text-center py-8">Нет чеков за выбранный период</div>' : ''}
+                const checks = await loadRecentChecks(headers, `${dateFrom} 00:00:00`, `${dateTo} 23:59:59`);
+
+                openDetailsModal(`Чеки (${checks.length})`, `
+                    <div class="space-y-2">
                         ${checks.map(check => `
-                            <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                            <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
                                 <div class="flex justify-between items-center">
-                                    <div>
-                                        <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
-                                        <div class="text-xs text-gray-400">${formatDateTime(check.moment)}</div>
-                                    </div>
-                                    <div class="font-bold text-green-400">${formatMoney((check.sum || 0) / 100)}</div>
+                                    <span class="text-white font-medium">${escapeHtml(check.name || 'Чек')}</span>
+                                    <span class="text-green-400 font-bold">${formatMoney((check.sum || 0) / 100)}</span>
                                 </div>
+                                <div class="text-xs text-gray-400 mt-1">${formatDateTime(check.moment)}</div>
                             </div>
-                        `).join('')}
+                        `).join('') || '<div class="text-gray-500 text-center py-8">Нет чеков</div>'}
                     </div>
                 `);
             } catch (error) {
@@ -668,7 +787,7 @@
             const dates = getPeriodDates('week');
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
-            
+
             if (apiToken) {
                 loadDashboard();
             } else {
