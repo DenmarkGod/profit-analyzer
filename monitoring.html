@@ -20,45 +20,14 @@
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        input[type="date"], select { color-scheme: dark; }
+        input[type="date"] { color-scheme: dark; }
         .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        .chart-container { position: relative; height: 300px; }
         .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-
-        /* Live-индикатор */
-        .pulse-dot { width: 9px; height: 9px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
-        .pulse-dot.paused { background: #f59e0b; animation: none; }
-        .pulse-dot.off { background: #64748b; animation: none; }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(74,222,128,0.5); } 50% { opacity: 0.6; transform: scale(1.15); box-shadow: 0 0 0 6px rgba(74,222,128,0); } }
-
-        /* Лента операций */
-        .feed-item { transition: all 0.25s ease; animation: slideIn 0.4s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
-        .feed-item:hover { border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.06); }
-
-        /* Типы документов */
-        .doc-cashin  { border-left: 3px solid #4ade80; }
-        .doc-supply  { border-left: 3px solid #60a5fa; }
-        .doc-demand  { border-left: 3px solid #facc15; }
-        .doc-unknown { border-left: 3px solid #64748b; }
-
-        .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
-        .badge-ok   { background: rgba(74,222,128,0.15); color: #4ade80; }
-        .badge-warn { background: rgba(245,158,11,0.15); color: #fbbf24; }
-        .badge-info { background: rgba(96,165,250,0.15); color: #60a5fa; }
-
-        .alert-card { transition: all 0.2s ease; }
-        .alert-card:hover { transform: translateX(4px); }
-
-        /* Тумблер автообновления */
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; inset: 0; background: #475569; transition: .3s; border-radius: 22px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background: #3b82f6; }
-        input:checked + .slider:before { transform: translateX(18px); }
+        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+        .chart-box { position: relative; width: 100%; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -107,41 +76,18 @@
 
     <!-- ОСНОВНОЙ КОНТЕНТ -->
     <main class="flex-1 flex flex-col overflow-hidden">
-        <!-- Верхняя панель -->
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <div id="live-dot" class="pulse-dot"></div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white">Мониторинг</h2>
-                    <span id="live-status" class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
-                        Обновлено: <span id="last-update">—</span>
-                    </span>
+                    <div class="pulse-dot"></div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white">Мониторинг приёмки</h2>
                 </div>
-
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- Быстрые периоды -->
-                    <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-lg">
-                        <button onclick="setPeriod('today', this)" class="period-btn px-3 py-1 text-xs rounded bg-blue-600 text-white">Сегодня</button>
-                        <button onclick="setPeriod('week', this)" class="period-btn px-3 py-1 text-xs rounded text-gray-300">Неделя</button>
-                        <button onclick="setPeriod('month', this)" class="period-btn px-3 py-1 text-xs rounded text-gray-300">Месяц</button>
-                    </div>
-
-                    <!-- Ручной диапазон -->
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
                         <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                         <span class="text-gray-500">—</span>
                         <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                     </div>
-
-                    <!-- Автообновление -->
-                    <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg">
-                        <span class="text-xs text-gray-300">Live</span>
-                        <label class="switch">
-                            <input type="checkbox" id="auto-refresh" onchange="toggleAutoRefresh()">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
                     <button onclick="loadMonitoring()" id="btn-refresh" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
                         🔄 Обновить
                     </button>
@@ -149,81 +95,108 @@
             </div>
         </div>
 
-        <!-- Область контента -->
         <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin space-y-6">
 
-            <!-- KPI -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="kpi-card glass p-5">
-                    <div class="text-xs text-gray-400 uppercase">💵 Входящие платежи</div>
-                    <div id="kpi-cashin-sum" class="text-2xl md:text-3xl font-bold text-green-400 mt-2">0 ₽</div>
-                    <div id="kpi-cashin-count" class="text-xs mt-2 text-gray-500">0 приходных ордеров</div>
-                </div>
-                <div class="kpi-card glass p-5">
-                    <div class="text-xs text-gray-400 uppercase">📥 Приёмки товара</div>
-                    <div id="kpi-supply-sum" class="text-2xl md:text-3xl font-bold text-blue-400 mt-2">0 ₽</div>
-                    <div id="kpi-supply-count" class="text-xs mt-2 text-gray-500">0 приёмок</div>
-                </div>
-                <div class="kpi-card glass p-5">
-                    <div class="text-xs text-gray-400 uppercase">📄 Всего операций</div>
-                    <div id="kpi-ops-count" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
-                    <div id="kpi-ops-sub" class="text-xs mt-2 text-gray-500">за период</div>
-                </div>
-                <div class="kpi-card glass p-5">
-                    <div class="text-xs text-gray-400 uppercase">⚠️ Требуют внимания</div>
-                    <div id="kpi-alerts" class="text-2xl md:text-3xl font-bold text-amber-400 mt-2">0</div>
-                    <div id="kpi-alerts-sub" class="text-xs mt-2 text-gray-500">алертов</div>
-                </div>
+            <!-- Плейсхолдер -->
+            <div id="mon-placeholder" class="flex flex-col items-center justify-center h-[60vh] text-center">
+                <div class="text-6xl mb-4">📡</div>
+                <h3 class="text-2xl font-bold text-white mb-2">Мониторинг приёмки</h3>
+                <p class="text-gray-400 max-w-md">Выберите период и нажмите «Обновить», чтобы увидеть объём по поставщикам, динамику и статусы приёмки.</p>
             </div>
 
-            <!-- График активности + Алерты -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 glass p-6">
-                    <h3 class="text-lg font-bold text-white mb-4">📈 Активность операций</h3>
-                    <div class="chart-container">
-                        <canvas id="activity-chart"></canvas>
+            <!-- КОНТЕНТ МОНITORИНГА -->
+            <div id="mon-content" class="hidden space-y-6">
+
+                <!-- KPI СВОДКА -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="kpi-card glass p-5">
+                        <div class="text-xs text-gray-400 uppercase">Всего приёмки</div>
+                        <div id="kpi-total-sum" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
+                        <div id="kpi-total-docs" class="text-xs mt-2 text-gray-500">0 документов</div>
+                    </div>
+                    <div class="kpi-card glass p-5">
+                        <div class="text-xs text-gray-400 uppercase">Поставщиков</div>
+                        <div id="kpi-suppliers" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
+                        <div class="text-xs mt-2 text-gray-500">уникальных</div>
+                    </div>
+                    <div class="kpi-card glass p-5">
+                        <div class="text-xs text-gray-400 uppercase">✅ Проведено</div>
+                        <div id="kpi-applied-sum" class="text-2xl md:text-3xl font-bold text-green-400 mt-2">0 ₽</div>
+                        <div id="kpi-applied-count" class="text-xs mt-2 text-gray-500">0 документов</div>
+                    </div>
+                    <div class="kpi-card glass p-5">
+                        <div class="text-xs text-gray-400 uppercase">⏳ Ожидает</div>
+                        <div id="kpi-pending-sum" class="text-2xl md:text-3xl font-bold text-amber-400 mt-2">0 ₽</div>
+                        <div id="kpi-pending-count" class="text-xs mt-2 text-gray-500">0 документов</div>
                     </div>
                 </div>
 
-                <div class="glass p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-white">🚨 Алерты</h3>
-                        <span id="alerts-badge" class="badge badge-warn hidden">0</span>
-                    </div>
-                    <div id="alerts-list" class="space-y-2 max-h-[300px] overflow-y-auto scrollbar-thin">
-                        <div class="text-gray-500 text-center py-8 text-sm">Загрузка...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Живая лента операций -->
-            <div class="glass p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <h3 class="text-lg font-bold text-white">🔴 Лента операций</h3>
-                        <div class="flex items-center gap-2 text-xs text-gray-500">
-                            <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span>Платежи
-                            <span class="inline-block w-2 h-2 rounded-full bg-blue-400 ml-2"></span>Приёмки
+                <!-- ГРАФИКИ: ОБЪЁМ ПО ПОСТАВЩИКАМ + ДИНАМИКА -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass p-6">
+                        <h3 class="text-lg font-bold text-white mb-1">📦 Объём приёмки по поставщикам</h3>
+                        <p class="text-xs text-gray-500 mb-4">Сумма приёмки за период, ₽ (по убыванию)</p>
+                        <div id="supplier-chart-box" class="chart-box" style="height:360px;">
+                            <canvas id="supplier-chart"></canvas>
                         </div>
                     </div>
-                    <span id="feed-count" class="text-xs text-gray-500">0 записей</span>
+                    <div class="glass p-6">
+                        <h3 class="text-lg font-bold text-white mb-1">📈 Динамика приёмки</h3>
+                        <p class="text-xs text-gray-500 mb-4">Сумма приёмки по дням, ₽</p>
+                        <div class="chart-box" style="height:360px;">
+                            <canvas id="dynamics-chart"></canvas>
+                        </div>
+                    </div>
                 </div>
-                <div id="feed-list" class="space-y-2 max-h-[520px] overflow-y-auto scrollbar-thin">
-                    <div class="text-gray-500 text-center py-8">Загрузка...</div>
-                </div>
-            </div>
 
+                <!-- СТАТУСЫ ПРИЁМКИ -->
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold text-white mb-1">🚦 Статусы приёмки</h3>
+                    <p class="text-xs text-gray-500 mb-4">Проведено / Ожидает проведения (по сумме за период)</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <div class="chart-box" style="height:260px;">
+                            <canvas id="status-chart"></canvas>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-3 h-3 rounded-full bg-green-400"></span>
+                                    <span class="text-gray-300">Проведено</span>
+                                </div>
+                                <div class="text-right">
+                                    <div id="status-applied-sum" class="font-bold text-green-400">0 ₽</div>
+                                    <div id="status-applied-count" class="text-xs text-gray-500">0 док.</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                                    <span class="text-gray-300">Ожидает</span>
+                                </div>
+                                <div class="text-right">
+                                    <div id="status-pending-sum" class="font-bold text-amber-400">0 ₽</div>
+                                    <div id="status-pending-count" class="text-xs text-gray-500">0 док.</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500 px-1">
+                                Документ «ожидает», если не проведён (<code class="text-gray-400">applicable=false</span></code>). Проведите такие приёмки, чтобы суммы попали в учёт.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </main>
 
-    <!-- МОДАЛЬНОЕ ОКНО API -->
+    <!-- МОДАЛКА API -->
     <div id="connection-modal" class="modal-overlay">
         <div class="glass p-8 max-w-md w-full shadow-2xl">
             <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
             <p class="text-sm text-gray-400 mb-6">Введите API-токен или логин:пароль</p>
-            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none" placeholder="user@domain.com:password">
-            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mt-4">Сохранить и подключить</button>
-            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3">Отмена</button>
+            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none mb-4" placeholder="user@domain.com:password">
+            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">Сохранить</button>
+            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3 mt-2">Отмена</button>
         </div>
     </div>
 
@@ -231,502 +204,317 @@
     <div id="global-loader" class="modal-overlay">
         <div class="glass p-8 max-w-sm w-full text-center">
             <div class="spinner mx-auto mb-4"></div>
-            <div id="loader-text" class="text-lg font-medium text-white mb-1">Загрузка данных...</div>
+            <div id="loader-text" class="text-lg font-medium text-white mb-1">Загрузка...</div>
             <div id="loader-subtext" class="text-sm text-gray-400">Пожалуйста, подождите</div>
         </div>
     </div>
 
     <script>
         // =====================================================
-        // КОНФИГУРАЦИЯ
+        // CONFIG & STATE
         // =====================================================
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
-        const AUTO_REFRESH_INTERVAL = 60000; // 60 сек
-
         let apiToken = localStorage.getItem('moysklad_token') || '';
-        let currentPeriod = 'today';
-        let activityChart = null;
-        let autoRefreshTimer = null;
-        let isLoading = false;
+        let charts = {};
 
-        // =====================================================
-        // ФОРМАТИРОВАНИЕ
-        // =====================================================
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(n) || 0);
         const formatNumber = (n) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(n) || 0);
-        const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-
-        function formatDateTime(dateStr) {
-            if (!dateStr) return '—';
-            const d = new Date(dateStr);
-            const today = new Date();
-            const isToday = d.toDateString() === today.toDateString();
-            if (isToday) return 'Сегодня ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-            return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' ' +
-                   d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function dateToLocalISO(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        function getPeriodDates(period) {
-            const now = new Date();
-            const from = new Date(now);
-            const to = new Date(now);
-            if (period === 'today') return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
-            if (period === 'week') from.setDate(from.getDate() - 6);
-            if (period === 'month') from.setDate(from.getDate() - 29);
-            return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
-        }
 
         // =====================================================
         // UI
         // =====================================================
-        function setPeriod(period, btn) {
-            currentPeriod = period;
-            document.querySelectorAll('.period-btn').forEach(b => {
-                b.classList.remove('bg-blue-600', 'text-white');
-                b.classList.add('text-gray-300');
-            });
-            if (btn) {
-                btn.classList.remove('text-gray-300');
-                btn.classList.add('bg-blue-600', 'text-white');
-            }
-            const dates = getPeriodDates(period);
-            document.getElementById('date-from').value = dates.from;
-            document.getElementById('date-to').value = dates.to;
-            if (apiToken) loadMonitoring();
-        }
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const past = new Date();
+            past.setDate(today.getDate() - 29); // мониторинг по умолчанию — 30 дней
+            document.getElementById('date-to').valueAsDate = today;
+            document.getElementById('date-from').valueAsDate = past;
+            if (!apiToken) showConnectionModal();
+        });
 
         function showLoader(text, subtext) {
             document.getElementById('loader-text').textContent = text;
-            document.getElementById('loader-subtext').textContent = subtext;
+            document.getElementById('loader-subtext').textContent = subtext || '';
             document.getElementById('global-loader').classList.add('active');
         }
         function setLoaderSubtext(t) { document.getElementById('loader-subtext').textContent = t; }
         function hideLoader() { document.getElementById('global-loader').classList.remove('active'); }
-
-        function showConnectionModal() {
-            document.getElementById('api-token').value = apiToken;
-            document.getElementById('connection-modal').classList.add('active');
-        }
+        function showConnectionModal() { document.getElementById('api-token').value = apiToken; document.getElementById('connection-modal').classList.add('active'); }
         function closeConnectionModal() { document.getElementById('connection-modal').classList.remove('active'); }
         function saveToken() {
             apiToken = document.getElementById('api-token').value.trim();
             localStorage.setItem('moysklad_token', apiToken);
             closeConnectionModal();
-            if (apiToken) loadMonitoring();
-        }
-
-        function setLiveState(state) {
-            const dot = document.getElementById('live-dot');
-            dot.classList.remove('paused', 'off');
-            if (state === 'paused') dot.classList.add('paused');
-            if (state === 'off') dot.classList.add('off');
-        }
-
-        function toggleAutoRefresh() {
-            const enabled = document.getElementById('auto-refresh').checked;
-            if (enabled) {
-                setLiveState('live');
-                autoRefreshTimer = setInterval(() => {
-                    if (!isLoading && apiToken) loadMonitoring(true);
-                }, AUTO_REFRESH_INTERVAL);
-            } else {
-                setLiveState('paused');
-                if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
-            }
+            loadMonitoring();
         }
 
         // =====================================================
-        // API
+        // API LAYER (с защитой от 429: retry + backoff)
         // =====================================================
         function getAuthHeaders() {
             let auth = apiToken;
             if (!apiToken.startsWith('Basic ') && !apiToken.startsWith('Bearer ')) {
                 auth = apiToken.includes(':') ? 'Basic ' + btoa(unescape(encodeURIComponent(apiToken))) : 'Bearer ' + apiToken;
             }
-            return { Authorization: auth, Accept: 'application/json;charset=utf-8', 'Content-Type': 'application/json' };
+            return { Authorization: auth, Accept: 'application/json;charset=utf-8' };
         }
 
-        async function proxyFetch(targetUrl, headers) {
-            const response = await fetch(PROXY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
-            });
-            if (response.status === 429) throw new Error('Превышен лимит запросов. Подождите немного.');
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
+        async function proxyFetch(targetUrl, headers, retries = 4) {
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                const response = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
+                });
+                if (response.status === 429) {
+                    if (attempt === retries) throw new Error('Превышен лимит запросов (429). Подождите минуту и повторите.');
+                    const wait = Math.pow(2, attempt) * 1000; // 1с, 2с, 4с, 8с
+                    setLoaderSubtext(`Лимит запросов — пауза ${wait / 1000}с (попытка ${attempt + 1})`);
+                    await new Promise(r => setTimeout(r, wait));
+                    continue;
+                }
+                if (!response.ok) throw new Error(`API Error ${response.status}`);
+                return response;
             }
-            return response;
         }
 
-        // Загрузка всех страниц (пагинация)
-        async function fetchAllPages(baseUrl, headers, maxPages = 10) {
-            let allRows = [];
+        // Пагинация ПО 100 (expand работает только при limit<=100) + пауза между страницами
+        async function fetchSupplies(headers, filter, onProgress) {
+            const all = [];
             let offset = 0;
-            const limit = 1000;
-            let pages = 0;
-
-            while (pages < maxPages) {
-                const separator = baseUrl.includes('?') ? '&' : '?';
-                const url = `${baseUrl}${separator}limit=${limit}&offset=${offset}`;
+            const limit = 100;
+            let total = null;
+            while (true) {
+                const url = `${MOYSKLAD_API}/entity/supply?expand=agent&limit=${limit}&offset=${offset}&filter=${encodeURIComponent(filter)}`;
                 const res = await proxyFetch(url, headers);
                 const json = await res.json();
                 const rows = json.rows || [];
-                allRows = allRows.concat(rows);
-                pages++;
-                if (rows.length < limit || allRows.length >= (json.meta?.size || 0)) break;
+                all.push(...rows);
+                if (total === null) total = (json.meta && json.meta.size != null) ? json.meta.size : null;
+                if (onProgress) onProgress(all.length, total);
+                if (rows.length < limit) break;
+                if (total != null && all.length >= total) break;
                 offset += limit;
+                await new Promise(r => setTimeout(r, 150)); // throttle между страницами
             }
-            return allRows;
+            return all;
         }
 
         // =====================================================
-        // ЗАГРУЗКА ДАННЫХ
+        // ЗАГРУЗКА МОНITORИНГА
         // =====================================================
-        async function loadMonitoring(silent = false) {
+        async function loadMonitoring() {
             if (!apiToken) { showConnectionModal(); return; }
-            if (isLoading) return;
-
             const dateFrom = document.getElementById('date-from').value;
             const dateTo = document.getElementById('date-to').value;
             if (!dateFrom || !dateTo) { alert('Выберите период'); return; }
 
-            isLoading = true;
-            if (!silent) showLoader('Загрузка мониторинга...', 'Обращение к API МойСклад');
-
-            const btnRefresh = document.getElementById('btn-refresh');
-            btnRefresh.disabled = true;
-            btnRefresh.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>';
+            const btn = document.getElementById('btn-refresh');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>';
+            showLoader('Загрузка приёмки...', 'Чтение документов приёмки');
 
             try {
+                const headers = getAuthHeaders();
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
-                const headers = getAuthHeaders();
+                const filter = `moment>=${momentFrom};moment<=${momentTo}`;
 
-                setLoaderSubtext('Загрузка приходных ордеров...');
-                const cashinPromise = fetchAllPages(
-                    `${MOYSKLAD_API}/entity/cashin?filter=${encodeURIComponent(`moment>=${momentFrom};moment<=${momentTo}`)}&order=moment,desc`,
-                    headers
-                );
+                const supplies = await fetchSupplies(headers, filter, (loaded, total) => {
+                    setLoaderSubtext(total ? `Приёмки: ${loaded} из ${total}` : `Приёмки: ${loaded}`);
+                });
 
-                setLoaderSubtext('Загрузка приёмок...');
-                const supplyPromise = fetchAllPages(
-                    `${MOYSKLAD_API}/entity/supply?filter=${encodeURIComponent(`moment>=${momentFrom};moment<=${momentTo}`)}&order=moment,desc`,
-                    headers
-                );
+                buildMonitoring(supplies);
 
-                setLoaderSubtext('Загрузка оборотов (остатки)...');
-                const turnoverPromise = fetchAllPages(
-                    `${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`,
-                    headers
-                );
-
-                const [cashinRows, supplyRows, turnoverRows] = await Promise.all([
-                    cashinPromise, supplyPromise, turnoverPromise
-                ]);
-
-                updateKPIs(cashinRows, supplyRows, turnoverRows);
-                updateActivityChart(cashinRows, supplyRows);
-                updateFeed(cashinRows, supplyRows);
-                updateAlerts(cashinRows, supplyRows, turnoverRows);
-
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
-            } catch (error) {
-                console.error(error);
-                if (!silent) alert('Ошибка загрузки: ' + error.message);
+                document.getElementById('mon-placeholder').classList.add('hidden');
+                document.getElementById('mon-content').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка: ' + err.message);
             } finally {
-                isLoading = false;
                 hideLoader();
-                btnRefresh.disabled = false;
-                btnRefresh.innerHTML = '🔄 Обновить';
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Обновить';
             }
         }
 
         // =====================================================
-        // KPI
+        // АГРЕГАЦИЯ НА КЛИЕНТЕ
         // =====================================================
-        function updateKPIs(cashinRows, supplyRows, turnoverRows) {
-            const cashinSum = cashinRows.reduce((s, r) => s + (Number(r.sum) || 0) / 100, 0);
-            const supplySum = supplyRows.reduce((s, r) => s + (Number(r.sum) || 0) / 100, 0);
-            const totalOps = cashinRows.length + supplyRows.length;
+        function buildMonitoring(supplies) {
+            const bySupplier = new Map(); // name -> sum
+            const byDay = new Map();      // 'YYYY-MM-DD' -> sum
+            let totalSum = 0, totalDocs = 0;
+            let appliedSum = 0, appliedCount = 0;
+            let pendingSum = 0, pendingCount = 0;
 
-            // Алерты: непроведённые + отрицательные остатки
-            const notApplicableCashin = cashinRows.filter(r => r.applicable === false).length;
-            const notApplicableSupply = supplyRows.filter(r => r.applicable === false).length;
-            const negativeStock = turnoverRows.filter(r => (r.onPeriodEnd?.quantity || 0) < 0).length;
-            const totalAlerts = notApplicableCashin + notApplicableSupply + negativeStock;
+            supplies.forEach(s => {
+                const name = (s.agent && s.agent.name) ? s.agent.name : 'Без поставщика';
+                const sum = (s.sum || 0) / 100; // копейки -> рубли
+                const day = (s.moment || '').substring(0, 10);
+                const applied = s.applicable === true;
 
-            document.getElementById('kpi-cashin-sum').textContent = formatMoney(cashinSum);
-            document.getElementById('kpi-cashin-count').textContent = `${formatNumber(cashinRows.length)} приходных ордеров`;
+                totalSum += sum;
+                totalDocs++;
+                if (applied) { appliedSum += sum; appliedCount++; }
+                else { pendingSum += sum; pendingCount++; }
 
-            document.getElementById('kpi-supply-sum').textContent = formatMoney(supplySum);
-            document.getElementById('kpi-supply-count').textContent = `${formatNumber(supplyRows.length)} приёмок`;
+                bySupplier.set(name, (bySupplier.get(name) || 0) + sum);
+                byDay.set(day, (byDay.get(day) || 0) + sum);
+            });
 
-            document.getElementById('kpi-ops-count').textContent = formatNumber(totalOps);
+            // KPI
+            document.getElementById('kpi-total-sum').textContent = formatMoney(totalSum);
+            document.getElementById('kpi-total-docs').textContent = `${formatNumber(totalDocs)} документов`;
+            document.getElementById('kpi-suppliers').textContent = formatNumber(bySupplier.size);
+            document.getElementById('kpi-applied-sum').textContent = formatMoney(appliedSum);
+            document.getElementById('kpi-applied-count').textContent = `${formatNumber(appliedCount)} документов`;
+            document.getElementById('kpi-pending-sum').textContent = formatMoney(pendingSum);
+            document.getElementById('kpi-pending-count').textContent = `${formatNumber(pendingCount)} документов`;
+            document.getElementById('status-applied-sum').textContent = formatMoney(appliedSum);
+            document.getElementById('status-applied-count').textContent = `${formatNumber(appliedCount)} док.`;
+            document.getElementById('status-pending-sum').textContent = formatMoney(pendingSum);
+            document.getElementById('status-pending-count').textContent = `${formatNumber(pendingCount)} док.`;
 
-            const alertsEl = document.getElementById('kpi-alerts');
-            alertsEl.textContent = formatNumber(totalAlerts);
-            alertsEl.className = 'text-2xl md:text-3xl font-bold mt-2 ' + (totalAlerts > 0 ? 'text-amber-400' : 'text-green-400');
+            drawSupplierChart(bySupplier);
+            drawDynamicsChart(byDay);
+            drawStatusChart(appliedSum, pendingSum);
         }
 
-        // =====================================================
-        // ГРАФИК АКТИВНОСТИ
-        // =====================================================
-        function updateActivityChart(cashinRows, supplyRows) {
-            const canvas = document.getElementById('activity-chart');
-            if (activityChart) activityChart.destroy();
+        // ----- БАР ПО ПОСТАВЩИКАМ -----
+        function drawSupplierChart(bySupplier) {
+            const box = document.getElementById('supplier-chart-box');
+            // сортировка по убыванию суммы
+            const sorted = [...bySupplier.entries()].sort((a, b) => b[1] - a[1]);
+            // подстраиваем высоту под число поставщиков
+            box.style.height = Math.max(320, sorted.length * 34 + 40) + 'px';
 
-            // Группировка по ключу периода (час для "сегодня", иначе день)
-            const useHours = currentPeriod === 'today';
-            const buckets = new Map();
+            const labels = sorted.map(e => e[0]);
+            const values = sorted.map(e => e[1]);
 
-            const addRows = (rows, type) => {
-                rows.forEach(r => {
-                    if (!r.moment) return;
-                    const d = new Date(r.moment);
-                    const key = useHours
-                        ? d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }).slice(0, 2) + ':00'
-                        : d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-                    if (!buckets.has(key)) buckets.set(key, { cashin: 0, supply: 0, sortKey: d.getTime() });
-                    buckets.get(key)[type] += (Number(r.sum) || 0) / 100;
-                });
-            };
+            if (charts.supplier) charts.supplier.destroy();
+            const ctx = document.getElementById('supplier-chart').getContext('2d');
 
-            addRows(cashinRows, 'cashin');
-            addRows(supplyRows, 'supply');
-
-            const sorted = Array.from(buckets.entries()).sort((a, b) => a[1].sortKey - b[1].sortKey);
-            const labels = sorted.map(([k]) => k);
-            const cashinData = sorted.map(([, v]) => v.cashin);
-            const supplyData = sorted.map(([, v]) => v.supply);
-
-            if (!labels.length) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#64748b';
-                ctx.font = '16px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText('Нет операций за выбранный период', canvas.width / 2, canvas.height / 2);
+            if (!sorted.length) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.fillStyle = '#64748b'; ctx.font = '14px Inter'; ctx.textAlign = 'center';
+                ctx.fillText('Нет данных за период', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
 
-            activityChart = new Chart(canvas, {
+            charts.supplier = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels,
-                    datasets: [
-                        {
-                            label: 'Платежи (входящие)',
-                            data: cashinData,
-                            backgroundColor: 'rgba(74,222,128,0.7)',
-                            borderRadius: 4
-                        },
-                        {
-                            label: 'Приёмки',
-                            data: supplyData,
-                            backgroundColor: 'rgba(96,165,250,0.7)',
-                            borderRadius: 4
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Объём приёмки, ₽',
+                        data: values,
+                        backgroundColor: 'rgba(96, 165, 250, 0.7)',
+                        borderColor: '#60a5fa',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
                 },
                 options: {
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 500 },
-                    interaction: { mode: 'index', intersect: false },
                     plugins: {
-                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}` } },
-                        legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 12 } }
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: c => formatMoney(c.parsed.x) } }
                     },
                     scales: {
-                        y: { ticks: { callback: v => formatMoney(v), color: '#94a3b8' }, grid: { color: '#1e293b' } },
-                        x: { ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 0 }, grid: { display: false } }
+                        x: { ticks: { callback: v => formatMoney(v), color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                        y: { ticks: { color: '#e2e8f0', autoSkip: false }, grid: { display: false } }
                     }
                 }
             });
         }
 
-        // =====================================================
-        // ЛЕНТА ОПЕРАЦИЙ
-        // =====================================================
-        function updateFeed(cashinRows, supplyRows) {
-            const container = document.getElementById('feed-list');
+        // ----- ДИНАМИКА ПО ДНЯМ -----
+        function drawDynamicsChart(byDay) {
+            const sorted = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+            const labels = sorted.map(e => {
+                const d = new Date(e[0]);
+                return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+            });
+            const values = sorted.map(e => e[1]);
 
-            const feed = [];
-            cashinRows.forEach(r => feed.push({
-                type: 'cashin',
-                name: r.name || 'Приходный ордер',
-                agent: r.agent?.name || '—',
-                purpose: r.paymentPurpose || '',
-                sum: (Number(r.sum) || 0) / 100,
-                moment: r.moment,
-                applicable: r.applicable
-            }));
-            supplyRows.forEach(r => feed.push({
-                type: 'supply',
-                name: r.name || 'Приёмка',
-                agent: r.agent?.name || '—',
-                purpose: r.description || '',
-                sum: (Number(r.sum) || 0) / 100,
-                moment: r.moment,
-                applicable: r.applicable
-            }));
+            if (charts.dynamics) charts.dynamics.destroy();
+            const ctx = document.getElementById('dynamics-chart').getContext('2d');
 
-            feed.sort((a, b) => new Date(b.moment) - new Date(a.moment));
-            const limited = feed.slice(0, 100);
-
-            document.getElementById('feed-count').textContent = `${formatNumber(feed.length)} записей`;
-
-            if (!limited.length) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет операций за выбранный период</div>';
+            if (!sorted.length) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.fillStyle = '#64748b'; ctx.font = '14px Inter'; ctx.textAlign = 'center';
+                ctx.fillText('Нет данных за период', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
 
-            container.innerHTML = limited.map(item => {
-                const docClass = `doc-${item.type}`;
-                const icon = item.type === 'cashin' ? '💵' : '📥';
-                const typeLabel = item.type === 'cashin' ? 'Платёж' : 'Приёмка';
-                const sumClass = item.type === 'cashin' ? 'text-green-400' : 'text-blue-400';
-                const statusBadge = item.applicable === false
-                    ? '<span class="badge badge-warn">не проведён</span>'
-                    : '<span class="badge badge-ok">проведён</span>';
-
-                return `
-                    <div class="feed-item ${docClass} bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
-                        <div class="flex justify-between items-start gap-3">
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-lg">${icon}</span>
-                                    <span class="font-medium text-white truncate">${escapeHtml(item.name)}</span>
-                                    <span class="badge badge-info">${typeLabel}</span>
-                                    ${statusBadge}
-                                </div>
-                                <div class="text-xs text-gray-400 mt-1 truncate">👤 ${escapeHtml(item.agent)}</div>
-                                ${item.purpose ? `<div class="text-xs text-gray-500 mt-0.5 truncate">📝 ${escapeHtml(item.purpose)}</div>` : ''}
-                            </div>
-                            <div class="text-right flex-shrink-0">
-                                <div class="font-bold ${sumClass}">${item.type === 'cashin' ? '+' : ''}${formatMoney(item.sum)}</div>
-                                <div class="text-xs text-gray-500 mt-1">${formatDateTime(item.moment)}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            charts.dynamics = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Приёмка, ₽',
+                        data: values,
+                        borderColor: '#34d399',
+                        backgroundColor: 'rgba(52, 211, 153, 0.12)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: c => formatMoney(c.parsed.y) } }
+                    },
+                    scales: {
+                        y: { ticks: { callback: v => formatMoney(v), color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                        x: { ticks: { color: '#94a3b8', maxRotation: 45, autoSkip: true }, grid: { display: false } }
+                    }
+                }
+            });
         }
 
-        // =====================================================
-        // АЛЕРТЫ
-        // =====================================================
-        function updateAlerts(cashinRows, supplyRows, turnoverRows) {
-            const container = document.getElementById('alerts-list');
-            const alerts = [];
+        // ----- СТАТУСЫ (DOUGHNUT) -----
+        function drawStatusChart(appliedSum, pendingSum) {
+            if (charts.status) charts.status.destroy();
+            const ctx = document.getElementById('status-chart').getContext('2d');
 
-            // 1. Непроведённые приходные ордера
-            const naCashin = cashinRows.filter(r => r.applicable === false);
-            if (naCashin.length) {
-                alerts.push({
-                    icon: '⚠️',
-                    level: 'warn',
-                    title: `Непроведённые платежи: ${naCashin.length}`,
-                    text: naCashin.slice(0, 3).map(r => escapeHtml(r.name)).join(', ') + (naCashin.length > 3 ? '…' : '')
-                });
-            }
-
-            // 2. Непроведённые приёмки
-            const naSupply = supplyRows.filter(r => r.applicable === false);
-            if (naSupply.length) {
-                alerts.push({
-                    icon: '📥',
-                    level: 'warn',
-                    title: `Непроведённые приёмки: ${naSupply.length}`,
-                    text: naSupply.slice(0, 3).map(r => escapeHtml(r.name)).join(', ') + (naSupply.length > 3 ? '…' : '')
-                });
-            }
-
-            // 3. Отрицательные остатки
-            const negative = turnoverRows.filter(r => (r.onPeriodEnd?.quantity || 0) < 0);
-            if (negative.length) {
-                alerts.push({
-                    icon: '📉',
-                    level: 'danger',
-                    title: `Отрицательные остатки: ${negative.length}`,
-                    text: negative.slice(0, 3).map(r => escapeHtml(r.assortment?.name || 'Товар')).join(', ') + (negative.length > 3 ? '…' : '')
-                });
-            }
-
-            // 4. Крупные платежи (информационный)
-            const largeCashin = cashinRows.filter(r => (Number(r.sum) || 0) / 100 >= 100000);
-            if (largeCashin.length) {
-                alerts.push({
-                    icon: '💰',
-                    level: 'info',
-                    title: `Крупные платежи (≥100 000 ₽): ${largeCashin.length}`,
-                    text: 'Проверьте корректность сумм'
-                });
-            }
-
-            // Бейдж в заголовке
-            const badge = document.getElementById('alerts-badge');
-            const problemCount = alerts.filter(a => a.level !== 'info').length;
-            if (problemCount > 0) {
-                badge.classList.remove('hidden');
-                badge.textContent = problemCount;
-            } else {
-                badge.classList.add('hidden');
-            }
-
-            if (!alerts.length) {
-                container.innerHTML = `
-                    <div class="text-center py-8">
-                        <div class="text-4xl mb-2">✅</div>
-                        <div class="text-green-400 font-medium">Всё в порядке</div>
-                        <div class="text-xs text-gray-500 mt-1">Алертов нет</div>
-                    </div>`;
+            if (appliedSum === 0 && pendingSum === 0) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.fillStyle = '#64748b'; ctx.font = '14px Inter'; ctx.textAlign = 'center';
+                ctx.fillText('Нет данных за период', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
 
-            const levelStyles = {
-                danger: 'border-red-500/40 bg-red-500/5',
-                warn: 'border-amber-500/40 bg-amber-500/5',
-                info: 'border-blue-500/40 bg-blue-500/5'
-            };
-
-            container.innerHTML = alerts.map(a => `
-                <div class="alert-card ${levelStyles[a.level]} border rounded-lg p-3">
-                    <div class="flex gap-2">
-                        <span class="text-xl flex-shrink-0">${a.icon}</span>
-                        <div class="min-w-0">
-                            <div class="font-semibold text-white text-sm">${a.title}</div>
-                            <div class="text-xs text-gray-400 mt-1 truncate">${a.text}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            charts.status = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Проведено', 'Ожидает'],
+                    datasets: [{
+                        data: [appliedSum, pendingSum],
+                        backgroundColor: ['rgba(74, 222, 128, 0.8)', 'rgba(251, 191, 36, 0.8)'],
+                        borderColor: ['#4ade80', '#fbbf24'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '62%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8' } },
+                        tooltip: { callbacks: { label: c => `${c.label}: ${formatMoney(c.parsed)}` } }
+                    }
+                }
+            });
         }
-
-        // =====================================================
-        // ИНИЦИАЛИЗАЦИЯ
-        // =====================================================
-        window.addEventListener('load', () => {
-            const dates = getPeriodDates('today');
-            document.getElementById('date-from').value = dates.from;
-            document.getElementById('date-to').value = dates.to;
-
-            if (apiToken) {
-                loadMonitoring();
-            } else {
-                showConnectionModal();
-            }
-        });
     </script>
 </body>
 </html>
