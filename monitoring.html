@@ -2,887 +2,577 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Мониторинг | Profit Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг МойСклад</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-        body { background: #0f172a; color: #e2e8f0; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
-        .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; text-decoration: none; display: flex; align-items: center; gap: 0.75rem; }
-        .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
-        .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
-        .kpi-card { transition: all 0.3s ease; position: relative; overflow: hidden; }
-        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); border-color: rgba(59, 130, 246, 0.3); }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 600; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .spinner { border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        input[type="date"], select { color-scheme: dark; }
-        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        .chart-container { position: relative; height: 300px; }
-        .chart-container-sm { position: relative; height: 240px; }
-        .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
-        .trend-up { color: #4ade80; }
-        .trend-down { color: #f87171; }
-        .trend-neutral { color: #94a3b8; }
-        .badge-danger { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
-        .badge-warning { background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.3); }
-        .badge-success { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
-        .badge-info { background: rgba(96, 165, 250, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.3); }
-        .section-title { display: flex; align-items: center; gap: 0.5rem; }
-        .table-row { transition: background 0.15s ease; }
-        .table-row:hover { background: rgba(59, 130, 246, 0.05); }
+        .status-ok { background: #dcfce7; color: #166534; }
+        .status-err { background: #fee2e2; color: #991b1b; }
+        .status-warn { background: #fef3c7; color: #92400e; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="bg-gray-50 min-h-screen">
 
-    <!-- БОКОВОЕ МЕНЮ -->
-    <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col hidden md:flex z-20">
-        <div class="p-6 border-b border-slate-800">
-            <h1 class="text-xl font-bold gradient-text">Profit Analyzer</h1>
-            <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800">Мониторинг МойСклад</h1>
+            </div>
+            <div id="connectionStatus" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm status-warn">
+                <span class="w-2 h-2 rounded-full bg-current"></span>
+                <span>Не подключено</span>
+            </div>
         </div>
-        <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-            <a href="index.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">📊</span> Главная
-            </a>
-            <a href="analytics.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">🔍</span> Аналитика
-            </a>
-            <a href="monitoring.html" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
-                <span class="text-lg">📡</span> Мониторинг
-            </a>
-            <a href="finance.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">💰</span> Финансы
-            </a>
-            <a href="stock.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">📦</span> Склад
-            </a>
-            <a href="clients.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">👥</span> Клиенты
-            </a>
-        </nav>
-        <div class="p-4 border-t border-slate-800">
-            <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition">
-                <span>🔌</span> Настройки API
-            </button>
-        </div>
-    </aside>
+    </header>
 
-    <!-- МОБИЛЬНОЕ МЕНЮ -->
-    <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto">
-        <a href="index.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Главная</a>
-        <a href="analytics.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">🔍</span>Аналитика</a>
-        <a href="monitoring.html" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">📡</span>Мониторинг</a>
-        <a href="finance.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Финансы</a>
-        <a href="stock.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Склад</a>
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="max-w-7xl mx-auto px-4 mt-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">⚙️ Настройки подключения</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">URL прокси (Cloudflare Worker)</label>
+                    <input id="proxyUrl" type="text" placeholder="https://your-worker.workers.dev"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        value="">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Токен авторизации МойСклад</label>
+                    <input id="authToken" type="password" placeholder="Basic base64(login:password) или токен"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        value="">
+                </div>
+            </div>
+            <div class="mt-4 flex gap-3">
+                <button onclick="testConnection()" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                    🔌 Проверить подключение
+                </button>
+                <button onclick="loadAllData()" class="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
+                    📊 Загрузить все данные
+                </button>
+                <button onclick="saveSettings()" class="px-5 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-medium">
+                    💾 Сохранить
+                </button>
+            </div>
+            <div id="settingsMsg" class="mt-3 text-sm hidden"></div>
+        </div>
     </div>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <!-- Верхняя панель -->
-        <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="pulse-dot"></div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white">Операционный мониторинг</h2>
-                    <span class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
-                        Обновлено: <span id="last-update">-</span>
-                    </span>
+    <!-- Tabs -->
+    <div class="max-w-7xl mx-auto px-4 mt-6">
+        <div class="flex gap-1 border-b border-gray-200 overflow-x-auto">
+            <button onclick="switchTab('overview')" id="tab-overview" class="px-4 py-3 text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap tab-active">📈 Обзор</button>
+            <button onclick="switchTab('profit')" id="tab-profit" class="px-4 py-3 text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">💰 Прибыльность</button>
+            <button onclick="switchTab('turnover')" id="tab-turnover" class="px-4 py-3 text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">📦 Обороты</button>
+            <button onclick="switchTab('sales')" id="tab-sales" class="px-4 py-3 text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">🛒 Продажи</button>
+            <button onclick="switchTab('cashin')" id="tab-cashin" class="px-4 py-3 text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">💵 Приходные ордера</button>
+            <button onclick="switchTab('supply')" id="tab-supply" class="px-4 py-3 text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap">🚚 Приёмки</button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- Overview Tab -->
+        <div id="content-overview" class="tab-content fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover transition-all duration-200">
+                    <div class="text-sm text-gray-500 mb-1">Продажи (сумма)</div>
+                    <div id="stat-sales-sum" class="text-2xl font-bold text-gray-800">—</div>
+                    <div id="stat-sales-count" class="text-xs text-gray-400 mt-1">—</div>
                 </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
-                        <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
-                        <span class="text-gray-500">—</span>
-                        <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
-                    </div>
-                    <button onclick="loadMonitoring()" id="btn-refresh" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
-                        🔄 Обновить
-                    </button>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover transition-all duration-200">
+                    <div class="text-sm text-gray-500 mb-1">Заказы (сумма)</div>
+                    <div id="stat-orders-sum" class="text-2xl font-bold text-gray-800">—</div>
+                    <div id="stat-orders-count" class="text-xs text-gray-400 mt-1">—</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover transition-all duration-200">
+                    <div class="text-sm text-gray-500 mb-1">Прибыль</div>
+                    <div id="stat-profit" class="text-2xl font-bold text-green-600">—</div>
+                    <div id="stat-margin" class="text-xs text-gray-400 mt-1">—</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover transition-all duration-200">
+                    <div class="text-sm text-gray-500 mb-1">Приходные ордера</div>
+                    <div id="stat-cashin-sum" class="text-2xl font-bold text-blue-600">—</div>
+                    <div id="stat-cashin-count" class="text-xs text-gray-400 mt-1">—</div>
+                </div>
+            </div>
+            <div id="overview-log" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <h3 class="font-semibold text-gray-700 mb-3">📋 Журнал загрузки</h3>
+                <div id="logEntries" class="space-y-2 text-sm font-mono max-h-64 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <!-- Profit Tab -->
+        <div id="content-profit" class="tab-content hidden fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-gray-700">💰 Прибыльность по товарам</h3>
+                    <button onclick="loadProfit()" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition">Обновить</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">Товар</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Продано</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Сумма продаж</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Себестоимость</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Прибыль</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Рентабельность</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profitTableBody">
+                            <tr><td colspan="6" class="py-8 text-center text-gray-400">Загрузите данные</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Область контента -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin space-y-6">
-
-            <!-- ===== KPI КАРТОЧКИ ===== -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="kpi-card glass p-5">
-                    <div class="text-xs text-gray-400 uppercase">💵 Приход денег</div>
-                    <div id="kpi-cashin" class="text-2xl font-bold text-green-400 mt-2">0 ₽</div>
-                    <div id="kpi-cashin-count" class="text-xs mt-2 text-gray-500">—</div>
-                </div>
-                <div class="kpi-card glass p-5">
-                    <div class="text-xs text-gray-400 uppercase">🚚 Приёмки</div>
-                    <div id="kpi-supplies" class="text-2xl font-bold text-blue-400 mt-2">0 ₽</div>
-                    <div id="kpi-supplies-count" class="text-xs mt-2 text-gray-500">—</div>
-                </div>
-                <div class="kpi-card glass p-5">
-                    <div class="text-xs text-gray-400 uppercase">📈 Продажи</div>
-                    <div id="kpi-sales" class="text-2xl font-bold text-white mt-2">0 ₽</div>
-                    <div id="kpi-sales-trend" class="text-xs mt-2 trend-neutral">—</div>
-                </div>
-                <div class="kpi-card glass p-5">
-                    <div class="text-xs text-gray-400 uppercase">⚠️ Проблемные товары</div>
-                    <div id="kpi-problems" class="text-2xl font-bold text-red-400 mt-2">0</div>
-                    <div id="kpi-problems-detail" class="text-xs mt-2 text-gray-500">—</div>
-                </div>
-            </div>
-
-            <!-- ===== ГРАФИКИ: ДЕНЕЖНЫЙ ПОТОК + ПРОДАЖИ vs ЗАКАЗЫ ===== -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold text-white mb-1 section-title">💵 Денежный поток</h3>
-                    <p class="text-xs text-gray-500 mb-4">Приходные ордера по дням</p>
-                    <div class="chart-container">
-                        <canvas id="cashflow-chart"></canvas>
-                    </div>
-                </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold text-white mb-1 section-title">📊 Продажи vs Заказы</h3>
-                    <p class="text-xs text-gray-500 mb-4">Сравнение потоков по дням</p>
-                    <div class="chart-container">
-                        <canvas id="sales-orders-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== СРАВНЕНИЕ ПЕРИОДОВ ===== -->
-            <div class="glass p-6">
-                <h3 class="text-lg font-bold text-white mb-4 section-title">📈 Сравнение с предыдущим периодом</h3>
-                <div id="period-comparison" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="text-gray-500 text-center py-8 md:col-span-3">Загрузка...</div>
-                </div>
-            </div>
-
-            <!-- ===== КОНТРОЛЬ ПОСТАВОК ===== -->
-            <div class="glass p-6">
+        <!-- Turnover Tab -->
+        <div id="content-turnover" class="tab-content hidden fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-4">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-white section-title">🚚 Последние приёмки</h3>
-                    <span id="supplies-badge" class="text-xs px-2 py-1 rounded-full badge-info">0 шт.</span>
+                    <h3 class="font-semibold text-gray-700">📦 Обороты по товарам</h3>
+                    <button onclick="loadTurnover()" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition">Обновить</button>
                 </div>
-                <div id="supplies-table" class="overflow-x-auto">
-                    <div class="text-gray-500 text-center py-8">Загрузка...</div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">Товар</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Нач. остаток</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Приход</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Расход</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Кон. остаток</th>
+                            </tr>
+                        </thead>
+                        <tbody id="turnoverTableBody">
+                            <tr><td colspan="5" class="py-8 text-center text-gray-400">Загрузите данные</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
 
-            <!-- ===== ПРОБЛЕМНЫЕ ТОВАРЫ ===== -->
-            <div class="glass p-6">
+        <!-- Sales Tab -->
+        <div id="content-sales" class="tab-content hidden fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-4">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-white section-title">⚠️ Проблемные товары</h3>
-                    <div class="flex gap-2">
-                        <button onclick="showProblemTab('negative')" id="tab-negative" class="text-xs px-3 py-1 rounded-full badge-danger font-medium">Убыточные</button>
-                        <button onclick="showProblemTab('stagnant')" id="tab-stagnant" class="text-xs px-3 py-1 rounded-full bg-slate-700 text-gray-400 font-medium">Без движения</button>
-                    </div>
+                    <h3 class="font-semibold text-gray-700">🛒 Показатели продаж (последние 7 дней)</h3>
+                    <button onclick="loadSalesPlot()" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition">Обновить</button>
                 </div>
-                <div id="problems-table" class="overflow-x-auto">
-                    <div class="text-gray-500 text-center py-8">Загрузка...</div>
+                <div id="salesChart" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- CashIn Tab -->
+        <div id="content-cashin" class="tab-content hidden fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-gray-700">💵 Приходные ордера</h3>
+                    <button onclick="loadCashIn()" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition">Обновить</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">№</th>
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">Дата</th>
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">Контрагент</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Сумма</th>
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">Основание</th>
+                                <th class="text-center py-2 px-3 text-gray-500 font-medium">Проведён</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashinTableBody">
+                            <tr><td colspan="6" class="py-8 text-center text-gray-400">Загрузите данные</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
 
-            <!-- ===== СКЛАДСКАЯ СВОДКА ===== -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold text-white mb-4 section-title">🏭 Обороты по складам</h3>
-                    <div class="chart-container-sm">
-                        <canvas id="warehouse-chart"></canvas>
-                    </div>
+        <!-- Supply Tab -->
+        <div id="content-supply" class="tab-content hidden fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-gray-700">🚚 Приёмки</h3>
+                    <button onclick="loadSupply()" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition">Обновить</button>
                 </div>
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold text-white mb-4 section-title">📦 Топ по расходу со склада</h3>
-                    <div id="top-outcome-list" class="space-y-2 max-h-[240px] overflow-y-auto scrollbar-thin">
-                        <div class="text-gray-500 text-center py-8">Загрузка...</div>
-                    </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">№</th>
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">Дата</th>
+                                <th class="text-left py-2 px-3 text-gray-500 font-medium">Контрагент</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Сумма</th>
+                                <th class="text-center py-2 px-3 text-gray-500 font-medium">Проведена</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplyTableBody">
+                            <tr><td colspan="5" class="py-8 text-center text-gray-400">Загрузите данные</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
         </div>
     </main>
 
-    <!-- МОДАЛЬНОЕ ОКНО API -->
-    <div id="connection-modal" class="modal-overlay">
-        <div class="glass p-8 max-w-md w-full shadow-2xl">
-            <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
-            <p class="text-sm text-gray-400 mb-6">Введите API-токен или логин:пароль</p>
-            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none" placeholder="user@domain.com:password">
-            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mt-4">Сохранить и подключить</button>
-            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3">Отмена</button>
-        </div>
-    </div>
-
-    <!-- LOADER -->
-    <div id="global-loader" class="modal-overlay">
-        <div class="glass p-8 max-w-sm w-full text-center">
-            <div class="spinner mx-auto mb-4"></div>
-            <div id="loader-text" class="text-lg font-medium text-white mb-1">Загрузка данных...</div>
-            <div id="loader-subtext" class="text-sm text-gray-400">Пожалуйста, подождите</div>
-        </div>
-    </div>
-
     <script>
-        // =====================================================
-        // КОНФИГУРАЦИЯ
-        // =====================================================
-        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
-        const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
-        let apiToken = localStorage.getItem('moysklad_token') || '';
-        let charts = {};
-        let problemData = { negative: [], stagnant: [] };
-        let currentProblemTab = 'negative';
+        // ============ CONFIG ============
+        const API_BASE = 'https://api.moysklad.ru/api/remap/1.2';
 
-        // =====================================================
-        // УТИЛИТЫ
-        // =====================================================
-        function formatMoney(amount) {
-            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(amount) || 0);
-        }
-        function formatNumber(n) {
-            return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(n) || 0);
-        }
-        function formatDateTime(dateStr) {
-            if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-        }
-        function escapeHtml(v) {
-            return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-        function dateToLocalISO(date) {
-            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-        }
-        function getPreviousPeriod(from, to) {
-            const f = new Date(from);
-            const t = new Date(to);
-            const days = Math.round((t - f) / (1000*60*60*24)) + 1;
-            const prevTo = new Date(f);
-            prevTo.setDate(prevTo.getDate() - 1);
-            const prevFrom = new Date(prevTo);
-            prevFrom.setDate(prevFrom.getDate() - days + 1);
-            return { from: dateToLocalISO(prevFrom), to: dateToLocalISO(prevTo) };
+        function getProxyUrl() {
+            return document.getElementById('proxyUrl').value.trim().replace(/\/$/, '');
         }
 
-        // =====================================================
-        // UI
-        // =====================================================
-        function showLoader(text, subtext) {
-            document.getElementById('loader-text').textContent = text;
-            document.getElementById('loader-subtext').textContent = subtext || '';
-            document.getElementById('global-loader').classList.add('active');
-        }
-        function hideLoader() { document.getElementById('global-loader').classList.remove('active'); }
-        function showConnectionModal() { document.getElementById('api-token').value = apiToken; document.getElementById('connection-modal').classList.add('active'); }
-        function closeConnectionModal() { document.getElementById('connection-modal').classList.remove('active'); }
-        function saveToken() {
-            apiToken = document.getElementById('api-token').value.trim();
-            localStorage.setItem('moysklad_token', apiToken);
-            closeConnectionModal();
-            if (apiToken) loadMonitoring();
+        function getAuthHeader() {
+            const token = document.getElementById('authToken').value.trim();
+            if (!token) return '';
+            if (token.startsWith('Basic ')) return token;
+            return 'Basic ' + token;
         }
 
-        // =====================================================
-        // API
-        // =====================================================
-        function getAuthHeaders() {
-            let auth = apiToken;
-            if (!apiToken.startsWith('Basic ') && !apiToken.startsWith('Bearer ')) {
-                auth = apiToken.includes(':') ? 'Basic ' + btoa(unescape(encodeURIComponent(apiToken))) : 'Bearer ' + apiToken;
-            }
-            return {
-                'Authorization': auth,
-                'Accept': 'application/json;charset=utf-8',
-                'Content-Type': 'application/json'
-            };
-        }
+        // ============ PROXY REQUEST ============
+        async function apiRequest(endpoint, params = '') {
+            const proxyUrl = getProxyUrl();
+            const auth = getAuthHeader();
 
-        // === Fetch через прокси с retry при 429 ===
-        async function apiFetch(endpoint, options = {}, retries = 3) {
-            const url = `${PROXY_URL}/${MOYSKLAD_API}${endpoint}`;
-            const headers = getAuthHeaders();
+            if (!proxyUrl) throw new Error('Укажите URL прокси');
+            if (!auth) throw new Error('Укажите токен авторизации');
 
-            for (let attempt = 0; attempt <= retries; attempt++) {
-                try {
-                    const response = await fetch(url, {
-                        method: options.method || 'GET',
-                        headers: headers,
-                        body: options.body || undefined
-                    });
+            const fullUrl = `${API_BASE}${endpoint}${params ? '?' + params : ''}`;
 
-                    if (response.status === 429) {
-                        if (attempt === retries) {
-                            throw new Error('Превышен лимит запросов (429). Подождите и повторите.');
-                        }
-                        const delay = Math.pow(2, attempt) * 1000;
-                        console.warn(`429: повтор через ${delay}мс (попытка ${attempt + 1}/${retries})`);
-                        await new Promise(r => setTimeout(r, delay));
-                        continue;
+            const response = await fetch(proxyUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: fullUrl,
+                    headers: {
+                        'Authorization': auth,
+                        'Accept-Encoding': 'gzip'
                     }
-
-                    if (!response.ok) {
-                        const errText = await response.text().catch(() => '');
-                        throw new Error(`HTTP ${response.status}: ${errText.substring(0, 200)}`);
-                    }
-
-                    return await response.json();
-                } catch (err) {
-                    if (attempt === retries) throw err;
-                    if (err.message.includes('429') || err.message.includes('HTTP')) throw err;
-                    // Сетевая ошибка — retry
-                    const delay = Math.pow(2, attempt) * 1000;
-                    console.warn(`Сетевая ошибка: повтор через ${delay}мс`, err.message);
-                    await new Promise(r => setTimeout(r, delay));
-                }
-            }
-        }
-
-        // === Пагинация: загрузка всех страниц ===
-        async function fetchAllPages(endpoint) {
-            let allRows = [];
-            let offset = 0;
-            const limit = 1000;
-            const maxPages = 10; // защита от бесконечного цикла
-            let page = 0;
-
-            while (page < maxPages) {
-                const sep = endpoint.includes('?') ? '&' : '?';
-                const pagedEndpoint = `${endpoint}${sep}limit=${limit}&offset=${offset}`;
-                const json = await apiFetch(pagedEndpoint);
-                const rows = json.rows || [];
-                allRows = allRows.concat(rows);
-
-                const totalSize = json.meta?.size || 0;
-                if (rows.length < limit || allRows.length >= totalSize) break;
-                offset += limit;
-                page++;
-            }
-            return allRows;
-        }
-
-        // =====================================================
-        // ЗАГРУЗКА ДАННЫХ
-        // =====================================================
-        async function loadMonitoring() {
-            if (!apiToken) { showConnectionModal(); return; }
-
-            const dateFrom = document.getElementById('date-from').value;
-            const dateTo = document.getElementById('date-to').value;
-            if (!dateFrom || !dateTo) { alert('Выберите период'); return; }
-
-            const btn = document.getElementById('btn-refresh');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>';
-            showLoader('Загрузка мониторинга...', 'Сбор данных из МойСклад');
-
-            try {
-                const momentFrom = `${dateFrom} 00:00:00`;
-                const momentTo = `${dateTo} 23:59:59`;
-                const prev = getPreviousPeriod(dateFrom, dateTo);
-                const prevFrom = `${prev.from} 00:00:00`;
-                const prevTo = `${prev.to} 23:59:59`;
-
-                // Параллельная загрузка всех данных
-                const [
-                    cashinData,
-                    suppliesData,
-                    salesSeries,
-                    ordersSeries,
-                    prevSalesSeries,
-                    profitData,
-                    turnoverData
-                ] = await Promise.all([
-                    // 1. Приходные ордера
-                    apiFetch(`/entity/cashin?filter=moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)}&limit=1000`),
-                    // 2. Приёмки
-                    apiFetch(`/entity/supply?filter=moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)}&limit=100&order=moment,desc`),
-                    // 3. Продажи (текущий период)
-                    apiFetch(`/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`),
-                    // 4. Заказы (текущий период)
-                    apiFetch(`/report/orders/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`),
-                    // 5. Продажи (предыдущий период)
-                    apiFetch(`/report/sales/plotseries?momentFrom=${encodeURIComponent(prevFrom)}&momentTo=${encodeURIComponent(prevTo)}&interval=day`),
-                    // 6. Прибыльность по товарам
-                    fetchAllPages(`/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`),
-                    // 7. Обороты
-                    fetchAllPages(`/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`)
-                ]);
-
-                // Обновляем UI
-                updateCashflowKPI(cashinData);
-                updateSuppliesKPI(suppliesData);
-                updateSalesKPI(salesSeries, prevSalesSeries);
-                updateCashflowChart(cashinData);
-                updateSalesOrdersChart(salesSeries, ordersSeries);
-                updatePeriodComparison(salesSeries, prevSalesSeries, ordersSeries, cashinData);
-                updateSuppliesTable(suppliesData);
-                processProblems(profitData, turnoverData);
-                updateWarehouseSection(turnoverData);
-
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
-            } catch (error) {
-                console.error('Ошибка загрузки:', error);
-                alert('Ошибка загрузки: ' + error.message);
-            } finally {
-                hideLoader();
-                btn.disabled = false;
-                btn.innerHTML = '🔄 Обновить';
-            }
-        }
-
-        // =====================================================
-        // KPI
-        // =====================================================
-        function updateCashflowKPI(data) {
-            const rows = data.rows || [];
-            const total = rows.reduce((s, r) => s + (r.sum || 0), 0) / 100;
-            document.getElementById('kpi-cashin').textContent = formatMoney(total);
-            document.getElementById('kpi-cashin-count').textContent = `${rows.length} платежей`;
-        }
-
-        function updateSuppliesKPI(data) {
-            const rows = data.rows || [];
-            const total = rows.reduce((s, r) => s + (r.sum || 0), 0) / 100;
-            document.getElementById('kpi-supplies').textContent = formatMoney(total);
-            document.getElementById('kpi-supplies-count').textContent = `${rows.length} приёмкок`;
-        }
-
-        function updateSalesKPI(salesSeries, prevSalesSeries) {
-            const current = (salesSeries.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
-            const previous = (prevSalesSeries.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
-            document.getElementById('kpi-sales').textContent = formatMoney(current);
-
-            const trendEl = document.getElementById('kpi-sales-trend');
-            if (previous > 0) {
-                const change = ((current - previous) / previous * 100).toFixed(1);
-                if (change > 0) {
-                    trendEl.className = 'text-xs mt-2 trend-up';
-                    trendEl.textContent = `↑ +${change}% к пред. периоду`;
-                } else if (change < 0) {
-                    trendEl.className = 'text-xs mt-2 trend-down';
-                    trendEl.textContent = `↓ ${change}% к пред. периоду`;
-                } else {
-                    trendEl.className = 'text-xs mt-2 trend-neutral';
-                    trendEl.textContent = '→ Без изменений';
-                }
-            } else {
-                trendEl.textContent = 'Нет данных за пред. период';
-            }
-        }
-
-        // =====================================================
-        // ГРАФИК ДЕНЕЖНОГО ПОТОКА
-        // =====================================================
-        function updateCashflowChart(cashinData) {
-            const rows = cashinData.rows || [];
-            const canvas = document.getElementById('cashflow-chart');
-            if (charts.cashflow) charts.cashflow.destroy();
-
-            // Группируем по дням
-            const byDay = {};
-            rows.forEach(r => {
-                const day = (r.moment || '').substring(0, 10);
-                if (!day) return;
-                byDay[day] = (byDay[day] || 0) + (r.sum || 0) / 100;
-            });
-
-            const labels = Object.keys(byDay).sort();
-            const values = labels.map(d => byDay[d]);
-
-            if (!labels.length) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#64748b';
-                ctx.font = '14px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText('Нет приходных ордеров за период', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-
-            charts.cashflow = new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: labels.map(d => new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })),
-                    datasets: [{
-                        label: 'Приход',
-                        data: values,
-                        backgroundColor: 'rgba(74, 222, 128, 0.6)',
-                        borderColor: '#4ade80',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => formatMoney(ctx.parsed.y) } }
-                    },
-                    scales: {
-                        y: { ticks: { callback: v => formatMoney(v), color: '#94a3b8' }, grid: { color: '#1e293b' } },
-                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // =====================================================
-        // ГРАФИК ПРОДАЖИ vs ЗАКАЗЫ
-        // =====================================================
-        function updateSalesOrdersChart(salesData, ordersData) {
-            const canvas = document.getElementById('sales-orders-chart');
-            if (charts.salesOrders) charts.salesOrders.destroy();
-
-            const sales = salesData.series || [];
-            const orders = ordersData.series || [];
-
-            if (!sales.length && !orders.length) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#64748b';
-                ctx.font = '14px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText('Нет данных за период', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-
-            // Объединяем даты
-            const allDates = new Set([
-                ...sales.map(s => (s.date || '').substring(0, 10)),
-                ...orders.map(o => (o.date || '').substring(0, 10))
-            ]);
-            const labels = Array.from(allDates).filter(Boolean).sort();
-
-            const salesMap = {};
-            sales.forEach(s => { salesMap[(s.date || '').substring(0, 10)] = (s.sum || 0) / 100; });
-            const ordersMap = {};
-            orders.forEach(o => { ordersMap[(o.date || '').substring(0, 10)] = (o.sum || 0) / 100; });
-
-            charts.salesOrders = new Chart(canvas, {
-                type: 'line',
-                data: {
-                    labels: labels.map(d => new Date(d).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })),
-                    datasets: [
-                        {
-                            label: 'Продажи',
-                            data: labels.map(d => salesMap[d] || 0),
-                            borderColor: '#4ade80',
-                            backgroundColor: 'rgba(74,222,128,0.1)',
-                            fill: true,
-                            tension: 0.3,
-                            pointRadius: 2
-                        },
-                        {
-                            label: 'Заказы',
-                            data: labels.map(d => ordersMap[d] || 0),
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'rgba(96,165,250,0.1)',
-                            fill: true,
-                            tension: 0.3,
-                            pointRadius: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8' } },
-                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}` } }
-                    },
-                    scales: {
-                        y: { ticks: { callback: v => formatMoney(v), color: '#94a3b8' }, grid: { color: '#1e293b' } },
-                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // =====================================================
-        // СРАВНЕНИЕ ПЕРИОДОВ
-        // =====================================================
-        function updatePeriodComparison(salesData, prevSalesData, ordersData, cashinData) {
-            const container = document.getElementById('period-comparison');
-
-            const curSales = (salesData.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
-            const prevSales = (prevSalesData.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
-            const curOrders = (ordersData.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
-            const curCashin = (cashinData.rows || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
-            const curChecks = (salesData.series || []).reduce((s, r) => s + (r.quantity || 0), 0);
-            const prevChecks = (prevSalesData.series || []).reduce((s, r) => s + (r.quantity || 0), 0);
-
-            const items = [
-                { label: 'Выручка', current: curSales, previous: prevSales, isMoney: true },
-                { label: 'Кол-во продаж', current: curChecks, previous: prevChecks, isMoney: false },
-                { label: 'Заказы', current: curOrders, previous: 0, isMoney: true, noCompare: true }
-            ];
-
-            container.innerHTML = items.map(item => {
-                let changeHtml = '';
-                if (!item.noCompare && item.previous > 0) {
-                    const change = ((item.current - item.previous) / item.previous * 100).toFixed(1);
-                    const cls = change > 0 ? 'trend-up' : change < 0 ? 'trend-down' : 'trend-neutral';
-                    const arrow = change > 0 ? '↑' : change < 0 ? '↓' : '→';
-                    changeHtml = `<div class="text-sm ${cls} font-medium">${arrow} ${change > 0 ? '+' : ''}${change}%</div>`;
-                } else if (!item.noCompare) {
-                    changeHtml = `<div class="text-sm text-gray-500">Нет данных</div>`;
-                }
-
-                return `
-                    <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                        <div class="text-xs text-gray-400 uppercase mb-2">${item.label}</div>
-                        <div class="text-xl font-bold text-white">${item.isMoney ? formatMoney(item.current) : formatNumber(item.current)}</div>
-                        <div class="mt-2 flex items-center justify-between">
-                            ${changeHtml}
-                            ${!item.noCompare ? `<span class="text-xs text-gray-500">Пред: ${item.isMoney ? formatMoney(item.previous) : formatNumber(item.previous)}</span>` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // =====================================================
-        // ТАБЛИЦА ПРИЁМОК
-        // =====================================================
-        function updateSuppliesTable(data) {
-            const rows = (data.rows || []).slice(0, 15);
-            const container = document.getElementById('supplies-table');
-            document.getElementById('supplies-badge').textContent = `${(data.rows || []).length} шт.`;
-
-            if (!rows.length) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет приёмкок за период</div>';
-                return;
-            }
-
-            container.innerHTML = `
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                            <th class="text-left py-2 px-3">Номер</th>
-                            <th class="text-left py-2 px-3">Дата</th>
-                            <th class="text-left py-2 px-3 hidden md:table-cell">Контрагент</th>
-                            <th class="text-right py-2 px-3">Сумма</th>
-                            <th class="text-center py-2 px-3">Статус</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows.map(s => `
-                            <tr class="table-row border-b border-slate-800/50">
-                                <td class="py-3 px-3 font-medium text-white">${escapeHtml(s.name || '-')}</td>
-                                <td class="py-3 px-3 text-gray-400">${formatDateTime(s.moment)}</td>
-                                <td class="py-3 px-3 text-gray-400 hidden md:table-cell">${s.agent ? 'Контрагент' : '-'}</td>
-                                <td class="py-3 px-3 text-right font-medium text-blue-400">${formatMoney((s.sum || 0) / 100)}</td>
-                                <td class="py-3 px-3 text-center">
-                                    ${s.applicable
-                                        ? '<span class="text-xs px-2 py-0.5 rounded-full badge-success">Проведена</span>'
-                                        : '<span class="text-xs px-2 py-0.5 rounded-full badge-warning">Черновик</span>'}
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
-        // =====================================================
-        // ПРОБЛЕМНЫЕ ТОВАРЫ
-        // =====================================================
-        function processProblems(profitData, turnoverData) {
-            // Убыточные: отрицательная прибыль при наличии продаж
-            problemData.negative = profitData
-                .filter(r => (r.profit || 0) < 0 && (r.sellSum || 0) > 0)
-                .sort((a, b) => a.profit - b.profit)
-                .slice(0, 20);
-
-            // Без движения: есть остаток на конец, но нет расхода и прихода
-            problemData.stagnant = turnoverData
-                .filter(r => {
-                    const endQty = r.onPeriodEnd?.quantity || 0;
-                    const outcome = r.outcome?.quantity || 0;
-                    const income = r.income?.quantity || 0;
-                    return endQty > 0 && outcome === 0 && income === 0;
                 })
-                .sort((a, b) => (b.onPeriodEnd?.sum || 0) - (a.onPeriodEnd?.sum || 0))
-                .slice(0, 20);
-
-            // Обновляем KPI
-            const totalProblems = problemData.negative.length + problemData.stagnant.length;
-            document.getElementById('kpi-problems').textContent = totalProblems;
-            document.getElementById('kpi-problems-detail').textContent = `${problemData.negative.length} убыточных, ${problemData.stagnant.length} без движения`;
-
-            showProblemTab(currentProblemTab);
-        }
-
-        function showProblemTab(tab) {
-            currentProblemTab = tab;
-            const container = document.getElementById('problems-table');
-
-            // Обновляем кнопки
-            document.getElementById('tab-negative').className = tab === 'negative'
-                ? 'text-xs px-3 py-1 rounded-full badge-danger font-medium'
-                : 'text-xs px-3 py-1 rounded-full bg-slate-700 text-gray-400 font-medium';
-            document.getElementById('tab-stagnant').className = tab === 'stagnant'
-                ? 'text-xs px-3 py-1 rounded-full badge-warning font-medium'
-                : 'text-xs px-3 py-1 rounded-full bg-slate-700 text-gray-400 font-medium';
-
-            if (tab === 'negative') {
-                const items = problemData.negative;
-                if (!items.length) {
-                    container.innerHTML = '<div class="text-center py-8 text-green-400">✅ Нет убыточных товаров — отлично!</div>';
-                    return;
-                }
-                container.innerHTML = `
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                                <th class="text-left py-2 px-3">Товар</th>
-                                <th class="text-right py-2 px-3">Выручка</th>
-                                <th class="text-right py-2 px-3">Себестоимость</th>
-                                <th class="text-right py-2 px-3">Убыток</th>
-                                <th class="text-right py-2 px-3 hidden md:table-cell">Продано</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${items.map(r => `
-                                <tr class="table-row border-b border-slate-800/50">
-                                    <td class="py-3 px-3 font-medium text-white">${escapeHtml(r.assortment?.name || '-')}</td>
-                                    <td class="py-3 px-3 text-right text-gray-300">${formatMoney((r.sellSum || 0) / 100)}</td>
-                                    <td class="py-3 px-3 text-right text-orange-400">${formatMoney((r.sellCostSum || 0) / 100)}</td>
-                                    <td class="py-3 px-3 text-right font-bold text-red-400">${formatMoney((r.profit || 0) / 100)}</td>
-                                    <td class="py-3 px-3 text-right text-gray-400 hidden md:table-cell">${formatNumber(r.sellQuantity || 0)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                const items = problemData.stagnant;
-                if (!items.length) {
-                    container.innerHTML = '<div class="text-center py-8 text-green-400">✅ Нет товаров без движения</div>';
-                    return;
-                }
-                container.innerHTML = `
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-xs text-gray-400 uppercase border-b border-slate-700">
-                                <th class="text-left py-2 px-3">Товар</th>
-                                <th class="text-right py-2 px-3">Остаток (шт.)</th>
-                                <th class="text-right py-2 px-3">Заморожено (себест.)</th>
-                                <th class="text-center py-2 px-3">Статус</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${items.map(r => `
-                                <tr class="table-row border-b border-slate-800/50">
-                                    <td class="py-3 px-3 font-medium text-white">${escapeHtml(r.assortment?.name || '-')}</td>
-                                    <td class="py-3 px-3 text-right text-gray-300">${formatNumber(r.onPeriodEnd?.quantity || 0)}</td>
-                                    <td class="py-3 px-3 text-right font-medium text-yellow-400">${formatMoney((r.onPeriodEnd?.sum || 0) / 100)}</td>
-                                    <td class="py-3 px-3 text-center"><span class="text-xs px-2 py-0.5 rounded-full badge-warning">Залежалый</span></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            }
-        }
-
-        // =====================================================
-        // СКЛАДСКАЯ СВОДКА
-        // =====================================================
-        function updateWarehouseSection(turnoverData) {
-            // Топ по расходу
-            const topOutcome = [...turnoverData]
-                .filter(r => (r.outcome?.quantity || 0) > 0)
-                .sort((a, b) => (b.outcome?.quantity || 0) - (a.outcome?.quantity || 0))
-                .slice(0, 8);
-
-            const container = document.getElementById('top-outcome-list');
-            if (!topOutcome.length) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет данных</div>';
-            } else {
-                const maxQty = topOutcome[0]?.outcome?.quantity || 1;
-                container.innerHTML = topOutcome.map(r => {
-                    const qty = r.outcome?.quantity || 0;
-                    const pct = Math.round((qty / maxQty) * 100);
-                    return `
-                        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-sm text-white truncate mr-2">${escapeHtml(r.assortment?.name || '-')}</span>
-                                <span class="text-xs text-gray-400 whitespace-nowrap">${formatNumber(qty)} шт.</span>
-                            </div>
-                            <div class="w-full bg-slate-700 rounded-full h-1.5">
-                                <div class="bg-blue-500 h-1.5 rounded-full" style="width: ${pct}%"></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            // График оборотов (приход vs расход суммарно)
-            const canvas = document.getElementById('warehouse-chart');
-            if (charts.warehouse) charts.warehouse.destroy();
-
-            const totalIncome = turnoverData.reduce((s, r) => s + (r.income?.quantity || 0), 0);
-            const totalOutcome = turnoverData.reduce((s, r) => s + (r.outcome?.quantity || 0), 0);
-            const startStock = turnoverData.reduce((s, r) => s + (r.onPeriodStart?.quantity || 0), 0);
-            const endStock = turnoverData.reduce((s, r) => s + (r.onPeriodEnd?.quantity || 0), 0);
-
-            charts.warehouse = new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: ['Нач. остаток', 'Приход', 'Расход', 'Кон. остаток'],
-                    datasets: [{
-                        label: 'Количество (шт.)',
-                        data: [startStock, totalIncome, totalOutcome, endStock],
-                        backgroundColor: [
-                            'rgba(148, 163, 184, 0.6)',
-                            'rgba(74, 222, 128, 0.6)',
-                            'rgba(248, 113, 113, 0.6)',
-                            'rgba(96, 165, 250, 0.6)'
-                        ],
-                        borderColor: ['#94a3b8', '#4ade80', '#f87171', '#60a5fa'],
-                        borderWidth: 1,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => `${formatNumber(ctx.parsed.x)} шт.` } }
-                    },
-                    scales: {
-                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
-                        y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
-                    }
-                }
             });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errText.substring(0, 200)}`);
+            }
+
+            return await response.json();
         }
 
-        // =====================================================
-        // ИНИЦИАЛИЗАЦИЯ
-        // =====================================================
-        window.addEventListener('load', () => {
-            const today = new Date();
-            const past = new Date();
-            past.setDate(today.getDate() - 29);
-            document.getElementById('date-from').value = dateToLocalISO(past);
-            document.getElementById('date-to').value = dateToLocalISO(today);
+        // ============ LOGGING ============
+        function addLog(msg, type = 'info') {
+            const el = document.getElementById('logEntries');
+            const colors = { info: 'text-gray-600', ok: 'text-green-600', err: 'text-red-600' };
+            const icons = { info: 'ℹ️', ok: '✅', err: '❌' };
+            const time = new Date().toLocaleTimeString();
+            el.innerHTML = `<div class="${colors[type]}"><span class="text-gray-400">[${time}]</span> ${icons[type]} ${msg}</div>` + el.innerHTML;
+        }
 
-            if (apiToken) {
-                loadMonitoring();
-            } else {
-                showConnectionModal();
+        // ============ CONNECTION TEST ============
+        async function testConnection() {
+            const statusEl = document.getElementById('connectionStatus');
+            const msgEl = document.getElementById('settingsMsg');
+            try {
+                addLog('Проверка подключения...');
+                const data = await apiRequest('/entity/product', 'limit=1');
+                statusEl.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm status-ok';
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-current"></span><span>Подключено</span>';
+                msgEl.className = 'mt-3 text-sm text-green-600';
+                msgEl.textContent = '✅ Подключение успешно!';
+                msgEl.classList.remove('hidden');
+                addLog('Подключение успешно', 'ok');
+            } catch (e) {
+                statusEl.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm status-err';
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-current"></span><span>Ошибка</span>';
+                msgEl.className = 'mt-3 text-sm text-red-600';
+                msgEl.textContent = '❌ ' + e.message;
+                msgEl.classList.remove('hidden');
+                addLog('Ошибка: ' + e.message, 'err');
             }
-        });
+        }
+
+        // ============ FORMAT HELPERS ============
+        function formatMoney(kopecks) {
+            if (kopecks == null) return '—';
+            return (kopecks / 100).toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' });
+        }
+
+        function formatNum(n) {
+            if (n == null) return '—';
+            return Number(n).toLocaleString('ru-RU');
+        }
+
+        function formatDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString('ru-RU');
+        }
+
+        // ============ TABS ============
+        function switchTab(name) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('tab-active'));
+            document.getElementById('content-' + name).classList.remove('hidden');
+            document.getElementById('tab-' + name).classList.add('tab-active');
+        }
+
+        // ============ LOAD ALL ============
+        async function loadAllData() {
+            addLog('Загрузка всех данных...');
+            await Promise.allSettled([
+                loadSalesPlot(),
+                loadProfit(),
+                loadTurnover(),
+                loadCashIn(),
+                loadSupply()
+            ]);
+            addLog('Все данные загружены', 'ok');
+        }
+
+        // ============ SALES PLOT ============
+        async function loadSalesPlot() {
+            try {
+                addLog('Загрузка показателей продаж...');
+                const now = new Date();
+                const from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const momentFrom = from.toISOString().slice(0, 19).replace('T', ' ');
+                const momentTo = now.toISOString().slice(0, 19).replace('T', ' ');
+
+                const data = await apiRequest('/report/sales/plotseries',
+                    `momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`);
+
+                const series = data.series || [];
+                let totalSum = 0, totalQty = 0;
+                series.forEach(s => { totalSum += s.sum || 0; totalQty += s.quantity || 0; });
+
+                document.getElementById('stat-sales-sum').textContent = formatMoney(totalSum);
+                document.getElementById('stat-sales-count').textContent = `${formatNum(totalQty)} шт.`;
+
+                // Render chart
+                const maxSum = Math.max(...series.map(s => s.sum || 0), 1);
+                const chartEl = document.getElementById('salesChart');
+                chartEl.innerHTML = series.map(s => {
+                    const pct = ((s.sum || 0) / maxSum * 100).toFixed(1);
+                    return `<div class="flex items-center gap-3">
+                        <div class="w-24 text-xs text-gray-500 shrink-0">${formatDate(s.date)}</div>
+                        <div class="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
+                            <div class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+                        </div>
+                        <div class="w-28 text-right text-sm font-medium text-gray-700 shrink-0">${formatMoney(s.sum)}</div>
+                    </div>`;
+                }).join('');
+
+                addLog(`Продажи: ${series.length} дней загружено`, 'ok');
+            } catch (e) {
+                addLog('Ошибка продаж: ' + e.message, 'err');
+            }
+        }
+
+        // ============ ORDERS PLOT ============
+        async function loadOrdersPlot() {
+            try {
+                const now = new Date();
+                const from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const momentFrom = from.toISOString().slice(0, 19).replace('T', ' ');
+                const momentTo = now.toISOString().slice(0, 19).replace('T', ' ');
+
+                const data = await apiRequest('/report/orders/plotseries',
+                    `momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`);
+
+                const series = data.series || [];
+                let totalSum = 0, totalQty = 0;
+                series.forEach(s => { totalSum += s.sum || 0; totalQty += s.quantity || 0; });
+
+                document.getElementById('stat-orders-sum').textContent = formatMoney(totalSum);
+                document.getElementById('stat-orders-count').textContent = `${formatNum(totalQty)} шт.`;
+                addLog('Заказы загружены', 'ok');
+            } catch (e) {
+                addLog('Ошибка заказов: ' + e.message, 'err');
+            }
+        }
+
+        // ============ PROFIT ============
+        async function loadProfit() {
+            try {
+                addLog('Загрузка прибыльности...');
+                const data = await apiRequest('/report/profit/byproduct', 'limit=50');
+                const rows = data.rows || [];
+
+                let totalProfit = 0;
+                rows.forEach(r => totalProfit += r.profit || 0);
+                document.getElementById('stat-profit').textContent = formatMoney(totalProfit);
+
+                const tbody = document.getElementById('profitTableBody');
+                if (rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400">Нет данных</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(r => {
+                    const name = r.assortment?.name || '—';
+                    const marginPct = r.margin != null ? (r.margin * 100).toFixed(1) + '%' : '—';
+                    return `<tr class="border-b border-gray-50 hover:bg-gray-50">
+                        <td class="py-2.5 px-3 font-medium text-gray-800">${name}</td>
+                        <td class="py-2.5 px-3 text-right">${formatNum(r.sellQuantity)}</td>
+                        <td class="py-2.5 px-3 text-right">${formatMoney(r.sellSum)}</td>
+                        <td class="py-2.5 px-3 text-right text-gray-500">${formatMoney(r.sellCostSum)}</td>
+                        <td class="py-2.5 px-3 text-right font-medium text-green-600">${formatMoney(r.profit)}</td>
+                        <td class="py-2.5 px-3 text-right">${marginPct}</td>
+                    </tr>`;
+                }).join('');
+
+                if (rows.length > 0) {
+                    const avgMargin = rows.reduce((s, r) => s + (r.salesMargin || 0), 0) / rows.length;
+                    document.getElementById('stat-margin').textContent = `Ср. рентабельность: ${(avgMargin * 100).toFixed(1)}%`;
+                }
+
+                addLog(`Прибыльность: ${rows.length} товаров`, 'ok');
+            } catch (e) {
+                addLog('Ошибка прибыльности: ' + e.message, 'err');
+            }
+        }
+
+        // ============ TURNOVER ============
+        async function loadTurnover() {
+            try {
+                addLog('Загрузка оборотов...');
+                const data = await apiRequest('/report/turnover/all', 'limit=50');
+                const rows = data.rows || [];
+
+                const tbody = document.getElementById('turnoverTableBody');
+                if (rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-400">Нет данных</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(r => {
+                    const name = r.assortment?.name || '—';
+                    return `<tr class="border-b border-gray-50 hover:bg-gray-50">
+                        <td class="py-2.5 px-3 font-medium text-gray-800">${name}</td>
+                        <td class="py-2.5 px-3 text-right">${formatNum(r.onPeriodStart?.quantity)} / ${formatMoney(r.onPeriodStart?.sum)}</td>
+                        <td class="py-2.5 px-3 text-right text-green-600">+${formatNum(r.income?.quantity)}</td>
+                        <td class="py-2.5 px-3 text-right text-red-500">-${formatNum(r.outcome?.quantity)}</td>
+                        <td class="py-2.5 px-3 text-right font-medium">${formatNum(r.onPeriodEnd?.quantity)} / ${formatMoney(r.onPeriodEnd?.sum)}</td>
+                    </tr>`;
+                }).join('');
+
+                addLog(`Обороты: ${rows.length} позиций`, 'ok');
+            } catch (e) {
+                addLog('Ошибка оборотов: ' + e.message, 'err');
+            }
+        }
+
+        // ============ CASH IN ============
+        async function loadCashIn() {
+            try {
+                addLog('Загрузка приходных ордеров...');
+                const data = await apiRequest('/entity/cashin', 'limit=50');
+                const rows = data.rows || [];
+
+                let totalSum = 0;
+                rows.forEach(r => totalSum += r.sum || 0);
+                document.getElementById('stat-cashin-sum').textContent = formatMoney(totalSum);
+                document.getElementById('stat-cashin-count').textContent = `${rows.length} шт.`;
+
+                const tbody = document.getElementById('cashinTableBody');
+                if (rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-400">Нет данных</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(r => {
+                    const agentName = r.agent?.meta?.href ? 'Контрагент' : '—';
+                    const applicable = r.applicable
+                        ? '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">Да</span>'
+                        : '<span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">Нет</span>';
+                    return `<tr class="border-b border-gray-50 hover:bg-gray-50">
+                        <td class="py-2.5 px-3 font-medium text-gray-800">${r.name || '—'}</td>
+                        <td class="py-2.5 px-3">${formatDate(r.moment)}</td>
+                        <td class="py-2.5 px-3 text-gray-600">${agentName}</td>
+                        <td class="py-2.5 px-3 text-right font-medium">${formatMoney(r.sum)}</td>
+                        <td class="py-2.5 px-3 text-gray-600 text-xs max-w-[200px] truncate">${r.paymentPurpose || '—'}</td>
+                        <td class="py-2.5 px-3 text-center">${applicable}</td>
+                    </tr>`;
+                }).join('');
+
+                addLog(`Приходные ордера: ${rows.length} шт.`, 'ok');
+            } catch (e) {
+                addLog('Ошибка приходных ордеров: ' + e.message, 'err');
+            }
+        }
+
+        // ============ SUPPLY ============
+        async function loadSupply() {
+            try {
+                addLog('Загрузка приёмкок...');
+                const data = await apiRequest('/entity/supply', 'limit=50');
+                const rows = data.rows || [];
+
+                const tbody = document.getElementById('supplyTableBody');
+                if (rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-400">Нет данных</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(r => {
+                    const applicable = r.applicable
+                        ? '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">Да</span>'
+                        : '<span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">Нет</span>';
+                    return `<tr class="border-b border-gray-50 hover:bg-gray-50">
+                        <td class="py-2.5 px-3 font-medium text-gray-800">${r.name || '—'}</td>
+                        <td class="py-2.5 px-3">${formatDate(r.moment)}</td>
+                        <td class="py-2.5 px-3 text-gray-600">${r.agent?.meta ? 'Поставщик' : '—'}</td>
+                        <td class="py-2.5 px-3 text-right font-medium">${formatMoney(r.sum)}</td>
+                        <td class="py-2.5 px-3 text-center">${applicable}</td>
+                    </tr>`;
+                }).join('');
+
+                addLog(`Приёмки: ${rows.length} шт.`, 'ok');
+            } catch (e) {
+                addLog('Ошибка приёмкок: ' + e.message, 'err');
+            }
+        }
+
+        // ============ SETTINGS PERSISTENCE ============
+        function saveSettings() {
+            localStorage.setItem('ms_proxy_url', getProxyUrl());
+            localStorage.setItem('ms_auth_token', document.getElementById('authToken').value.trim());
+            const msgEl = document.getElementById('settingsMsg');
+            msgEl.className = 'mt-3 text-sm text-green-600';
+            msgEl.textContent = '💾 Настройки сохранены';
+            msgEl.classList.remove('hidden');
+            setTimeout(() => msgEl.classList.add('hidden'), 3000);
+        }
+
+        function loadSettings() {
+            const url = localStorage.getItem('ms_proxy_url');
+            const token = localStorage.getItem('ms_auth_token');
+            if (url) document.getElementById('proxyUrl').value = url;
+            if (token) document.getElementById('authToken').value = token;
+        }
+
+        // ============ INIT ============
+        loadSettings();
     </script>
 </body>
 </html>
