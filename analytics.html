@@ -27,7 +27,7 @@
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
         .chart-container { position: relative; height: 600px; width: 100%; }
         .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-
+        
         /* Цвета квадрантов */
         .q-ax { color: #4ade80; } .q-ay { color: #facc15; } .q-az { color: #f87171; }
         .q-bx { color: #60a5fa; } .q-by { color: #a78bfa; } .q-bz { color: #fb923c; }
@@ -100,7 +100,7 @@
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h2 class="text-xl md:text-2xl font-bold text-white">ABC-XYZ Анализ</h2>
-
+                
                 <div class="flex flex-wrap items-center gap-3">
                     <!-- РУЧНОЙ ВЫБОР ДИАПАЗОНА -->
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
@@ -113,7 +113,7 @@
                         <input type="checkbox" id="abc-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900">
                         <span class="text-sm text-gray-300">Построить матрицу</span>
                     </label>
-
+                    
                     <button onclick="runAnalysis()" id="btn-analyze" disabled class="px-4 py-2 text-xs font-semibold bg-slate-700 text-gray-400 rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50">
                         🚀 Сформировать
                     </button>
@@ -122,7 +122,7 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
-
+            
             <!-- Плейсхолдер -->
             <div id="analysis-placeholder" class="flex flex-col items-center justify-center h-[60vh] text-center">
                 <div class="text-6xl mb-4">📉</div>
@@ -132,7 +132,7 @@
 
             <!-- Результаты анализа -->
             <div id="analysis-results" class="hidden space-y-6">
-
+                
                 <!-- График -->
                 <div class="glass p-6">
                     <div class="flex justify-between items-center mb-4">
@@ -238,7 +238,7 @@
             </div>
             <div class="overflow-y-auto scrollbar-thin pr-2 space-y-4 text-sm text-gray-300">
                 <p>Матрица совмещает два показателя: прибыльность товара (ABC) и стабильность его продаж (XYZ).</p>
-
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-slate-800/50 p-4 rounded-lg">
                         <h4 class="font-bold text-white mb-2">Ось Y: ABC (Прибыльность)</h4>
@@ -317,7 +317,7 @@
         // =====================================================
         // CONFIG & STATE
         // =====================================================
-        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev'; // Обновите URL, если изменился
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let apiToken = localStorage.getItem('moysklad_token') || '';
         let abcChart = null;
@@ -326,7 +326,7 @@
         // UI Helpers
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
         const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
+        
         const checkbox = document.getElementById('abc-checkbox');
         const btnAnalyze = document.getElementById('btn-analyze');
         const btnResetZoom = document.getElementById('btn-reset-zoom');
@@ -336,7 +336,7 @@
             const today = new Date();
             const past = new Date();
             past.setDate(today.getDate() - 90);
-
+            
             document.getElementById('date-to').valueAsDate = today;
             document.getElementById('date-from').valueAsDate = past;
 
@@ -364,82 +364,14 @@
         function hideLoader() { document.getElementById('global-loader').classList.remove('active'); }
         function showConnectionModal() { document.getElementById('api-token').value = apiToken; document.getElementById('connection-modal').classList.add('active'); }
         function closeConnectionModal() { document.getElementById('connection-modal').classList.remove('active'); }
-        function saveToken() {
-            apiToken = document.getElementById('api-token').value.trim();
-            localStorage.setItem('moysklad_token', apiToken);
-            closeConnectionModal();
+        function saveToken() { 
+            apiToken = document.getElementById('api-token').value.trim(); 
+            localStorage.setItem('moysklad_token', apiToken); 
+            closeConnectionModal(); 
         }
-
+        
         function showChartHelp() {
             document.getElementById('help-modal').classList.add('active');
-        }
-
-        // =====================================================
-        // API: Ограничитель параллельных запросов (копия из index.html)
-        // =====================================================
-        const REQUEST_LIMIT_ANALYTICS = 3; // Меньше лимит для аналитики, т.к. она может быть тяжелее
-        let activeRequestsAnalytics = 0;
-        const requestQueueAnalytics = [];
-
-        function executeRequestAnalytics(requestFn) {
-            return new Promise((resolve, reject) => {
-                const task = { requestFn, resolve, reject };
-
-                if (activeRequestsAnalytics < REQUEST_LIMIT_ANALYTICS) {
-                    startRequestAnalytics(task);
-                } else {
-                    requestQueueAnalytics.push(task);
-                }
-            });
-        }
-
-        function startRequestAnalytics(task) {
-            activeRequestsAnalytics++;
-            task.requestFn()
-                .then(result => {
-                    task.resolve(result);
-                })
-                .catch(error => {
-                    task.reject(error);
-                })
-                .finally(() => {
-                    activeRequestsAnalytics--;
-                    if (requestQueueAnalytics.length > 0) {
-                        startRequestAnalytics(requestQueueAnalytics.shift());
-                    }
-                });
-        }
-
-        // =====================================================
-        // API: Кэширование на клиенте (копия из index.html)
-        // =====================================================
-        function cacheGet(key) {
-            try {
-                const cached = sessionStorage.getItem(key);
-                if (!cached) return null;
-                const parsed = JSON.parse(cached);
-                if (parsed.expires < Date.now()) {
-                    sessionStorage.removeItem(key);
-                    return null;
-                }
-                return parsed.data;
-            } catch (e) {
-                console.warn("Cache get error:", e);
-                sessionStorage.removeItem(key);
-                return null;
-            }
-        }
-
-        function cacheSet(key, data, ttlMinutes = 10) { // Увеличен TTL для аналитики
-            try {
-                const item = {
-                    data: data,
-                    expires: Date.now() + ttlMinutes * 60 * 1000
-                };
-                sessionStorage.setItem(key, JSON.stringify(item));
-            } catch (e) {
-                console.warn("Cache set error:", e);
-            }
         }
 
         // =====================================================
@@ -459,11 +391,6 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url, headers, method: 'GET' })
             });
-             if (response.status === 429) {
-                console.warn("Received 429 in analytics, retrying after delay...");
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                return proxyFetch(url, headers);
-            }
             if (!response.ok) throw new Error(`API Error ${response.status}`);
             return response;
         }
@@ -472,16 +399,16 @@
             let allRows = [];
             let offset = 0;
             const limit = 1000;
-
+            
             while (true) {
                 const separator = baseUrl.includes('?') ? '&' : '?';
                 const url = `${baseUrl}${separator}limit=${limit}&offset=${offset}`;
-
+                
                 const res = await proxyFetch(url, headers);
                 const json = await res.json();
                 const rows = json.rows || [];
                 allRows = allRows.concat(rows);
-
+                
                 if (rows.length < limit || allRows.length >= (json.meta?.size || 0)) break;
                 offset += limit;
             }
@@ -489,43 +416,28 @@
         }
 
         // =====================================================
-        // ANALYSIS LOGIC (Оптимизированное)
+        // ANALYSIS LOGIC
         // =====================================================
         async function runAnalysis() {
             if (!apiToken) { showConnectionModal(); return; }
-
+            
             const dateFrom = document.getElementById('date-from').value;
             const dateTo = document.getElementById('date-to').value;
-
+            
             if (!dateFrom || !dateTo) { alert('Выберите диапазон дат'); return; }
 
             showLoader('Загрузка данных...', 'Сбор информации о прибыльности и оборотах');
-
+            
             try {
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Формируем кэш-ключи
-                const cacheKeyProfit = `profit_by_product_${momentFrom}_${momentTo}`;
-                const cacheKeyTurnover = `turnover_all_${momentFrom}_${momentTo}`;
-
-                // Проверяем кэш
-                let [profitRows, turnoverRows] = await Promise.all([
-                    cacheGet(cacheKeyProfit) || executeRequestAnalytics(() => fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)),
-                    cacheGet(cacheKeyTurnover) || executeRequestAnalytics(() => fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers))
+                // Параллельная загрузка
+                const [profitRows, turnoverRows] = await Promise.all([
+                    fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers),
+                    fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)
                 ]);
-
-                // Кэшируем результаты, если они были загружены
-                if (!Array.isArray(profitRows)) {
-                    cacheSet(cacheKeyProfit, profitRows);
-                    profitRows = JSON.parse(profitRows);
-                }
-                if (!Array.isArray(turnoverRows)) {
-                    cacheSet(cacheKeyTurnover, turnoverRows);
-                    turnoverRows = JSON.parse(turnoverRows);
-                }
-
 
                 processData(profitRows, turnoverRows);
 
@@ -544,10 +456,10 @@
             profitRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
-
+                
                 const profit = (row.profit || 0) / 100;
                 const revenue = (row.sellSum || 0) / 100;
-
+                
                 productMap.set(id, {
                     name: row.assortment.name || 'Без названия',
                     profit: profit,
@@ -568,7 +480,7 @@
 
                 let avgStock = (startQty + endQty) / 2;
                 if (avgStock <= 0) avgStock = 0.1; // Защита от деления на 0
-
+                
                 // Оборачиваемость = Продажи / Средний остаток
                 const turnoverRate = outcomeQty > 0 ? (outcomeQty / avgStock) : 0;
 
@@ -588,22 +500,22 @@
 
             // 3. Классификация
             const items = Array.from(productMap.values()).filter(i => i.revenue > 0 || i.profit !== 0 || i.turnoverRate > 0);
-
+            
             // Сортировка по прибыли для ABC
             items.sort((a, b) => b.profit - a.profit);
-
+            
             const totalProfit = items.reduce((sum, i) => sum + Math.max(0, i.profit), 0);
             let cumulativeProfit = 0;
-
+            
             items.forEach(item => {
                 // ABC
                 const profitShare = totalProfit > 0 ? (Math.max(0, item.profit) / totalProfit) * 100 : 0;
                 cumulativeProfit += profitShare;
-
+                
                 if (cumulativeProfit <= 80) item.abc = 'A';
                 else if (cumulativeProfit <= 95) item.abc = 'B';
                 else item.abc = 'C';
-
+                
                 item.profitShare = profitShare;
 
                 // XYZ (по оборачиваемости)
@@ -696,12 +608,12 @@
                         legend: { position: 'bottom', labels: { color: '#94a3b8' } }
                     },
                     scales: {
-                        x: {
+                        x: { 
                             title: { display: true, text: 'Оборачиваемость (Стабильность)', color: '#94a3b8' },
                             grid: { color: '#334155' },
                             ticks: { color: '#94a3b8' }
                         },
-                        y: {
+                        y: { 
                             title: { display: true, text: 'Доля в прибыли (%)', color: '#94a3b8' },
                             grid: { color: '#334155' },
                             ticks: { color: '#94a3b8' }
@@ -713,7 +625,7 @@
 
         function renderTable(items) {
             const tbody = document.getElementById('abc-table-body');
-
+            
             tbody.innerHTML = items.map(item => {
                 const qClass = `q-${item.abc.toLowerCase()}${item.xyz.toLowerCase()}`;
                 return `
@@ -742,7 +654,7 @@
                 currentSortCol = col;
                 currentSortDir = 'desc';
             }
-
+            
             // Обновляем иконки
             document.querySelectorAll('.sort-icon').forEach(el => {
                 el.classList.remove('active');
@@ -797,3 +709,4 @@
     </script>
 </body>
 </html>
+
