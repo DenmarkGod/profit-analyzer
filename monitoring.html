@@ -2,678 +2,731 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мониторинг — МойСклад</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мониторинг | Profit Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade { animation: fadeIn 0.5s ease-out forwards; }
-        .animate-fade-delay-1 { animation-delay: 0.1s; opacity: 0; }
-        .animate-fade-delay-2 { animation-delay: 0.2s; opacity: 0; }
-        .animate-fade-delay-3 { animation-delay: 0.3s; opacity: 0; }
-        .animate-fade-delay-4 { animation-delay: 0.4s; opacity: 0; }
-        .bar { transition: height 0.8s ease-out; }
-        .pulse-dot { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        body { background: #0f172a; color: #e2e8f0; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; }
+        .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; text-decoration: none; display: flex; align-items: center; gap: 0.75rem; }
+        .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
+        .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
+        .kpi-card { transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); border-color: rgba(59, 130, 246, 0.3); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input[type="date"], select { color-scheme: dark; }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .chart-container { position: relative; height: 300px; }
+        .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        /* Live-индикатор */
+        .pulse-dot { width: 9px; height: 9px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
+        .pulse-dot.paused { background: #f59e0b; animation: none; }
+        .pulse-dot.off { background: #64748b; animation: none; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(74,222,128,0.5); } 50% { opacity: 0.6; transform: scale(1.15); box-shadow: 0 0 0 6px rgba(74,222,128,0); } }
+
+        /* Лента операций */
+        .feed-item { transition: all 0.25s ease; animation: slideIn 0.4s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+        .feed-item:hover { border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.06); }
+
+        /* Типы документов */
+        .doc-cashin  { border-left: 3px solid #4ade80; }
+        .doc-supply  { border-left: 3px solid #60a5fa; }
+        .doc-demand  { border-left: 3px solid #facc15; }
+        .doc-unknown { border-left: 3px solid #64748b; }
+
+        .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+        .badge-ok   { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .badge-warn { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .badge-info { background: rgba(96,165,250,0.15); color: #60a5fa; }
+
+        .alert-card { transition: all 0.2s ease; }
+        .alert-card:hover { transform: translateX(4px); }
+
+        /* Тумблер автообновления */
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: #475569; transition: .3s; border-radius: 22px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(18px); }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen">
+<body class="flex h-screen overflow-hidden">
 
-    <!-- Header -->
-    <header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
+    <!-- БОКОВОЕ МЕНЮ -->
+    <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col hidden md:flex z-20">
+        <div class="p-6 border-b border-slate-800">
+            <h1 class="text-xl font-bold gradient-text">Profit Analyzer</h1>
+            <p class="text-xs text-gray-500 mt-1">Управленческий учет ИП</p>
+        </div>
+        <nav class="flex-1 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+            <a href="index.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+                <span class="text-lg">📊</span> Главная
+            </a>
+            <a href="analytics.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+                <span class="text-lg">🔍</span> Аналитика
+            </a>
+            <a href="monitoring.html" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
+                <span class="text-lg">📡</span> Мониторинг
+            </a>
+            <a href="finance.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+                <span class="text-lg">💰</span> Финансы
+            </a>
+            <a href="stock.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+                <span class="text-lg">📦</span> Склад
+            </a>
+            <a href="clients.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
+                <span class="text-lg">👥</span> Клиенты
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="showConnectionModal()" class="w-full text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-slate-800 transition">
+                <span>🔌</span> Настройки API
+            </button>
+        </div>
+    </aside>
+
+    <!-- МОБИЛЬНОЕ МЕНЮ -->
+    <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto">
+        <a href="index.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Главная</a>
+        <a href="analytics.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">🔍</span>Аналитика</a>
+        <a href="monitoring.html" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">📡</span>Мониторинг</a>
+        <a href="finance.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Финансы</a>
+        <a href="stock.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Склад</a>
+    </div>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- Верхняя панель -->
+        <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl font-bold text-white">Мониторинг</h1>
-                    <span class="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">МойСклад API v1.2</span>
+                    <div id="live-dot" class="pulse-dot"></div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white">Мониторинг</h2>
+                    <span id="live-status" class="text-xs text-gray-500 bg-slate-800 px-2 py-1 rounded hidden md:inline">
+                        Обновлено: <span id="last-update">—</span>
+                    </span>
                 </div>
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="pulse-dot w-2 h-2 bg-green-500 rounded-full"></span>
-                        <span class="text-sm text-green-400">Онлайн</span>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Быстрые периоды -->
+                    <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-lg">
+                        <button onclick="setPeriod('today', this)" class="period-btn px-3 py-1 text-xs rounded bg-blue-600 text-white">Сегодня</button>
+                        <button onclick="setPeriod('week', this)" class="period-btn px-3 py-1 text-xs rounded text-gray-300">Неделя</button>
+                        <button onclick="setPeriod('month', this)" class="period-btn px-3 py-1 text-xs rounded text-gray-300">Месяц</button>
                     </div>
-                    <span class="text-sm text-gray-400" id="currentTime"></span>
-                    <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                        Обновить
+
+                    <!-- Ручной диапазон -->
+                    <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
+                        <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
+                        <span class="text-gray-500">—</span>
+                        <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
+                    </div>
+
+                    <!-- Автообновление -->
+                    <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg">
+                        <span class="text-xs text-gray-300">Live</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-refresh" onchange="toggleAutoRefresh()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <button onclick="loadMonitoring()" id="btn-refresh" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
+                        🔄 Обновить
                     </button>
                 </div>
             </div>
         </div>
-    </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Область контента -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin space-y-6">
 
-        <!-- KPI Cards -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Прибыль -->
-            <div class="animate-fade animate-fade-delay-1 bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600/50 transition-colors">
+            <!-- KPI -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="kpi-card glass p-5">
+                    <div class="text-xs text-gray-400 uppercase">💵 Входящие платежи</div>
+                    <div id="kpi-cashin-sum" class="text-2xl md:text-3xl font-bold text-green-400 mt-2">0 ₽</div>
+                    <div id="kpi-cashin-count" class="text-xs mt-2 text-gray-500">0 приходных ордеров</div>
+                </div>
+                <div class="kpi-card glass p-5">
+                    <div class="text-xs text-gray-400 uppercase">📥 Приёмки товара</div>
+                    <div id="kpi-supply-sum" class="text-2xl md:text-3xl font-bold text-blue-400 mt-2">0 ₽</div>
+                    <div id="kpi-supply-count" class="text-xs mt-2 text-gray-500">0 приёмок</div>
+                </div>
+                <div class="kpi-card glass p-5">
+                    <div class="text-xs text-gray-400 uppercase">📄 Всего операций</div>
+                    <div id="kpi-ops-count" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
+                    <div id="kpi-ops-sub" class="text-xs mt-2 text-gray-500">за период</div>
+                </div>
+                <div class="kpi-card glass p-5">
+                    <div class="text-xs text-gray-400 uppercase">⚠️ Требуют внимания</div>
+                    <div id="kpi-alerts" class="text-2xl md:text-3xl font-bold text-amber-400 mt-2">0</div>
+                    <div id="kpi-alerts-sub" class="text-xs mt-2 text-gray-500">алертов</div>
+                </div>
+            </div>
+
+            <!-- График активности + Алерты -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 glass p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">📈 Активность операций</h3>
+                    <div class="chart-container">
+                        <canvas id="activity-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white">🚨 Алерты</h3>
+                        <span id="alerts-badge" class="badge badge-warn hidden">0</span>
+                    </div>
+                    <div id="alerts-list" class="space-y-2 max-h-[300px] overflow-y-auto scrollbar-thin">
+                        <div class="text-gray-500 text-center py-8 text-sm">Загрузка...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Живая лента операций -->
+            <div class="glass p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm text-gray-400">Прибыль за период</span>
-                    <div class="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                        </svg>
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-lg font-bold text-white">🔴 Лента операций</h3>
+                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                            <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span>Платежи
+                            <span class="inline-block w-2 h-2 rounded-full bg-blue-400 ml-2"></span>Приёмки
+                        </div>
                     </div>
+                    <span id="feed-count" class="text-xs text-gray-500">0 записей</span>
                 </div>
-                <p class="text-3xl font-bold text-white" id="totalProfit">₽ 1 868 400 300</p>
-                <div class="flex items-center gap-1 mt-2">
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
-                    </svg>
-                    <span class="text-sm text-green-500">+12.5%</span>
-                    <span class="text-sm text-gray-500">vs прошлый период</span>
+                <div id="feed-list" class="space-y-2 max-h-[520px] overflow-y-auto scrollbar-thin">
+                    <div class="text-gray-500 text-center py-8">Загрузка...</div>
                 </div>
             </div>
 
-            <!-- Сумма продаж -->
-            <div class="animate-fade animate-fade-delay-2 bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600/50 transition-colors">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm text-gray-400">Сумма продаж</span>
-                    <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-3xl font-bold text-white" id="totalSales">₽ 313 495 109</p>
-                <div class="flex items-center gap-1 mt-2">
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
-                    </svg>
-                    <span class="text-sm text-green-500">+8.3%</span>
-                    <span class="text-sm text-gray-500">vs прошлый период</span>
-                </div>
-            </div>
-
-            <!-- Приходные ордера -->
-            <div class="animate-fade animate-fade-delay-3 bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600/50 transition-colors">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm text-gray-400">Приходные ордера</span>
-                    <div class="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-3xl font-bold text-white" id="cashInTotal">₽ 1 873 189</p>
-                <div class="flex items-center gap-1 mt-2">
-                    <span class="text-sm text-gray-400">3 документа за период</span>
-                </div>
-            </div>
-
-            <!-- Рентабельность -->
-            <div class="animate-fade animate-fade-delay-4 bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600/50 transition-colors">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm text-gray-400">Ср. рентабельность</span>
-                    <div class="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                </div>
-                <p class="text-3xl font-bold text-white" id="avgMargin">66.7%</p>
-                <div class="flex items-center gap-1 mt-2">
-                    <span class="text-sm text-gray-400">Рентабельность продаж: 40%</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Charts Row -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Обороты по товарам (Bar Chart) -->
-            <div class="lg:col-span-2 bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-lg font-semibold text-white">Обороты по товарам</h2>
-                    <div class="flex gap-2">
-                        <button class="text-xs px-3 py-1 rounded bg-blue-600 text-white">Месяц</button>
-                        <button class="text-xs px-3 py-1 rounded bg-gray-800 text-gray-400 hover:bg-gray-700">Квартал</button>
-                        <button class="text-xs px-3 py-1 rounded bg-gray-800 text-gray-400 hover:bg-gray-700">Год</button>
-                    </div>
-                </div>
-                <div class="flex items-end justify-between h-48 gap-3 px-4">
-                    <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-full bg-blue-600/80 rounded-t bar" style="height: 60%"></div>
-                        <span class="text-xs text-gray-500">Товар 1</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-full bg-blue-500/80 rounded-t bar" style="height: 85%"></div>
-                        <span class="text-xs text-gray-500">Товар 2</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-full bg-blue-400/80 rounded-t bar" style="height: 45%"></div>
-                        <span class="text-xs text-gray-500">Товар 3</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-full bg-purple-500/80 rounded-t bar" style="height: 70%"></div>
-                        <span class="text-xs text-gray-500">Мод. 1</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-full bg-purple-400/80 rounded-t bar" style="height: 30%"></div>
-                        <span class="text-xs text-gray-500">Мод. 2</span>
-                    </div>
-                    <div class="flex flex-col items-center gap-2 flex-1">
-                        <div class="w-full bg-green-500/80 rounded-t bar" style="height: 55%"></div>
-                        <span class="text-xs text-gray-500">Услуга</span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-center gap-6 mt-4 text-xs text-gray-400">
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-500 rounded"></span> Приход</span>
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-red-500 rounded"></span> Расход</span>
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-purple-500 rounded"></span> Модификации</span>
-                </div>
-            </div>
-
-            <!-- Прибыльность по каналам -->
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 class="text-lg font-semibold text-white mb-6">Прибыльность по каналам</h2>
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-300">ijk-shop.ru</span>
-                            <span class="text-green-400">₽ 252 500</span>
-                        </div>
-                        <div class="w-full bg-gray-800 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 75%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-300">Розница</span>
-                            <span class="text-green-400">₽ 180 200</span>
-                        </div>
-                        <div class="w-full bg-gray-800 rounded-full h-2">
-                            <div class="bg-blue-500 h-2 rounded-full" style="width: 55%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-300">Опт</span>
-                            <span class="text-green-400">₽ 95 800</span>
-                        </div>
-                        <div class="w-full bg-gray-800 rounded-full h-2">
-                            <div class="bg-purple-500 h-2 rounded-full" style="width: 30%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-300">Маркетплейс</span>
-                            <span class="text-green-400">₽ 42 100</span>
-                        </div>
-                        <div class="w-full bg-gray-800 rounded-full h-2">
-                            <div class="bg-amber-500 h-2 rounded-full" style="width: 15%"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-6 pt-4 border-t border-gray-800">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-400">Всего продаж:</span>
-                        <span class="text-white font-semibold">3</span>
-                    </div>
-                    <div class="flex justify-between text-sm mt-1">
-                        <span class="text-gray-400">Ср. чек:</span>
-                        <span class="text-white font-semibold">₽ 252 500</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Tables Row -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- Прибыльность по товарам -->
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-white">Прибыльность по товарам</h2>
-                    <span class="text-xs text-gray-500">report/profit/byproduct</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-left text-gray-400 border-b border-gray-800">
-                                <th class="pb-3 font-medium">Товар</th>
-                                <th class="pb-3 font-medium text-right">Кол-во</th>
-                                <th class="pb-3 font-medium text-right">Сумма продаж</th>
-                                <th class="pb-3 font-medium text-right">Прибыль</th>
-                                <th class="pb-3 font-medium text-right">Рент.</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-800/50">
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                        <span class="text-white">Курево</span>
-                                        <span class="text-xs text-gray-500">00067</span>
-                                    </div>
-                                </td>
-                                <td class="py-3 text-right text-gray-300">8 643</td>
-                                <td class="py-3 text-right text-gray-300">₽ 1 868 400 300</td>
-                                <td class="py-3 text-right text-green-400">₽ 1 868 400 300</td>
-                                <td class="py-3 text-right"><span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded text-xs">0%</span></td>
-                            </tr>
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
-                                        <span class="text-white">Ногтеточка</span>
-                                        <span class="text-xs text-gray-500">00198</span>
-                                    </div>
-                                </td>
-                                <td class="py-3 text-right text-gray-300">4 765</td>
-                                <td class="py-3 text-right text-gray-300">₽ 476 500 000 000</td>
-                                <td class="py-3 text-right text-green-400">₽ 476 500 000 000</td>
-                                <td class="py-3 text-right"><span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded text-xs">0%</span></td>
-                            </tr>
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
-                                        <span class="text-white">Заточка коньков</span>
-                                        <span class="text-xs text-gray-500">00045</span>
-                                    </div>
-                                </td>
-                                <td class="py-3 text-right text-gray-300">10</td>
-                                <td class="py-3 text-right text-gray-300">₽ 5 000 000</td>
-                                <td class="py-3 text-right text-green-400">₽ 1 400 000</td>
-                                <td class="py-3 text-right"><span class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded text-xs">66.7%</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Приходные ордера -->
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-white">Приходные ордера</h2>
-                    <span class="text-xs text-gray-500">entity/cashin</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-left text-gray-400 border-b border-gray-800">
-                                <th class="pb-3 font-medium">№</th>
-                                <th class="pb-3 font-medium">Дата</th>
-                                <th class="pb-3 font-medium">Контрагент</th>
-                                <th class="pb-3 font-medium text-right">Сумма</th>
-                                <th class="pb-3 font-medium text-center">Статус</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-800/50">
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3 text-white font-medium">00003</td>
-                                <td class="py-3 text-gray-400">04.07.2016</td>
-                                <td class="py-3 text-gray-300">ООО "Покупатель"</td>
-                                <td class="py-3 text-right text-white">₽ 132 000</td>
-                                <td class="py-3 text-center"><span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-xs">Не проведён</span></td>
-                            </tr>
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3 text-white font-medium">00001</td>
-                                <td class="py-3 text-gray-400">04.07.2016</td>
-                                <td class="py-3 text-gray-300">ООО "Покупатель"</td>
-                                <td class="py-3 text-right text-white">₽ 3 189</td>
-                                <td class="py-3 text-center"><span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded text-xs">Проведён</span></td>
-                            </tr>
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3 text-white font-medium">00002</td>
-                                <td class="py-3 text-gray-400">04.07.2016</td>
-                                <td class="py-3 text-gray-300">ООО "Поставщик"</td>
-                                <td class="py-3 text-right text-white">₽ 1 700 000</td>
-                                <td class="py-3 text-center"><span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded text-xs">Проведён</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Supply & Stock Row -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- Приемки -->
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-white">Приемки</h2>
-                    <span class="text-xs text-gray-500">entity/supply</span>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-500/10 rounded flex items-center justify-center">
-                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-white font-medium">Приемка №00001</p>
-                                <p class="text-xs text-gray-500">10.06.2016 • ООО "Поставщик"</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm text-white font-medium">₽ 16 136 135 600</p>
-                            <p class="text-xs text-green-400">Проведена</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-500/10 rounded flex items-center justify-center">
-                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-white font-medium">Приемка №00002</p>
-                                <p class="text-xs text-gray-500">13.06.2016 • ООО "Поставщик"</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm text-white font-medium">₽ 0</p>
-                            <p class="text-xs text-green-400">Проведена</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-500/10 rounded flex items-center justify-center">
-                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-white font-medium">Приемка №00003</p>
-                                <p class="text-xs text-gray-500">13.06.2016 • ООО "Поставщик"</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm text-white font-medium">₽ 16 000</p>
-                            <p class="text-xs text-green-400">Проведена</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Остатки по документам -->
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-white">Остатки по документам</h2>
-                    <span class="text-xs text-gray-500">report/stock/byoperation</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-left text-gray-400 border-b border-gray-800">
-                                <th class="pb-3 font-medium">Позиция</th>
-                                <th class="pb-3 font-medium text-right">Остаток</th>
-                                <th class="pb-3 font-medium text-right">Резерв</th>
-                                <th class="pb-3 font-medium text-right">Доступно</th>
-                                <th class="pb-3 font-medium text-right">Себест.</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-800/50">
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3 text-white">Клюшка хоккейная</td>
-                                <td class="py-3 text-right text-red-400">-2</td>
-                                <td class="py-3 text-right text-gray-300">0</td>
-                                <td class="py-3 text-right text-gray-300">0</td>
-                                <td class="py-3 text-right text-gray-300">₽ 0</td>
-                            </tr>
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3 text-white">Поднимание пингвинов</td>
-                                <td class="py-3 text-right text-gray-300">0</td>
-                                <td class="py-3 text-right text-gray-300">0</td>
-                                <td class="py-3 text-right text-gray-300">0</td>
-                                <td class="py-3 text-right text-gray-300">₽ 0</td>
-                            </tr>
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3 text-white">ТоварМногоМодификаций (1, 100, 30)</td>
-                                <td class="py-3 text-right text-green-400">3</td>
-                                <td class="py-3 text-right text-gray-300">0</td>
-                                <td class="py-3 text-right text-green-400">3</td>
-                                <td class="py-3 text-right text-gray-300">₽ 0</td>
-                            </tr>
-                            <tr class="hover:bg-gray-800/50">
-                                <td class="py-3 text-white">ТоварМногоМодификаций</td>
-                                <td class="py-3 text-right text-green-400">3</td>
-                                <td class="py-3 text-right text-amber-400">1</td>
-                                <td class="py-3 text-right text-green-400">2</td>
-                                <td class="py-3 text-right text-gray-300">₽ 0</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Counterparties & Employees -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Прибыльность по покупателям -->
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 class="text-lg font-semibold text-white mb-4">Топ покупатели</h2>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-xs text-blue-400 font-bold">1</div>
-                            <span class="text-sm text-white">ООО "Покупатель"</span>
-                        </div>
-                        <span class="text-sm text-green-400">₽ 310 390 615</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-xs text-blue-400 font-bold">2</div>
-                            <span class="text-sm text-white">Розничный покупатель</span>
-                        </div>
-                        <span class="text-sm text-green-400">₽ 45 200</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-xs text-blue-400 font-bold">3</div>
-                            <span class="text-sm text-white">rtr</span>
-                        </div>
-                        <span class="text-sm text-green-400">₽ 12 800</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Прибыльность по сотрудникам -->
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 class="text-lg font-semibold text-white mb-4">Сотрудники</h2>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-purple-500/10 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm text-white">Администратор</p>
-                                <p class="text-xs text-gray-500">3 продажи</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm text-green-400">₽ 313 495 109</p>
-                            <p class="text-xs text-gray-500">Ср. чек: ₽ 104 498 369</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-4 pt-4 border-t border-gray-800 grid grid-cols-2 gap-4 text-center">
-                    <div>
-                        <p class="text-2xl font-bold text-white">1.0</p>
-                        <p class="text-xs text-gray-500">Рентабельность</p>
-                    </div>
-                    <div>
-                        <p class="text-2xl font-bold text-white">0</p>
-                        <p class="text-xs text-gray-500">Возвраты</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- API Status -->
-            <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h2 class="text-lg font-semibold text-white mb-4">Статус API</h2>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-300">entity/cashin</span>
-                        <span class="flex items-center gap-1 text-xs text-green-400">
-                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 200 OK
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-300">report/profit/byproduct</span>
-                        <span class="flex items-center gap-1 text-xs text-green-400">
-                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 200 OK
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-300">report/turnover/all</span>
-                        <span class="flex items-center gap-1 text-xs text-green-400">
-                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 200 OK
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-300">entity/supply</span>
-                        <span class="flex items-center gap-1 text-xs text-green-400">
-                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 200 OK
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-300">entity/counterparty</span>
-                        <span class="flex items-center gap-1 text-xs text-green-400">
-                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 200 OK
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-300">report/stock/byoperation</span>
-                        <span class="flex items-center gap-1 text-xs text-green-400">
-                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 200 OK
-                        </span>
-                    </div>
-                </div>
-                <div class="mt-4 pt-4 border-t border-gray-800">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-400">Последний запрос:</span>
-                        <span class="text-white" id="lastRequest">—</span>
-                    </div>
-                    <div class="flex justify-between text-sm mt-1">
-                        <span class="text-gray-400">Время ответа:</span>
-                        <span class="text-green-400">~245ms</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Turnover Details -->
-        <section class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-lg font-semibold text-white">Обороты — детализация по складам</h2>
-                <span class="text-xs text-gray-500">report/turnover/bystore</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="text-left text-gray-400 border-b border-gray-800">
-                            <th class="pb-3 font-medium">Товар</th>
-                            <th class="pb-3 font-medium">Склад</th>
-                            <th class="pb-3 font-medium text-right">Нач. периода</th>
-                            <th class="pb-3 font-medium text-right">Приход</th>
-                            <th class="pb-3 font-medium text-right">Расход</th>
-                            <th class="pb-3 font-medium text-right">Кон. периода</th>
-                            <th class="pb-3 font-medium text-right">Сумма (коп.)</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-800/50">
-                        <tr class="hover:bg-gray-800/50">
-                            <td class="py-3 text-white">товар 2</td>
-                            <td class="py-3 text-gray-300">Основной склад</td>
-                            <td class="py-3 text-right text-gray-400">0</td>
-                            <td class="py-3 text-right text-green-400">+3</td>
-                            <td class="py-3 text-right text-red-400">-2</td>
-                            <td class="py-3 text-right text-white font-medium">1</td>
-                            <td class="py-3 text-right text-gray-300">0</td>
-                        </tr>
-                        <tr class="hover:bg-gray-800/50">
-                            <td class="py-3 text-white">товар 2 (красный)</td>
-                            <td class="py-3 text-gray-300">Основной склад</td>
-                            <td class="py-3 text-right text-gray-400">0</td>
-                            <td class="py-3 text-right text-green-400">+3</td>
-                            <td class="py-3 text-right text-red-400">-1</td>
-                            <td class="py-3 text-right text-white font-medium">2</td>
-                            <td class="py-3 text-right text-gray-300">20 000</td>
-                        </tr>
-                        <tr class="hover:bg-gray-800/50">
-                            <td class="py-3 text-white">товар 2 (красный)</td>
-                            <td class="py-3 text-gray-300">склад 2</td>
-                            <td class="py-3 text-right text-gray-400">0</td>
-                            <td class="py-3 text-right text-green-400">+0</td>
-                            <td class="py-3 text-right text-red-400">-5</td>
-                            <td class="py-3 text-right text-red-400 font-medium">-5</td>
-                            <td class="py-3 text-right text-gray-300">0</td>
-                        </tr>
-                        <tr class="hover:bg-gray-800/50">
-                            <td class="py-3 text-white">товар 1</td>
-                            <td class="py-3 text-gray-300">Основной склад</td>
-                            <td class="py-3 text-right text-gray-400">0</td>
-                            <td class="py-3 text-right text-green-400">+3</td>
-                            <td class="py-3 text-right text-red-400">-1</td>
-                            <td class="py-3 text-right text-white font-medium">2</td>
-                            <td class="py-3 text-right text-gray-300">4 400</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
+        </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 border-t border-gray-800 py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between text-sm text-gray-500">
-                <span>Мониторинг МойСклад • API v1.2 • api.moysklad.ru</span>
-                <span>Обновлено: <span id="footerTime">—</span></span>
-            </div>
+    <!-- МОДАЛЬНОЕ ОКНО API -->
+    <div id="connection-modal" class="modal-overlay">
+        <div class="glass p-8 max-w-md w-full shadow-2xl">
+            <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
+            <p class="text-sm text-gray-400 mb-6">Введите API-токен или логин:пароль</p>
+            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none" placeholder="user@domain.com:password">
+            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mt-4">Сохранить и подключить</button>
+            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3">Отмена</button>
         </div>
-    </footer>
+    </div>
+
+    <!-- LOADER -->
+    <div id="global-loader" class="modal-overlay">
+        <div class="glass p-8 max-w-sm w-full text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <div id="loader-text" class="text-lg font-medium text-white mb-1">Загрузка данных...</div>
+            <div id="loader-subtext" class="text-sm text-gray-400">Пожалуйста, подождите</div>
+        </div>
+    </div>
 
     <script>
-        function updateTime() {
-            const now = new Date();
-            const formatted = now.toLocaleString('ru-RU', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
-            document.getElementById('currentTime').textContent = formatted;
-            document.getElementById('footerTime').textContent = formatted;
+        // =====================================================
+        // КОНФИГУРАЦИЯ
+        // =====================================================
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
+        const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
+        const AUTO_REFRESH_INTERVAL = 60000; // 60 сек
+
+        let apiToken = localStorage.getItem('moysklad_token') || '';
+        let currentPeriod = 'today';
+        let activityChart = null;
+        let autoRefreshTimer = null;
+        let isLoading = false;
+
+        // =====================================================
+        // ФОРМАТИРОВАНИЕ
+        // =====================================================
+        const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(n) || 0);
+        const formatNumber = (n) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(n) || 0);
+        const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '—';
+            const d = new Date(dateStr);
+            const today = new Date();
+            const isToday = d.toDateString() === today.toDateString();
+            if (isToday) return 'Сегодня ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' ' +
+                   d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         }
 
-        function refreshData() {
-            const now = new Date();
-            document.getElementById('lastRequest').textContent =
-                now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        function dateToLocalISO(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
 
-            // Simulate data refresh animation
-            document.querySelectorAll('.bar').forEach(bar => {
-                const currentHeight = bar.style.height;
-                bar.style.height = '0%';
-                setTimeout(() => { bar.style.height = currentHeight; }, 100);
+        function getPeriodDates(period) {
+            const now = new Date();
+            const from = new Date(now);
+            const to = new Date(now);
+            if (period === 'today') return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
+            if (period === 'week') from.setDate(from.getDate() - 6);
+            if (period === 'month') from.setDate(from.getDate() - 29);
+            return { from: dateToLocalISO(from), to: dateToLocalISO(to) };
+        }
+
+        // =====================================================
+        // UI
+        // =====================================================
+        function setPeriod(period, btn) {
+            currentPeriod = period;
+            document.querySelectorAll('.period-btn').forEach(b => {
+                b.classList.remove('bg-blue-600', 'text-white');
+                b.classList.add('text-gray-300');
+            });
+            if (btn) {
+                btn.classList.remove('text-gray-300');
+                btn.classList.add('bg-blue-600', 'text-white');
+            }
+            const dates = getPeriodDates(period);
+            document.getElementById('date-from').value = dates.from;
+            document.getElementById('date-to').value = dates.to;
+            if (apiToken) loadMonitoring();
+        }
+
+        function showLoader(text, subtext) {
+            document.getElementById('loader-text').textContent = text;
+            document.getElementById('loader-subtext').textContent = subtext;
+            document.getElementById('global-loader').classList.add('active');
+        }
+        function setLoaderSubtext(t) { document.getElementById('loader-subtext').textContent = t; }
+        function hideLoader() { document.getElementById('global-loader').classList.remove('active'); }
+
+        function showConnectionModal() {
+            document.getElementById('api-token').value = apiToken;
+            document.getElementById('connection-modal').classList.add('active');
+        }
+        function closeConnectionModal() { document.getElementById('connection-modal').classList.remove('active'); }
+        function saveToken() {
+            apiToken = document.getElementById('api-token').value.trim();
+            localStorage.setItem('moysklad_token', apiToken);
+            closeConnectionModal();
+            if (apiToken) loadMonitoring();
+        }
+
+        function setLiveState(state) {
+            const dot = document.getElementById('live-dot');
+            dot.classList.remove('paused', 'off');
+            if (state === 'paused') dot.classList.add('paused');
+            if (state === 'off') dot.classList.add('off');
+        }
+
+        function toggleAutoRefresh() {
+            const enabled = document.getElementById('auto-refresh').checked;
+            if (enabled) {
+                setLiveState('live');
+                autoRefreshTimer = setInterval(() => {
+                    if (!isLoading && apiToken) loadMonitoring(true);
+                }, AUTO_REFRESH_INTERVAL);
+            } else {
+                setLiveState('paused');
+                if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+            }
+        }
+
+        // =====================================================
+        // API
+        // =====================================================
+        function getAuthHeaders() {
+            let auth = apiToken;
+            if (!apiToken.startsWith('Basic ') && !apiToken.startsWith('Bearer ')) {
+                auth = apiToken.includes(':') ? 'Basic ' + btoa(unescape(encodeURIComponent(apiToken))) : 'Bearer ' + apiToken;
+            }
+            return { Authorization: auth, Accept: 'application/json;charset=utf-8', 'Content-Type': 'application/json' };
+        }
+
+        async function proxyFetch(targetUrl, headers) {
+            const response = await fetch(PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
+            });
+            if (response.status === 429) throw new Error('Превышен лимит запросов. Подождите немного.');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Ошибка API ${response.status}: ${errorText}`);
+            }
+            return response;
+        }
+
+        // Загрузка всех страниц (пагинация)
+        async function fetchAllPages(baseUrl, headers, maxPages = 10) {
+            let allRows = [];
+            let offset = 0;
+            const limit = 1000;
+            let pages = 0;
+
+            while (pages < maxPages) {
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                const url = `${baseUrl}${separator}limit=${limit}&offset=${offset}`;
+                const res = await proxyFetch(url, headers);
+                const json = await res.json();
+                const rows = json.rows || [];
+                allRows = allRows.concat(rows);
+                pages++;
+                if (rows.length < limit || allRows.length >= (json.meta?.size || 0)) break;
+                offset += limit;
+            }
+            return allRows;
+        }
+
+        // =====================================================
+        // ЗАГРУЗКА ДАННЫХ
+        // =====================================================
+        async function loadMonitoring(silent = false) {
+            if (!apiToken) { showConnectionModal(); return; }
+            if (isLoading) return;
+
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+            if (!dateFrom || !dateTo) { alert('Выберите период'); return; }
+
+            isLoading = true;
+            if (!silent) showLoader('Загрузка мониторинга...', 'Обращение к API МойСклад');
+
+            const btnRefresh = document.getElementById('btn-refresh');
+            btnRefresh.disabled = true;
+            btnRefresh.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>';
+
+            try {
+                const momentFrom = `${dateFrom} 00:00:00`;
+                const momentTo = `${dateTo} 23:59:59`;
+                const headers = getAuthHeaders();
+
+                setLoaderSubtext('Загрузка приходных ордеров...');
+                const cashinPromise = fetchAllPages(
+                    `${MOYSKLAD_API}/entity/cashin?filter=${encodeURIComponent(`moment>=${momentFrom};moment<=${momentTo}`)}&order=moment,desc`,
+                    headers
+                );
+
+                setLoaderSubtext('Загрузка приёмок...');
+                const supplyPromise = fetchAllPages(
+                    `${MOYSKLAD_API}/entity/supply?filter=${encodeURIComponent(`moment>=${momentFrom};moment<=${momentTo}`)}&order=moment,desc`,
+                    headers
+                );
+
+                setLoaderSubtext('Загрузка оборотов (остатки)...');
+                const turnoverPromise = fetchAllPages(
+                    `${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`,
+                    headers
+                );
+
+                const [cashinRows, supplyRows, turnoverRows] = await Promise.all([
+                    cashinPromise, supplyPromise, turnoverPromise
+                ]);
+
+                updateKPIs(cashinRows, supplyRows, turnoverRows);
+                updateActivityChart(cashinRows, supplyRows);
+                updateFeed(cashinRows, supplyRows);
+                updateAlerts(cashinRows, supplyRows, turnoverRows);
+
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
+            } catch (error) {
+                console.error(error);
+                if (!silent) alert('Ошибка загрузки: ' + error.message);
+            } finally {
+                isLoading = false;
+                hideLoader();
+                btnRefresh.disabled = false;
+                btnRefresh.innerHTML = '🔄 Обновить';
+            }
+        }
+
+        // =====================================================
+        // KPI
+        // =====================================================
+        function updateKPIs(cashinRows, supplyRows, turnoverRows) {
+            const cashinSum = cashinRows.reduce((s, r) => s + (Number(r.sum) || 0) / 100, 0);
+            const supplySum = supplyRows.reduce((s, r) => s + (Number(r.sum) || 0) / 100, 0);
+            const totalOps = cashinRows.length + supplyRows.length;
+
+            // Алерты: непроведённые + отрицательные остатки
+            const notApplicableCashin = cashinRows.filter(r => r.applicable === false).length;
+            const notApplicableSupply = supplyRows.filter(r => r.applicable === false).length;
+            const negativeStock = turnoverRows.filter(r => (r.onPeriodEnd?.quantity || 0) < 0).length;
+            const totalAlerts = notApplicableCashin + notApplicableSupply + negativeStock;
+
+            document.getElementById('kpi-cashin-sum').textContent = formatMoney(cashinSum);
+            document.getElementById('kpi-cashin-count').textContent = `${formatNumber(cashinRows.length)} приходных ордеров`;
+
+            document.getElementById('kpi-supply-sum').textContent = formatMoney(supplySum);
+            document.getElementById('kpi-supply-count').textContent = `${formatNumber(supplyRows.length)} приёмок`;
+
+            document.getElementById('kpi-ops-count').textContent = formatNumber(totalOps);
+
+            const alertsEl = document.getElementById('kpi-alerts');
+            alertsEl.textContent = formatNumber(totalAlerts);
+            alertsEl.className = 'text-2xl md:text-3xl font-bold mt-2 ' + (totalAlerts > 0 ? 'text-amber-400' : 'text-green-400');
+        }
+
+        // =====================================================
+        // ГРАФИК АКТИВНОСТИ
+        // =====================================================
+        function updateActivityChart(cashinRows, supplyRows) {
+            const canvas = document.getElementById('activity-chart');
+            if (activityChart) activityChart.destroy();
+
+            // Группировка по ключу периода (час для "сегодня", иначе день)
+            const useHours = currentPeriod === 'today';
+            const buckets = new Map();
+
+            const addRows = (rows, type) => {
+                rows.forEach(r => {
+                    if (!r.moment) return;
+                    const d = new Date(r.moment);
+                    const key = useHours
+                        ? d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }).slice(0, 2) + ':00'
+                        : d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+                    if (!buckets.has(key)) buckets.set(key, { cashin: 0, supply: 0, sortKey: d.getTime() });
+                    buckets.get(key)[type] += (Number(r.sum) || 0) / 100;
+                });
+            };
+
+            addRows(cashinRows, 'cashin');
+            addRows(supplyRows, 'supply');
+
+            const sorted = Array.from(buckets.entries()).sort((a, b) => a[1].sortKey - b[1].sortKey);
+            const labels = sorted.map(([k]) => k);
+            const cashinData = sorted.map(([, v]) => v.cashin);
+            const supplyData = sorted.map(([, v]) => v.supply);
+
+            if (!labels.length) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#64748b';
+                ctx.font = '16px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('Нет операций за выбранный период', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            activityChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Платежи (входящие)',
+                            data: cashinData,
+                            backgroundColor: 'rgba(74,222,128,0.7)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Приёмки',
+                            data: supplyData,
+                            backgroundColor: 'rgba(96,165,250,0.7)',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 500 },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${formatMoney(ctx.parsed.y)}` } },
+                        legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 12 } }
+                    },
+                    scales: {
+                        y: { ticks: { callback: v => formatMoney(v), color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                        x: { ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 0 }, grid: { display: false } }
+                    }
+                }
             });
         }
 
-        // Initialize
-        updateTime();
-        setInterval(updateTime, 1000);
-        refreshData();
+        // =====================================================
+        // ЛЕНТА ОПЕРАЦИЙ
+        // =====================================================
+        function updateFeed(cashinRows, supplyRows) {
+            const container = document.getElementById('feed-list');
 
-        // Simulate periodic updates
-        setInterval(() => {
-            document.getElementById('lastRequest').textContent =
-                new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }, 30000);
+            const feed = [];
+            cashinRows.forEach(r => feed.push({
+                type: 'cashin',
+                name: r.name || 'Приходный ордер',
+                agent: r.agent?.name || '—',
+                purpose: r.paymentPurpose || '',
+                sum: (Number(r.sum) || 0) / 100,
+                moment: r.moment,
+                applicable: r.applicable
+            }));
+            supplyRows.forEach(r => feed.push({
+                type: 'supply',
+                name: r.name || 'Приёмка',
+                agent: r.agent?.name || '—',
+                purpose: r.description || '',
+                sum: (Number(r.sum) || 0) / 100,
+                moment: r.moment,
+                applicable: r.applicable
+            }));
+
+            feed.sort((a, b) => new Date(b.moment) - new Date(a.moment));
+            const limited = feed.slice(0, 100);
+
+            document.getElementById('feed-count').textContent = `${formatNumber(feed.length)} записей`;
+
+            if (!limited.length) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет операций за выбранный период</div>';
+                return;
+            }
+
+            container.innerHTML = limited.map(item => {
+                const docClass = `doc-${item.type}`;
+                const icon = item.type === 'cashin' ? '💵' : '📥';
+                const typeLabel = item.type === 'cashin' ? 'Платёж' : 'Приёмка';
+                const sumClass = item.type === 'cashin' ? 'text-green-400' : 'text-blue-400';
+                const statusBadge = item.applicable === false
+                    ? '<span class="badge badge-warn">не проведён</span>'
+                    : '<span class="badge badge-ok">проведён</span>';
+
+                return `
+                    <div class="feed-item ${docClass} bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                        <div class="flex justify-between items-start gap-3">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-lg">${icon}</span>
+                                    <span class="font-medium text-white truncate">${escapeHtml(item.name)}</span>
+                                    <span class="badge badge-info">${typeLabel}</span>
+                                    ${statusBadge}
+                                </div>
+                                <div class="text-xs text-gray-400 mt-1 truncate">👤 ${escapeHtml(item.agent)}</div>
+                                ${item.purpose ? `<div class="text-xs text-gray-500 mt-0.5 truncate">📝 ${escapeHtml(item.purpose)}</div>` : ''}
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <div class="font-bold ${sumClass}">${item.type === 'cashin' ? '+' : ''}${formatMoney(item.sum)}</div>
+                                <div class="text-xs text-gray-500 mt-1">${formatDateTime(item.moment)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // =====================================================
+        // АЛЕРТЫ
+        // =====================================================
+        function updateAlerts(cashinRows, supplyRows, turnoverRows) {
+            const container = document.getElementById('alerts-list');
+            const alerts = [];
+
+            // 1. Непроведённые приходные ордера
+            const naCashin = cashinRows.filter(r => r.applicable === false);
+            if (naCashin.length) {
+                alerts.push({
+                    icon: '⚠️',
+                    level: 'warn',
+                    title: `Непроведённые платежи: ${naCashin.length}`,
+                    text: naCashin.slice(0, 3).map(r => escapeHtml(r.name)).join(', ') + (naCashin.length > 3 ? '…' : '')
+                });
+            }
+
+            // 2. Непроведённые приёмки
+            const naSupply = supplyRows.filter(r => r.applicable === false);
+            if (naSupply.length) {
+                alerts.push({
+                    icon: '📥',
+                    level: 'warn',
+                    title: `Непроведённые приёмки: ${naSupply.length}`,
+                    text: naSupply.slice(0, 3).map(r => escapeHtml(r.name)).join(', ') + (naSupply.length > 3 ? '…' : '')
+                });
+            }
+
+            // 3. Отрицательные остатки
+            const negative = turnoverRows.filter(r => (r.onPeriodEnd?.quantity || 0) < 0);
+            if (negative.length) {
+                alerts.push({
+                    icon: '📉',
+                    level: 'danger',
+                    title: `Отрицательные остатки: ${negative.length}`,
+                    text: negative.slice(0, 3).map(r => escapeHtml(r.assortment?.name || 'Товар')).join(', ') + (negative.length > 3 ? '…' : '')
+                });
+            }
+
+            // 4. Крупные платежи (информационный)
+            const largeCashin = cashinRows.filter(r => (Number(r.sum) || 0) / 100 >= 100000);
+            if (largeCashin.length) {
+                alerts.push({
+                    icon: '💰',
+                    level: 'info',
+                    title: `Крупные платежи (≥100 000 ₽): ${largeCashin.length}`,
+                    text: 'Проверьте корректность сумм'
+                });
+            }
+
+            // Бейдж в заголовке
+            const badge = document.getElementById('alerts-badge');
+            const problemCount = alerts.filter(a => a.level !== 'info').length;
+            if (problemCount > 0) {
+                badge.classList.remove('hidden');
+                badge.textContent = problemCount;
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            if (!alerts.length) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-4xl mb-2">✅</div>
+                        <div class="text-green-400 font-medium">Всё в порядке</div>
+                        <div class="text-xs text-gray-500 mt-1">Алертов нет</div>
+                    </div>`;
+                return;
+            }
+
+            const levelStyles = {
+                danger: 'border-red-500/40 bg-red-500/5',
+                warn: 'border-amber-500/40 bg-amber-500/5',
+                info: 'border-blue-500/40 bg-blue-500/5'
+            };
+
+            container.innerHTML = alerts.map(a => `
+                <div class="alert-card ${levelStyles[a.level]} border rounded-lg p-3">
+                    <div class="flex gap-2">
+                        <span class="text-xl flex-shrink-0">${a.icon}</span>
+                        <div class="min-w-0">
+                            <div class="font-semibold text-white text-sm">${a.title}</div>
+                            <div class="text-xs text-gray-400 mt-1 truncate">${a.text}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // =====================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // =====================================================
+        window.addEventListener('load', () => {
+            const dates = getPeriodDates('today');
+            document.getElementById('date-from').value = dates.from;
+            document.getElementById('date-to').value = dates.to;
+
+            if (apiToken) {
+                loadMonitoring();
+            } else {
+                showConnectionModal();
+            }
+        });
     </script>
 </body>
 </html>
