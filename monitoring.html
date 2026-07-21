@@ -294,46 +294,72 @@
             if (!apiToken.startsWith('Basic ') && !apiToken.startsWith('Bearer ')) {
                 auth = apiToken.includes(':') ? 'Basic ' + btoa(unescape(encodeURIComponent(apiToken))) : 'Bearer ' + apiToken;
             }
-            return { Authorization: auth, Accept: 'application/json;charset=utf-8', 'Content-Type': 'application/json' };
+            return {
+                'Authorization': auth,
+                'Accept': 'application/json;charset=utf-8',
+                'Content-Type': 'application/json'
+            };
         }
 
-        // === 1. Обёртка fetch с retry при 429 ===
-        async function proxyFetch(url, options = {}, retries = 3) {
-          for (let attempt = 0; attempt <= retries; attempt++) {
-            const response = await fetch(url, options);
-        
-            if (response.status === 429) {
-              if (attempt === retries) {
-                throw new Error('Превышен лимит запросов. Подождите.');
-              }
-              // Ждём с увеличением: 1с → 2с → 4с
-              const delay = Math.pow(2, attempt) * 1000;
-              console.warn(`429: повтор через ${delay}мс (попытка ${attempt + 1})`);
-              await new Promise(r => setTimeout(r, delay));
-              continue;
+        // === Fetch через прокси с retry при 429 ===
+        async function apiFetch(endpoint, options = {}, retries = 3) {
+            const url = `${PROXY_URL}/${MOYSKLAD_API}${endpoint}`;
+            const headers = getAuthHeaders();
+
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: options.method || 'GET',
+                        headers: headers,
+                        body: options.body || undefined
+                    });
+
+                    if (response.status === 429) {
+                        if (attempt === retries) {
+                            throw new Error('Превышен лимит запросов (429). Подождите и повторите.');
+                        }
+                        const delay = Math.pow(2, attempt) * 1000;
+                        console.warn(`429: повтор через ${delay}мс (попытка ${attempt + 1}/${retries})`);
+                        await new Promise(r => setTimeout(r, delay));
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        const errText = await response.text().catch(() => '');
+                        throw new Error(`HTTP ${response.status}: ${errText.substring(0, 200)}`);
+                    }
+
+                    return await response.json();
+                } catch (err) {
+                    if (attempt === retries) throw err;
+                    if (err.message.includes('429') || err.message.includes('HTTP')) throw err;
+                    // Сетевая ошибка — retry
+                    const delay = Math.pow(2, attempt) * 1000;
+                    console.warn(`Сетевая ошибка: повтор через ${delay}мс`, err.message);
+                    await new Promise(r => setTimeout(r, delay));
+                }
             }
-        
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
-            }
-            return response.json();
-          }
         }
 
-        async function fetchAllPages(baseUrl, headers) {
+        // === Пагинация: загрузка всех страниц ===
+        async function fetchAllPages(endpoint) {
             let allRows = [];
             let offset = 0;
             const limit = 1000;
-            while (true) {
-                const sep = baseUrl.includes('?') ? '&' : '?';
-                const url = `${baseUrl}${sep}limit=${limit}&offset=${offset}`;
-                const res = await proxyFetch(url, headers);
-                const json = await res.json();
+            const maxPages = 10; // защита от бесконечного цикла
+            let page = 0;
+
+            while (page < maxPages) {
+                const sep = endpoint.includes('?') ? '&' : '?';
+                const pagedEndpoint = `${endpoint}${sep}limit=${limit}&offset=${offset}`;
+                const json = await apiFetch(pagedEndpoint);
                 const rows = json.rows || [];
                 allRows = allRows.concat(rows);
-                if (rows.length < limit || allRows.length >= (json.meta?.size || 0)) break;
+
+                const totalSize = json.meta?.size || 0;
+                if (rows.length < limit || allRows.length >= totalSize) break;
                 offset += limit;
-                if (offset > 5000) break; // защита
+                page++;
             }
             return allRows;
         }
@@ -356,11 +382,11 @@
             try {
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
-                const headers = getAuthHeaders();
                 const prev = getPreviousPeriod(dateFrom, dateTo);
                 const prevFrom = `${prev.from} 00:00:00`;
                 const prevTo = `${prev.to} 23:59:59`;
 
+                // Параллельная загрузка всех данных
                 const [
                     cashinData,
                     suppliesData,
@@ -370,20 +396,20 @@
                     profitData,
                     turnoverData
                 ] = await Promise.all([
-                    // Приходные ордера
-                    proxyFetch(`${MOYSKLAD_API}/entity/cashin?filter=moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)}&limit=1000`, headers).then(r => r.json()),
-                    // Приёмки
-                    proxyFetch(`${MOYSKLAD_API}/entity/supply?filter=moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)}&limit=100&order=moment,desc`, headers).then(r => r.json()),
-                    // Продажи (текущий период)
-                    proxyFetch(`${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers).then(r => r.json()),
-                    // Заказы (текущий период)
-                    proxyFetch(`${MOYSKLAD_API}/report/orders/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`, headers).then(r => r.json()),
-                    // Продажи (предыдущий период)
-                    proxyFetch(`${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(prevFrom)}&momentTo=${encodeURIComponent(prevTo)}&interval=day`, headers).then(r => r.json()),
-                    // Прибыльность по товарам
-                    fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers),
-                    // Обороты
-                    fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)
+                    // 1. Приходные ордера
+                    apiFetch(`/entity/cashin?filter=moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)}&limit=1000`),
+                    // 2. Приёмки
+                    apiFetch(`/entity/supply?filter=moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)}&limit=100&order=moment,desc`),
+                    // 3. Продажи (текущий период)
+                    apiFetch(`/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`),
+                    // 4. Заказы (текущий период)
+                    apiFetch(`/report/orders/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`),
+                    // 5. Продажи (предыдущий период)
+                    apiFetch(`/report/sales/plotseries?momentFrom=${encodeURIComponent(prevFrom)}&momentTo=${encodeURIComponent(prevTo)}&interval=day`),
+                    // 6. Прибыльность по товарам
+                    fetchAllPages(`/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`),
+                    // 7. Обороты
+                    fetchAllPages(`/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`)
                 ]);
 
                 // Обновляем UI
@@ -399,7 +425,7 @@
 
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
             } catch (error) {
-                console.error(error);
+                console.error('Ошибка загрузки:', error);
                 alert('Ошибка загрузки: ' + error.message);
             } finally {
                 hideLoader();
@@ -429,7 +455,7 @@
             const current = (salesSeries.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
             const previous = (prevSalesSeries.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
             document.getElementById('kpi-sales').textContent = formatMoney(current);
-            
+
             const trendEl = document.getElementById('kpi-sales-trend');
             if (previous > 0) {
                 const change = ((current - previous) / previous * 100).toFixed(1);
@@ -526,13 +552,16 @@
             }
 
             // Объединяем даты
-            const allDates = new Set([...sales.map(s => s.date?.substring(0,10)), ...orders.map(o => o.date?.substring(0,10))]);
+            const allDates = new Set([
+                ...sales.map(s => (s.date || '').substring(0, 10)),
+                ...orders.map(o => (o.date || '').substring(0, 10))
+            ]);
             const labels = Array.from(allDates).filter(Boolean).sort();
 
             const salesMap = {};
-            sales.forEach(s => { salesMap[s.date?.substring(0,10)] = (s.sum || 0) / 100; });
+            sales.forEach(s => { salesMap[(s.date || '').substring(0, 10)] = (s.sum || 0) / 100; });
             const ordersMap = {};
-            orders.forEach(o => { ordersMap[o.date?.substring(0,10)] = (o.sum || 0) / 100; });
+            orders.forEach(o => { ordersMap[(o.date || '').substring(0, 10)] = (o.sum || 0) / 100; });
 
             charts.salesOrders = new Chart(canvas, {
                 type: 'line',
@@ -580,7 +609,7 @@
         // =====================================================
         function updatePeriodComparison(salesData, prevSalesData, ordersData, cashinData) {
             const container = document.getElementById('period-comparison');
-            
+
             const curSales = (salesData.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
             const prevSales = (prevSalesData.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
             const curOrders = (ordersData.series || []).reduce((s, r) => s + (r.sum || 0), 0) / 100;
@@ -647,11 +676,11 @@
                             <tr class="table-row border-b border-slate-800/50">
                                 <td class="py-3 px-3 font-medium text-white">${escapeHtml(s.name || '-')}</td>
                                 <td class="py-3 px-3 text-gray-400">${formatDateTime(s.moment)}</td>
-                                <td class="py-3 px-3 text-gray-400 hidden md:table-cell">${escapeHtml(s.agent?.meta?.href ? 'Контрагент' : '-')}</td>
+                                <td class="py-3 px-3 text-gray-400 hidden md:table-cell">${s.agent ? 'Контрагент' : '-'}</td>
                                 <td class="py-3 px-3 text-right font-medium text-blue-400">${formatMoney((s.sum || 0) / 100)}</td>
                                 <td class="py-3 px-3 text-center">
-                                    ${s.applicable 
-                                        ? '<span class="text-xs px-2 py-0.5 rounded-full badge-success">Проведена</span>' 
+                                    ${s.applicable
+                                        ? '<span class="text-xs px-2 py-0.5 rounded-full badge-success">Проведена</span>'
                                         : '<span class="text-xs px-2 py-0.5 rounded-full badge-warning">Черновик</span>'}
                                 </td>
                             </tr>
@@ -671,13 +700,7 @@
                 .sort((a, b) => a.profit - b.profit)
                 .slice(0, 20);
 
-            // Без движения: есть остаток на конец, но нет расхода
-            const turnoverMap = {};
-            turnoverData.forEach(r => {
-                const id = r.assortment?.meta?.href;
-                if (id) turnoverMap[id] = r;
-            });
-
+            // Без движения: есть остаток на конец, но нет расхода и прихода
             problemData.stagnant = turnoverData
                 .filter(r => {
                     const endQty = r.onPeriodEnd?.quantity || 0;
@@ -699,13 +722,13 @@
         function showProblemTab(tab) {
             currentProblemTab = tab;
             const container = document.getElementById('problems-table');
-            
+
             // Обновляем кнопки
-            document.getElementById('tab-negative').className = tab === 'negative' 
-                ? 'text-xs px-3 py-1 rounded-full badge-danger font-medium' 
+            document.getElementById('tab-negative').className = tab === 'negative'
+                ? 'text-xs px-3 py-1 rounded-full badge-danger font-medium'
                 : 'text-xs px-3 py-1 rounded-full bg-slate-700 text-gray-400 font-medium';
-            document.getElementById('tab-stagnant').className = tab === 'stagnant' 
-                ? 'text-xs px-3 py-1 rounded-full badge-warning font-medium' 
+            document.getElementById('tab-stagnant').className = tab === 'stagnant'
+                ? 'text-xs px-3 py-1 rounded-full badge-warning font-medium'
                 : 'text-xs px-3 py-1 rounded-full bg-slate-700 text-gray-400 font-medium';
 
             if (tab === 'negative') {
