@@ -55,9 +55,9 @@
         .sort-icon.active { opacity: 1; color: #60a5fa; }
 
         /* Бейджи поставщиков */
-        .badge { font-size: 9px; padding: 1px 5px; border-radius: 4px; margin-left: 4px; white-space: nowrap; }
-        .badge-last { background: rgba(59,130,246,0.2); color: #93c5fd; }
-        .badge-best { background: rgba(74,222,128,0.2); color: #86efac; }
+        .badge { display: inline-block; font-size: 9px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+        .badge-best { background: rgba(74,222,128,0.18); color: #4ade80; }
+        .badge-last { background: rgba(96,165,250,0.18); color: #60a5fa; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -143,7 +143,7 @@
             <!-- Результаты анализа -->
             <div id="analysis-results" class="hidden space-y-6">
                 
-                <!-- ===== СЕКЦИЯ ABC-XYZ (видна только при чекбоксе матрицы) ===== -->
+                <!-- ===== БЛОК ABC-XYZ (обёрнут, показывается по чекбоксу) ===== -->
                 <div id="abc-section" class="hidden space-y-6">
                     <!-- График -->
                     <div class="glass p-6">
@@ -153,6 +153,12 @@
                                     <h3 class="text-lg font-bold text-white">Матрица ABC-XYZ</h3>
                                     <p class="text-xs text-gray-400 mt-1">Ось X: Оборачиваемость (стабильность) | Ось Y: Вклад в прибыль (%)</p>
                                 </div>
+                                <!-- Кнопка справки -->
+                                <button onclick="showChartHelp()" class="text-gray-400 hover:text-white transition" title="Как читать график?">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
                             </div>
                             <button onclick="resetZoom()" id="btn-reset-zoom" class="hidden px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition">
                                 🔍 Сброс зума
@@ -213,6 +219,7 @@
                                             <input type="text" placeholder="Коэф." class="table-filter-input" oninput="filterTable(this, 5)">
                                         </th>
                                     </tr>
+                                </tr>
                                 </thead>
                                 <tbody id="abc-table-body" class="divide-y divide-slate-700">
                                     <!-- Rows injected here -->
@@ -222,36 +229,45 @@
                     </div>
                 </div>
 
-                <!-- ===== СЕКЦИЯ ПОСТАВЩИКОВ (видна только при чекбоксе поставщиков) ===== -->
+                <!-- ===== БЛОК СРАВНЕНИЯ ПОСТАВЩИКОВ ===== -->
                 <div id="supplier-section" class="hidden space-y-6">
                     <div class="glass p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-bold text-white">Сравнение цен поставщиков</h3>
-                                <p class="text-xs text-gray-400 mt-1">Товары, которые закупались у 2+ поставщиков. Цена — последняя закупка. <span class="badge badge-last">🕐 последний</span> <span class="badge badge-best">✓ выгодно</span></p>
-                            </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-lg font-bold text-white">Сравнение цен поставщиков</h3>
+                            <span class="text-xs text-gray-500">За всё время · <span class="badge badge-best">✓ выгоднее</span> = мин. цена · <span class="badge badge-last">🕐 последний</span> = последняя закупка</span>
                         </div>
+                        <p class="text-xs text-gray-400 mb-4">Товары, которые закупались у 2+ поставщиков. Каждая строка — связка «товар + поставщик» с последней ценой закупки.</p>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm text-left">
                                 <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
                                     <tr>
-                                        <th class="px-4 py-3 w-1/3">
+                                        <th class="px-4 py-3">
                                             <div class="flex items-center justify-between">
                                                 Товар
                                                 <span class="sort-icon" onclick="toggleSupSort('name')" id="sup-sort-name">↕</span>
                                             </div>
-                                            <input type="text" placeholder="Поиск товара..." class="table-filter-input" oninput="filterSupTable(this, 0)">
+                                            <input type="text" placeholder="Поиск..." class="table-filter-input" oninput="filterSupTable(this, 0)">
                                         </th>
                                         <th class="px-4 py-3">
                                             <div class="flex items-center justify-between">
-                                                Лучшая цена
-                                                <span class="sort-icon" onclick="toggleSupSort('bestPrice')" id="sup-sort-bestPrice">↕</span>
+                                                Поставщик
+                                                <span class="sort-icon" onclick="toggleSupSort('supplier')" id="sup-sort-supplier">↕</span>
                                             </div>
-                                            <input type="text" placeholder="₽" class="table-filter-input" oninput="filterSupTable(this, 1)">
+                                            <input type="text" placeholder="Поставщик..." class="table-filter-input" oninput="filterSupTable(this, 1)">
+                                        </th>
+                                        <th class="px-4 py-3 text-right">
+                                            <div class="flex items-center justify-end gap-1">
+                                                Последняя цена
+                                                <span class="sort-icon" onclick="toggleSupSort('price')" id="sup-sort-price">↕</span>
+                                            </div>
+                                            <input type="text" placeholder="₽" class="table-filter-input" oninput="filterSupTable(this, 2)">
                                         </th>
                                         <th class="px-4 py-3">
-                                            Поставщики и цены закупки
-                                            <input type="text" placeholder="Поиск поставщика..." class="table-filter-input" oninput="filterSupTable(this, 2)">
+                                            <div class="flex items-center justify-between">
+                                                Дата последней закупки
+                                                <span class="sort-icon" onclick="toggleSupSort('date')" id="sup-sort-date">↕</span>
+                                            </div>
+                                            <input type="text" placeholder="дата" class="table-filter-input" oninput="filterSupTable(this, 3)">
                                         </th>
                                     </tr>
                                 </thead>
@@ -267,7 +283,7 @@
         </div>
     </main>
 
-    <!-- МОДАЛЬНОЕ ОКНО API -->
+    <!-- МОДАЛЬНЫЕ ОКНА -->
     <div id="connection-modal" class="modal-overlay">
         <div class="glass p-8 max-w-md w-full shadow-2xl">
             <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
@@ -278,18 +294,82 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ -->
-    <div id="details-modal" class="modal-overlay">
-        <div class="glass p-6 max-w-3xl w-full shadow-2xl max-h-[90vh] flex flex-col">
+    <!-- Модальное окно справки по графику -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="glass p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
-                <h2 id="details-title" class="text-xl font-bold text-white">Детали</h2>
-                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+                <h2 class="text-xl font-bold text-white">Как читать матрицу ABC-XYZ</h2>
+                <button onclick="document.getElementById('help-modal').classList.remove('active')" class="text-gray-400 hover:text-white text-3xl">&times;</button>
             </div>
-            <div id="details-content" class="overflow-y-auto scrollbar-thin flex-1"></div>
+            <div class="overflow-y-auto scrollbar-thin pr-2 space-y-4 text-sm text-gray-300">
+                <p>Матрица совмещает два показателя: прибыльность товара (ABC) и стабильность его продаж (XYZ).</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-800/50 p-4 rounded-lg">
+                        <h4 class="font-bold text-white mb-2">Ось Y: ABC (Прибыльность)</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><span class="text-green-400 font-bold">A</span> — Топ товары, приносящие 80% всей прибыли.</li>
+                            <li><span class="text-blue-400 font-bold">B</span> — Товары среднего сегмента (следующие 15% прибыли).</li>
+                            <li><span class="text-slate-400 font-bold">C</span> — Аутсайдеры, приносящие последние 5% прибыли.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-800/50 p-4 rounded-lg">
+                        <h4 class="font-bold text-white mb-2">Ось X: XYZ (Стабильность)</h4>
+                        <p class="mb-2">Оценивается через оборачиваемость запасов.</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><span class="font-bold text-white">X</span> — Высокая оборачиваемость (>3). Стабильный спрос.</li>
+                            <li><span class="font-bold text-white">Y</span> — Средняя оборачиваемость (1-3). Умеренный спрос.</li>
+                            <li><span class="font-bold text-white">Z</span> — Низкая оборачиваемость (<1). Нестабильный спрос или залежалый товар.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4 class="font-bold text-white mt-4 mb-2">Расшифровка квадрантов:</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div class="p-2 rounded bg-green-900/20 border border-green-900/50">
+                        <div class="font-bold q-ax">AX</div>
+                        <div class="text-xs">Лидеры. Высокая прибыль, стабильные продажи. Требуют постоянного наличия.</div>
+                    </div>
+                    <div class="p-2 rounded bg-yellow-900/20 border border-yellow-900/50">
+                        <div class="font-bold q-ay">AY</div>
+                        <div class="text-xs">Прибыльные, но спрос колеблется. Нужен страховой запас.</div>
+                    </div>
+                    <div class="p-2 rounded bg-red-900/20 border border-red-900/50">
+                        <div class="font-bold q-az">AZ</div>
+                        <div class="text-xs">Высокая маржа, но редкие продажи. Риск заморозки денег.</div>
+                    </div>
+                    <div class="p-2 rounded bg-blue-900/20 border border-blue-900/50">
+                        <div class="font-bold q-bx">BX</div>
+                        <div class="text-xs">Хорошая оборачиваемость, средняя прибыль. "Рабочие лошадки".</div>
+                    </div>
+                    <div class="p-2 rounded bg-purple-900/20 border border-purple-900/50">
+                        <div class="font-bold q-by">BY</div>
+                        <div class="text-xs">Средняя прибыль и средняя стабильность. Стандартный ассортимент.</div>
+                    </div>
+                    <div class="p-2 rounded bg-orange-900/20 border border-orange-900/50">
+                        <div class="font-bold q-bz">BZ</div>
+                        <div class="text-xs">Средняя прибыль, низкая оборачиваемость. Кандидаты на вывод.</div>
+                    </div>
+                    <div class="p-2 rounded bg-slate-800/50 border border-slate-700">
+                        <div class="font-bold q-cx">CX</div>
+                        <div class="text-xs">Низкая прибыль, но стабильный спрос. Нужны для ассортимента.</div>
+                    </div>
+                    <div class="p-2 rounded bg-slate-700/50 border border-slate-600">
+                        <div class="font-bold q-cy">CY</div>
+                        <div class="text-xs">Низкая прибыль, нестабильный спрос. Балласт.</div>
+                    </div>
+                    <div class="p-2 rounded bg-slate-900/50 border border-slate-800">
+                        <div class="font-bold q-cz">CZ</div>
+                        <div class="text-xs">Аутсайдеры. Низкая прибыль, нет оборотов. К выводу из ассортимента.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-700 text-right">
+                <button onclick="document.getElementById('help-modal').classList.remove('active')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm">Понятно</button>
+            </div>
         </div>
     </div>
 
-    <!-- LOADER -->
     <div id="global-loader" class="modal-overlay">
         <div class="glass p-8 max-w-sm w-full text-center">
             <div class="spinner mx-auto mb-4"></div>
@@ -306,8 +386,8 @@
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let apiToken = localStorage.getItem('moysklad_token') || '';
         let abcChart = null;
-        let currentItems = [];      // данные ABC-XYZ для сортировки
-        let supplierItems = [];     // данные поставщиков для сортировки
+        let currentItems = [];      // данные ABC-XYZ
+        let supplierRows = [];      // данные таблицы поставщиков (плоский список)
 
         // UI Helpers
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
@@ -330,10 +410,11 @@
             if (!apiToken) {
                 showConnectionModal();
             }
+            updateAnalyzeButtonState();
         });
 
-        // Кнопка активна, если отмечен ЛЮБОЙ из двух чекбоксов
-        function updateBtnState() {
+        // Кнопка активна, если отмечен ХОТЯ БЫ ОДИН чекбокс
+        function updateAnalyzeButtonState() {
             const any = abcCheckbox.checked || supplierCheckbox.checked;
             btnAnalyze.disabled = !any;
             if (!any) {
@@ -344,8 +425,8 @@
                 btnAnalyze.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
             }
         }
-        abcCheckbox.addEventListener('change', updateBtnState);
-        supplierCheckbox.addEventListener('change', updateBtnState);
+        abcCheckbox.addEventListener('change', updateAnalyzeButtonState);
+        supplierCheckbox.addEventListener('change', updateAnalyzeButtonState);
 
         function showLoader(text, subtext) {
             document.getElementById('loader-text').textContent = text;
@@ -363,12 +444,10 @@
             localStorage.setItem('moysklad_token', apiToken); 
             closeConnectionModal(); 
         }
-        function openDetailsModal(title, html) {
-            document.getElementById('details-title').textContent = title;
-            document.getElementById('details-content').innerHTML = html;
-            document.getElementById('details-modal').classList.add('active');
+        
+        function showChartHelp() {
+            document.getElementById('help-modal').classList.add('active');
         }
-        function closeDetailsModal() { document.getElementById('details-modal').classList.remove('active'); }
 
         // =====================================================
         // API LAYER
@@ -412,7 +491,7 @@
         }
 
         // =====================================================
-        // ЗАПУСК АНАЛИЗА
+        // ЗАПУСК АНАЛИЗА (условно по чекбоксам)
         // =====================================================
         async function runAnalysis() {
             if (!apiToken) { showConnectionModal(); return; }
@@ -423,55 +502,52 @@
             if (!dateFrom || !dateTo) { alert('Выберите диапазон дат'); return; }
 
             const doAbc = abcCheckbox.checked;
-            const doSup = supplierCheckbox.checked;
-            if (!doAbc && !doSup) return;
+            const doSupplier = supplierCheckbox.checked;
+            if (!doAbc && !doSupplier) return;
 
-            const btnRefresh = btnAnalyze;
-            btnRefresh.disabled = true;
-            showLoader('Загрузка данных...', 'Обращение к API МойСклад');
-
-            // Скрываем обе секции перед новым запуском
+            // Скрываем блоки перед новым запуском
             document.getElementById('abc-section').classList.add('hidden');
             document.getElementById('supplier-section').classList.add('hidden');
+
+            showLoader('Загрузка данных...', 'Подготовка...');
             
             try {
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
+                // --- ABC-XYZ (логика не тронута) ---
                 if (doAbc) {
-                    setLoaderSubtext('Загрузка прибыльности и оборотов...');
+                    setLoaderSubtext('Сбор прибыльности и оборотов...');
                     const [profitRows, turnoverRows] = await Promise.all([
                         fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers),
                         fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)
                     ]);
                     processData(profitRows, turnoverRows);
-                    document.getElementById('abc-section').classList.remove('hidden');
                 }
 
-                if (doSup) {
-                    await loadAndProcessSuppliers(headers, momentFrom, momentTo);
-                    document.getElementById('supplier-section').classList.remove('hidden');
+                // --- Сравнение поставщиков (за всё время) ---
+                if (doSupplier) {
+                    await loadSupplierData(headers);
                 }
 
-                document.getElementById('analysis-placeholder').classList.add('hidden');
                 document.getElementById('analysis-results').classList.remove('hidden');
-                document.getElementById('last-update') && (document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU'));
+
             } catch (err) {
                 console.error(err);
                 alert('Ошибка анализа: ' + err.message);
             } finally {
                 hideLoader();
-                updateBtnState();
             }
         }
 
         // =====================================================
-        // ABC-XYZ (без изменений логики)
+        // ABC-XYZ (ЛОГИКА НЕ ТРОНУТА)
         // =====================================================
         function processData(profitRows, turnoverRows) {
             const productMap = new Map();
 
+            // 1. Прибыльность (ABC)
             profitRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
@@ -487,6 +563,7 @@
                 });
             });
 
+            // 2. Оборачиваемость (XYZ Proxy)
             turnoverRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
@@ -499,6 +576,7 @@
                 let avgStock = (startQty + endQty) / 2;
                 if (avgStock <= 0) avgStock = 0.1; // Защита от деления на 0
                 
+                // Оборачиваемость = Продажи / Средний остаток
                 const turnoverRate = outcomeQty > 0 ? (outcomeQty / avgStock) : 0;
 
                 if (productMap.has(id)) {
@@ -515,14 +593,17 @@
                 }
             });
 
+            // 3. Классификация
             const items = Array.from(productMap.values()).filter(i => i.revenue > 0 || i.profit !== 0 || i.turnoverRate > 0);
             
+            // Сортировка по прибыли для ABC
             items.sort((a, b) => b.profit - a.profit);
             
             const totalProfit = items.reduce((sum, i) => sum + Math.max(0, i.profit), 0);
             let cumulativeProfit = 0;
             
             items.forEach(item => {
+                // ABC
                 const profitShare = totalProfit > 0 ? (Math.max(0, item.profit) / totalProfit) * 100 : 0;
                 cumulativeProfit += profitShare;
                 
@@ -532,15 +613,18 @@
                 
                 item.profitShare = profitShare;
 
+                // XYZ (по оборачиваемости)
                 const tr = item.turnoverRate || 0;
                 if (tr > 3) item.xyz = 'X';
                 else if (tr >= 1) item.xyz = 'Y';
                 else item.xyz = 'Z';
             });
 
-            currentItems = items;
+            currentItems = items; // Сохраняем для сортировки
             renderChart(items);
             renderTable(items);
+
+            document.getElementById('abc-section').classList.remove('hidden');
         }
 
         function resetZoom() {
@@ -608,7 +692,7 @@
                             }
                         },
                         tooltip: {
-                            callbacks: { 
+                            callbacks: {
                                 label: (ctx) => {
                                     const raw = ctx.raw;
                                     return `${raw.name}: Прибыль ${formatMoney(raw.profit)} (${ctx.dataset.label})`;
@@ -652,137 +736,118 @@
         }
 
         // =====================================================
-        // ПОСТАВЩИКИ: загрузка приёмок + позиций (N+1 батчами)
+        // СРАВНЕНИЕ ПОСТАВЩИКОВ (за всё время)
+        // Корень прошлой пустой таблицы: в СПИСКЕ /entity/supply
+        // поле positions приходит БЕЗ rows (expand не раскрывает коллекции в списке).
+        // Поэтому позиции каждой приемки грузим отдельным запросом по id.
         // =====================================================
-        async function loadAndProcessSuppliers(headers, momentFrom, momentTo) {
-            setLoaderSubtext('Загрузка списка приёмок...');
+        async function loadSupplierData(headers) {
+            setLoaderSubtext('Загрузка списка приемок за всё время...');
 
-            // expand=agent даёт ИМЯ поставщика (без него приходит только ссылка → таблица была пустой)
-            const cond = `moment>=${momentFrom};moment<=${momentTo}`;
-            const supplies = await fetchAllPages(
-                `${MOYSKLAD_API}/entity/supply?expand=agent&order=moment,desc&filter=${encodeURIComponent(cond)}`,
-                headers
-            );
+            // 1) Список всех приемок за всё время (без фильтра по датам)
+            const supplies = await fetchAllPages(`${MOYSKLAD_API}/entity/supply`, headers);
 
             if (supplies.length === 0) {
-                supplierItems = [];
-                renderSupplierTable([]);
+                supplierRows = [];
+                renderSupplierTable();
+                document.getElementById('supplier-section').classList.remove('hidden');
                 return;
             }
 
-            // Позиции НЕ раскрываются в ответе списка → грузим отдельно для каждой приёмки, батчами
-            const BATCH = 5;
+            // 2) Для каждой приемки — её позиции (отдельный запрос по id, т.к. в списке позиции не раскрываются)
+            // productId -> { name, suppliers: Map<supplierName, { price, date }> }
+            const productSuppliers = new Map();
+            const BATCH = 6; // параллельность, чтобы не уронить прокси
+
             for (let i = 0; i < supplies.length; i += BATCH) {
                 const batch = supplies.slice(i, i + BATCH);
                 await Promise.all(batch.map(async (s) => {
+                    const supplierName = (s.agent && s.agent.name) ? s.agent.name : 'Без поставщика';
+                    const moment = s.moment;
                     try {
-                        const res = await proxyFetch(
-                            `${MOYSKLAD_API}/entity/supply/${s.id}/positions?expand=assortment&limit=1000`,
+                        const positions = await fetchAllPages(
+                            `${MOYSKLAD_API}/entity/supply/${s.id}/positions?expand=assortment`,
                             headers
                         );
-                        const json = await res.json();
-                        s._positions = json.rows || [];
+                        positions.forEach(pos => {
+                            const pid = pos.assortment?.meta?.href;
+                            if (!pid) return;
+                            const pname = pos.assortment?.name || 'Без названия';
+                            const price = (pos.price || 0) / 100; // цена в копейках -> рубли
+
+                            if (!productSuppliers.has(pid)) {
+                                productSuppliers.set(pid, { name: pname, suppliers: new Map() });
+                            }
+                            const supMap = productSuppliers.get(pid).suppliers;
+                            const ex = supMap.get(supplierName);
+                            // храним ПОСЛЕДНЮЮ цену каждого поставщика
+                            if (!ex || new Date(ex.date) < new Date(moment)) {
+                                supMap.set(supplierName, { price: price, date: moment });
+                            }
+                        });
                     } catch (e) {
-                        s._positions = [];
+                        // отдельная приемка не прочиталась — пропускаем, не валим весь анализ
                     }
                 }));
-                setLoaderSubtext(`Загрузка позиций приёмки: ${Math.min(i + BATCH, supplies.length)} из ${supplies.length}`);
+                setLoaderSubtext(`Обработка приемок: ${Math.min(i + BATCH, supplies.length)} из ${supplies.length}`);
             }
 
-            processSuppliers(supplies);
-        }
+            // 3) Оставляем только товары с 2+ поставщиками и формируем плоский список строк
+            supplierRows = [];
+            productSuppliers.forEach((data) => {
+                if (data.suppliers.size < 2) return;
 
-        function processSuppliers(supplies) {
-            // productId -> { name, suppliers: Map<supplierName, { price, date }> }
-            const productMap = new Map();
+                const supList = Array.from(data.suppliers.entries())
+                    .map(([name, info]) => ({ name, price: info.price, date: info.date }));
 
-            supplies.forEach(s => {
-                const supplierName = (s.agent && s.agent.name) ? s.agent.name : 'Без поставщика';
-                const date = s.moment;
-                const positions = s._positions || [];
+                const bestPrice = Math.min(...supList.map(s => s.price));
+                const lastDate = supList.reduce((m, s) => (!m || new Date(s.date) > new Date(m)) ? s.date : m, null);
 
-                positions.forEach(pos => {
-                    const pid = pos.assortment?.meta?.href;
-                    if (!pid) return;
-                    const pname = pos.assortment?.name || 'Без названия';
-                    const price = (pos.price || 0) / 100; // цена закупки за единицу
-
-                    if (!productMap.has(pid)) {
-                        productMap.set(pid, { name: pname, suppliers: new Map() });
-                    }
-                    const supMap = productMap.get(pid).suppliers;
-                    const existing = supMap.get(supplierName);
-                    // храним ПОСЛЕДНЮЮ цену (самая свежая приёмка этого поставщика)
-                    if (!existing || new Date(date) > new Date(existing.date)) {
-                        supMap.set(supplierName, { price: price, date: date });
-                    }
+                supList.forEach(s => {
+                    supplierRows.push({
+                        productName: data.name,
+                        supplierName: s.name,
+                        lastPrice: s.price,
+                        lastDate: s.date,
+                        isBest: s.price === bestPrice,
+                        isLast: s.date === lastDate
+                    });
                 });
             });
 
-            // Оставляем только товары с 2+ поставщиками
-            const result = [];
-            productMap.forEach((val) => {
-                if (val.suppliers.size > 1) {
-                    const sups = Array.from(val.suppliers.entries()).map(([name, d]) => ({
-                        name: name,
-                        price: d.price,
-                        date: d.date
-                    }));
-                    const bestPrice = Math.min(...sups.map(x => x.price));
-                    const lastTime = Math.max(...sups.map(x => new Date(x.date).getTime()));
-                    result.push({ name: val.name, suppliers: sups, bestPrice: bestPrice, lastTime: lastTime });
-                }
-            });
+            // сортировка по умолчанию: по товару, затем по цене
+            supplierRows.sort((a, b) => a.productName.localeCompare(b.productName, 'ru') || a.lastPrice - b.lastPrice);
 
-            result.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
-            supplierItems = result;
-            // сбрасываем иконки сортировки поставщиков
-            supSortCol = 'name'; supSortDir = 'asc';
-            ['name', 'bestPrice'].forEach(f => {
-                const el = document.getElementById('sup-sort-' + f);
-                if (el) { el.classList.remove('active'); el.textContent = '↕'; }
-            });
-            const elN = document.getElementById('sup-sort-name');
-            if (elN) { elN.classList.add('active'); elN.textContent = '↑'; }
-            renderSupplierTable(result);
+            renderSupplierTable();
+            document.getElementById('supplier-section').classList.remove('hidden');
         }
 
-        function renderSupplierTable(items) {
+        function renderSupplierTable() {
             const tbody = document.getElementById('supplier-table-body');
-            if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">Нет товаров, закупавшихся у нескольких поставщиков за выбранный период</td></tr>';
+            if (!supplierRows || supplierRows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Нет товаров, которые закупались у двух и более поставщиков за всё время.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = items.map(item => {
-                const supHtml = item.suppliers
-                    .slice()
-                    .sort((a, b) => a.price - b.price)
-                    .map(s => {
-                        const isLast = new Date(s.date).getTime() === item.lastTime;
-                        const isBest = s.price === item.bestPrice;
-                        let badges = '';
-                        if (isLast) badges += '<span class="badge badge-last">🕐 последний</span>';
-                        if (isBest) badges += '<span class="badge badge-best">✓ выгодно</span>';
-                        return `
-                            <div class="flex justify-between gap-2 py-0.5">
-                                <span class="text-gray-300 truncate">${escapeHtml(s.name)}${badges}</span>
-                                <span class="text-gray-400 whitespace-nowrap">${formatMoney(s.price)}</span>
-                            </div>`;
-                    }).join('');
-
+            tbody.innerHTML = supplierRows.map(r => {
+                const badges =
+                    (r.isBest ? '<span class="badge badge-best">✓ выгоднее</span>' : '') +
+                    (r.isLast ? '<span class="badge badge-last">🕐 последний</span>' : '');
+                const priceClass = r.isBest ? 'text-green-400 font-bold' : 'text-gray-300';
+                const dateStr = r.lastDate ? new Date(r.lastDate).toLocaleDateString('ru-RU') : '—';
                 return `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50 align-top">
-                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
-                        <td class="px-4 py-3 text-green-400 font-bold whitespace-nowrap">${formatMoney(item.bestPrice)}</td>
-                        <td class="px-4 py-3 text-xs">${supHtml}</td>
+                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(r.productName)}</td>
+                        <td class="px-4 py-3 text-gray-300">${escapeHtml(r.supplierName)}${badges}</td>
+                        <td class="px-4 py-3 text-right ${priceClass}">${formatMoney(r.lastPrice)}</td>
+                        <td class="px-4 py-3 text-gray-400">${dateStr}</td>
                     </tr>
                 `;
             }).join('');
         }
 
         // =====================================================
-        // СОРТИРОВКА И ФИЛЬТР: таблица ABC-XYZ
+        // СОРТИРОВКА / ФИЛЬТР — таблица ABC-XYZ (не тронута)
         // =====================================================
         let currentSortCol = 'profit';
         let currentSortDir = 'desc';
@@ -847,18 +912,19 @@
         }
 
         // =====================================================
-        // СОРТИРОВКА И ФИЛЬТР: таблица поставщиков
+        // СОРТИРОВКА / ФИЛЬТР — таблица поставщиков
         // =====================================================
-        let supSortCol = 'name';
-        let supSortDir = 'asc';
+        let currentSupSortCol = 'name';
+        let currentSupSortDir = 'asc';
 
         function toggleSupSort(col) {
-            if (supSortCol === col) {
-                supSortDir = supSortDir === 'asc' ? 'desc' : 'asc';
+            if (currentSupSortCol === col) {
+                currentSupSortDir = currentSupSortDir === 'asc' ? 'desc' : 'asc';
             } else {
-                supSortCol = col;
-                supSortDir = 'asc';
+                currentSupSortCol = col;
+                currentSupSortDir = (col === 'price') ? 'asc' : 'asc';
             }
+
             document.querySelectorAll('#supplier-section .sort-icon').forEach(el => {
                 el.classList.remove('active');
                 el.textContent = '↕';
@@ -866,28 +932,62 @@
             const activeIcon = document.getElementById(`sup-sort-${col}`);
             if (activeIcon) {
                 activeIcon.classList.add('active');
-                activeIcon.textContent = supSortDir === 'asc' ? '↑' : '↓';
+                activeIcon.textContent = currentSupSortDir === 'asc' ? '↑' : '↓';
             }
-            const sorted = [...supplierItems].sort((a, b) => {
+
+            supSortAndRender();
+        }
+
+        function supSortAndRender() {
+            const sorted = [...supplierRows].sort((a, b) => {
                 let valA, valB;
-                if (col === 'name') { valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); }
-                else { valA = a.bestPrice; valB = b.bestPrice; }
-                if (valA < valB) return supSortDir === 'asc' ? -1 : 1;
-                if (valA > valB) return supSortDir === 'asc' ? 1 : -1;
+                switch (currentSupSortCol) {
+                    case 'name': valA = a.productName.toLowerCase(); valB = b.productName.toLowerCase(); break;
+                    case 'supplier': valA = a.supplierName.toLowerCase(); valB = b.supplierName.toLowerCase(); break;
+                    case 'price': valA = a.lastPrice; valB = b.lastPrice; break;
+                    case 'date': valA = a.lastDate ? new Date(a.lastDate).getTime() : 0; valB = b.lastDate ? new Date(b.lastDate).getTime() : 0; break;
+                    default: valA = 0; valB = 0;
+                }
+                if (valA < valB) return currentSupSortDir === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSupSortDir === 'asc' ? 1 : -1;
                 return 0;
             });
-            renderSupplierTable(sorted);
+            renderSupplierTableRows(sorted);
+        }
+
+        function renderSupplierTableRows(rows) {
+            const tbody = document.getElementById('supplier-table-body');
+            tbody.innerHTML = rows.map(r => {
+                const badges =
+                    (r.isBest ? '<span class="badge badge-best">✓ выгоднее</span>' : '') +
+                    (r.isLast ? '<span class="badge badge-last">🕐 последний</span>' : '');
+                const priceClass = r.isBest ? 'text-green-400 font-bold' : 'text-gray-300';
+                const dateStr = r.lastDate ? new Date(r.lastDate).toLocaleDateString('ru-RU') : '—';
+                return `
+                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(r.productName)}</td>
+                        <td class="px-4 py-3 text-gray-300">${escapeHtml(r.supplierName)}${badges}</td>
+                        <td class="px-4 py-3 text-right ${priceClass}">${formatMoney(r.lastPrice)}</td>
+                        <td class="px-4 py-3 text-gray-400">${dateStr}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function filterSupTable(input, colIndex) {
             const filter = input.value.toLowerCase();
             const table = document.getElementById('supplier-table-body');
             const rows = table.getElementsByTagName('tr');
+
             for (let i = 0; i < rows.length; i++) {
                 const cell = rows[i].getElementsByTagName('td')[colIndex];
                 if (cell) {
                     const txtValue = cell.textContent || cell.innerText;
-                    rows[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
                 }
             }
         }
