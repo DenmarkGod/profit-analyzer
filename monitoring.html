@@ -297,15 +297,27 @@
             return { Authorization: auth, Accept: 'application/json;charset=utf-8', 'Content-Type': 'application/json' };
         }
 
-        async function proxyFetch(targetUrl, headers) {
-            const response = await fetch(PROXY_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: targetUrl, headers, method: 'GET' })
-            });
-            if (response.status === 429) throw new Error('Превышен лимит запросов. Подождите.');
-            if (!response.ok) throw new Error(`Ошибка API ${response.status}`);
-            return response;
+        // === 1. Обёртка fetch с retry при 429 ===
+        async function proxyFetch(url, options = {}, retries = 3) {
+          for (let attempt = 0; attempt <= retries; attempt++) {
+            const response = await fetch(url, options);
+        
+            if (response.status === 429) {
+              if (attempt === retries) {
+                throw new Error('Превышен лимит запросов. Подождите.');
+              }
+              // Ждём с увеличением: 1с → 2с → 4с
+              const delay = Math.pow(2, attempt) * 1000;
+              console.warn(`429: повтор через ${delay}мс (попытка ${attempt + 1})`);
+              await new Promise(r => setTimeout(r, delay));
+              continue;
+            }
+        
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+          }
         }
 
         async function fetchAllPages(baseUrl, headers) {
