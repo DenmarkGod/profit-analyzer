@@ -36,11 +36,6 @@
         .view-section { display: none; animation: fadeIn 0.3s ease-out; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Добавлен стиль для кнопки обновления */
-        .refresh-btn-loading { position: relative; }
-        .refresh-btn-loading .spinner { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 16px; height: 16px; border-width: 2px; }
-        .refresh-btn-text { opacity: 1; }
-        .refresh-btn-loading .refresh-btn-text { opacity: 0; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -108,9 +103,8 @@
                         <span class="text-gray-500">—</span>
                         <input type="date" id="date-to" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                     </div>
-                    <button onclick="loadDashboard()" id="btn-refresh" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
-                        <span class="refresh-btn-text">🔄 Обновить</span>
-                        <div class="spinner refresh-btn-spinner hidden"></div>
+                    <button onclick="loadDashboard()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
+                        🔄 Обновить
                     </button>
                 </div>
             </div>
@@ -118,7 +112,7 @@
 
         <!-- Область контента -->
         <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
-
+            
             <!-- ГЛАВНАЯ СТРАНИЦА -->
             <div id="view-dashboard" class="view-section active space-y-6">
                 <!-- KPI Карточки -->
@@ -243,81 +237,12 @@
         // =====================================================
         // КОНФИГУРАЦИЯ
         // =====================================================
-        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev'; // Обновите URL, если изменился
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let currentPeriod = 'week';
         let charts = {};
         let apiToken = localStorage.getItem('moysklad_token') || '';
-        let dashboardCache = {}; // Старое кэширование, пока не используется
-
-        // =====================================================
-        // API: Ограничитель параллельных запросов
-        // =====================================================
-        const REQUEST_LIMIT = 4; // Максимум 4 параллельных запроса
-        let activeRequests = 0;
-        const requestQueue = [];
-
-        function executeRequest(requestFn) {
-            return new Promise((resolve, reject) => {
-                const task = { requestFn, resolve, reject };
-
-                if (activeRequests < REQUEST_LIMIT) {
-                    startRequest(task);
-                } else {
-                    requestQueue.push(task);
-                }
-            });
-        }
-
-        function startRequest(task) {
-            activeRequests++;
-            task.requestFn()
-                .then(result => {
-                    task.resolve(result);
-                })
-                .catch(error => {
-                    task.reject(error);
-                })
-                .finally(() => {
-                    activeRequests--;
-                    if (requestQueue.length > 0) {
-                        startRequest(requestQueue.shift());
-                    }
-                });
-        }
-
-        // =====================================================
-        // API: Кэширование на клиенте
-        // =====================================================
-        function cacheGet(key) {
-            try {
-                const cached = sessionStorage.getItem(key);
-                if (!cached) return null;
-                const parsed = JSON.parse(cached);
-                if (parsed.expires < Date.now()) {
-                    sessionStorage.removeItem(key); // Удаляем просроченное
-                    return null;
-                }
-                return parsed.data;
-            } catch (e) {
-                console.warn("Cache get error:", e);
-                sessionStorage.removeItem(key); // Удаляем испорченное
-                return null;
-            }
-        }
-
-        function cacheSet(key, data, ttlMinutes = 5) {
-            try {
-                const item = {
-                    data: data,
-                    expires: Date.now() + ttlMinutes * 60 * 1000
-                };
-                sessionStorage.setItem(key, JSON.stringify(item));
-            } catch (e) {
-                console.warn("Cache set error:", e);
-                // Если кэш переполнен, просто игнорируем
-            }
-        }
+        let dashboardCache = {};
 
         // =====================================================
         // ФОРМАТИРОВАНИЕ
@@ -361,7 +286,7 @@
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById('view-' + view);
             if (target) target.classList.remove('hidden');
-
+            
             document.querySelectorAll('.nav-item').forEach(el => {
                 el.classList.remove('active', 'text-blue-400');
                 el.classList.add('text-gray-400');
@@ -371,7 +296,7 @@
                 nav.classList.add('active', 'text-blue-400');
                 nav.classList.remove('text-gray-400');
             }
-
+            
             const titles = { dashboard: 'Главная', finance: 'Финансы', stock: 'Склад', clients: 'Клиенты' };
             document.getElementById('page-title').textContent = titles[view] || 'Главная';
         }
@@ -439,8 +364,7 @@
                 return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
                 if (retries > 0) {
-                    const delay = 1500 * Math.pow(2, 3 - retries); // Экспоненциальный отступ
-                    await new Promise(resolve => setTimeout(resolve, delay));
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Уменьшили задержку для скорости
                     return fetchWithRetry(url, options, retries - 1);
                 }
                 throw new Error('Сеть сбрасывает соединение.');
@@ -453,13 +377,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: targetUrl, headers: headers, method: 'GET' })
             });
-            if (response.status === 429) {
-                console.warn("Received 429, retrying after delay...");
-                // Простое ожидание. В реальной системе лучше использовать Retry-After header.
-                await new Promise(resolve => setTimeout(resolve, 5000)); // Ждем 5 секунд
-                // Повторный вызов (рекурсивно, но с ограничением через fetchWithRetry)
-                return proxyFetch(targetUrl, headers);
-            }
+            if (response.status === 429) throw new Error('Превышен лимит запросов. Подождите немного.');
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Ошибка API ${response.status}: ${errorText}`);
@@ -468,80 +386,41 @@
         }
 
         // =====================================================
-        // ГЛАВНАЯ — ЗАГРУЗКА ДАННЫХ (Оптимизированная)
+        // ГЛАВНАЯ — ЗАГРУЗКА ДАННЫХ
         // =====================================================
         async function loadDashboard() {
             if (!apiToken) { showConnectionModal(); return; }
-
-            const dateFrom = document.getElementById('date-from').value;
-            const dateTo = document.getElementById('date-to').value;
-            if (!dateFrom || !dateTo) { alert('Выберите период'); return; }
-
-            const btnRefresh = document.getElementById('btn-refresh');
-            btnRefresh.classList.add('refresh-btn-loading');
-            btnRefresh.disabled = true;
-
+            showLoader('Загрузка данных...', 'Обращение к API МойСклад');
+            
             try {
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                showLoader('Загрузка данных...', 'Обращение к API МойСклад');
-
-                // Формируем кэш-ключи для каждого запроса
-                const cacheKeys = {
-                    dashboard: `dash_${currentPeriod}`,
-                    sales: `sales_${momentFrom}_${momentTo}`,
-                    profit: `profit_${momentFrom}_${momentTo}`,
-                    checks: `checks_${momentFrom}_${momentTo}`
-                };
-
-                // Проверяем кэш для каждого запроса
-                let [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
-                    cacheGet(cacheKeys.dashboard) || executeRequest(() => loadDashboardMetrics(headers)),
-                    cacheGet(cacheKeys.sales) || executeRequest(() => loadSalesSeries(headers, momentFrom, momentTo)),
-                    cacheGet(cacheKeys.profit) || executeRequest(() => loadProfitByProduct(headers, momentFrom, momentTo)),
-                    cacheGet(cacheKeys.checks) || executeRequest(() => loadRecentChecks(headers, momentFrom, momentTo))
+                // Параллельная загрузка 4 легких отчетов (максимальная скорость)
+                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
+                    loadDashboardMetrics(headers),
+                    loadSalesSeries(headers, momentFrom, momentTo),
+                    loadProfitByProduct(headers, momentFrom, momentTo),
+                    loadRecentChecks(headers, momentFrom, momentTo)
                 ]);
 
-                // Если данные были из кэша, сохраняем их в кэш снова (обновляем TTL)
-                if (!Array.isArray(dashboardData)) {
-                    cacheSet(cacheKeys.dashboard, dashboardData);
-                }
-                if (!Array.isArray(salesSeries)) {
-                    cacheSet(cacheKeys.sales, salesSeries);
-                }
-                if (!Array.isArray(profitData)) {
-                    cacheSet(cacheKeys.profit, profitData);
-                }
-                if (!Array.isArray(checksData)) {
-                    cacheSet(cacheKeys.checks, checksData);
-                }
-
-                // Если данные были из кэша, они могут быть строками или объектами, а не массивами.
-                // Нужно убедиться, что это массивы/объекты.
-                if (typeof dashboardData === 'string') dashboardData = JSON.parse(dashboardData);
-                if (typeof salesSeries === 'string') salesSeries = JSON.parse(salesSeries);
-                if (typeof profitData === 'string') profitData = JSON.parse(profitData);
-                if (typeof checksData === 'string') checksData = JSON.parse(checksData);
-
-                // Сохраняем в глобальный кэш (может быть не нужен при кэшировании в sessionStorage)
                 dashboardCache = { dashboardData, salesSeries, profitData, checksData };
-
+                
                 updateKPIs(dashboardData, salesSeries, profitData);
                 updateMainChart(salesSeries);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
-
+                
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
             } catch (error) {
                 console.error(error);
                 alert(error.message);
             } finally {
                 hideLoader();
-                btnRefresh.classList.remove('refresh-btn-loading');
-                btnRefresh.disabled = false;
             }
         }
 
@@ -589,7 +468,7 @@
             document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
             document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
-
+            
             // Имитация трендов (можно доработать при наличии данных за прошлый период)
             ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
                 document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
@@ -638,12 +517,12 @@
         function updateTopProducts(profitData) {
             const container = document.getElementById('top-products-list');
             const rows = [...profitData].sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 5);
-
+            
             if (!rows.length) {
                 container.innerHTML = '<div class="text-gray-500 text-center py-8">Нет данных</div>';
                 return;
             }
-
+            
             container.innerHTML = rows.map(row => `
                 <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
                     <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
@@ -676,7 +555,7 @@
             const revenue = salesSeries.reduce((sum, row) => sum + (row.sum || 0) / 100, 0);
             const profit = profitData.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
             const margin = revenue > 0 ? (profit / revenue * 100) : 0;
-
+            
             const insights = [];
             if (revenue > 0) {
                 insights.push({ icon: '📊', title: 'Выручка за период', text: formatMoney(revenue) });
@@ -745,7 +624,7 @@
                 const dateTo = document.getElementById('date-to').value;
                 const headers = getAuthHeaders();
                 const checks = await loadRecentChecks(headers, `${dateFrom} 00:00:00`, `${dateTo} 23:59:59`);
-
+                
                 openDetailsModal(`Чеки (${checks.length})`, `
                     <div class="space-y-2">
                         ${checks.map(check => `
@@ -787,7 +666,7 @@
             const dates = getPeriodDates('week');
             document.getElementById('date-from').value = dates.from;
             document.getElementById('date-to').value = dates.to;
-
+            
             if (apiToken) {
                 loadDashboard();
             } else {
