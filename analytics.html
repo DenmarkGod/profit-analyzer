@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profit Analyzer Pro</title>
+    <title>ABC-XYZ Анализ | Profit Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Плагин для зума и панорамирования -->
@@ -17,12 +17,6 @@
         .nav-item { transition: all 0.2s ease; border-left: 3px solid transparent; text-decoration: none; display: flex; align-items: center; gap: 0.75rem; }
         .nav-item:hover { background: rgba(59, 130, 246, 0.1); }
         .nav-item.active { background: rgba(59, 130, 246, 0.15); border-left-color: #3b82f6; color: #60a5fa; }
-        .kpi-card { transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
-        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); border-color: rgba(59, 130, 246, 0.3); }
-        .trend-up { color: #4ade80; }
-        .trend-down { color: #f87171; }
-        .trend-neutral { color: #94a3b8; }
-        .check-item { transition: all 0.2s ease; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -105,9 +99,10 @@
     <main class="flex-1 flex flex-col overflow-hidden">
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h2 class="text-xl md:text-2xl font-bold text-white">Аналитика</h2>
+                <h2 class="text-xl md:text-2xl font-bold text-white">ABC-XYZ Анализ</h2>
                 
                 <div class="flex flex-wrap items-center gap-3">
+                    <!-- РУЧНОЙ ВЫБОР ДИАПАЗОНА -->
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
                         <input type="date" id="date-from" class="px-2 py-1 text-xs bg-transparent border-none outline-none text-white">
                         <span class="text-gray-500">—</span>
@@ -116,7 +111,7 @@
 
                     <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
                         <input type="checkbox" id="abc-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900">
-                        <span class="text-sm text-gray-300">ABC-XYZ Анализ</span>
+                        <span class="text-sm text-gray-300">Матрица ABC-XYZ</span>
                     </label>
 
                     <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
@@ -136,14 +131,14 @@
             <!-- Плейсхолдер -->
             <div id="analysis-placeholder" class="flex flex-col items-center justify-center h-[60vh] text-center">
                 <div class="text-6xl mb-4">📉</div>
-                <h3 class="text-2xl font-bold text-white mb-2">Выберите отчет и запустите анализ</h3>
-                <p class="text-gray-400 max-w-md">Отметьте галочками нужные отчеты и нажмите «Сформировать».</p>
+                <h3 class="text-2xl font-bold text-white mb-2">Выберите период и запустите анализ</h3>
+                <p class="text-gray-400 max-w-md">Для корректного XYZ-анализа рекомендуется выбирать период не менее 30 дней.</p>
             </div>
 
             <!-- Результаты анализа -->
             <div id="analysis-results" class="hidden space-y-6">
                 
-                <!-- ABC-XYZ График -->
+                <!-- График ABC-XYZ -->
                 <div id="abc-chart-container" class="glass p-6 hidden">
                     <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center gap-3">
@@ -156,12 +151,12 @@
                             </button>
                         </div>
                         <div class="chart-container">
-                            <canvas id="main-chart"></canvas>
+                            <canvas id="abc-chart"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <!-- ABC-XYZ Таблица -->
+                <!-- Таблица ABC-XYZ -->
                 <div id="abc-table-container" class="glass p-6 hidden">
                     <h3 class="text-lg font-bold text-white mb-4">Детальная таблица ABC-XYZ</h3>
                     <div class="overflow-x-auto">
@@ -180,7 +175,7 @@
                                             Класс
                                             <span class="sort-icon" onclick="toggleSort('class')" id="sort-class">↕</span>
                                         </div>
-                                        <input type="text" placeholder="AX" class="table-filter-input" oninput="filterTable(this, 1)">
+                                        <input type="text" placeholder="Напр. AX" class="table-filter-input" oninput="filterTable(this, 1)">
                                     </th>
                                     <th class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-1">
@@ -212,15 +207,21 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="abc-table-body" class="divide-y divide-slate-700"></tbody>
+                            <tbody id="abc-table-body" class="divide-y divide-slate-700">
+                                <!-- Rows injected here -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Сравнение поставщиков -->
+                <!-- Блок сравнения поставщиков -->
                 <div id="supplier-analysis-container" class="glass p-6 hidden">
-                    <h3 class="text-lg font-bold text-white mb-4">Сравнение цен поставщиков</h3>
-                    <p class="text-xs text-gray-400 mb-4">Товары, закупавшиеся у нескольких поставщиков за выбранный период. Показана последняя цена закупки.</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Сравнение цен поставщиков</h3>
+                            <p class="text-xs text-gray-400 mt-1">Товары, закупавшиеся у нескольких поставщиков за выбранный период. Показана последняя цена закупки.</p>
+                        </div>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
                             <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
@@ -237,12 +238,14 @@
                                             Лучший поставщик
                                             <span class="sort-icon" onclick="toggleSupplierSort('bestSupplier')" id="sup-sort-best">↕</span>
                                         </div>
+                                        <input type="text" placeholder="Поставщик" class="table-filter-input" oninput="filterSupplierTable(this, 1)">
                                     </th>
                                     <th class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-1">
                                             Лучшая цена
                                             <span class="sort-icon" onclick="toggleSupplierSort('bestPrice')" id="sup-sort-price">↕</span>
                                         </div>
+                                        <input type="text" placeholder="₽" class="table-filter-input" oninput="filterSupplierTable(this, 2)">
                                     </th>
                                     <th class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-1">
@@ -251,11 +254,12 @@
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody id="supplier-table-body" class="divide-y divide-slate-700"></tbody>
+                            <tbody id="supplier-table-body" class="divide-y divide-slate-700">
+                                <!-- Supplier rows injected here -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
     </main>
@@ -265,9 +269,85 @@
         <div class="glass p-8 max-w-md w-full shadow-2xl">
             <h3 class="text-xl font-bold mb-2 text-white">Подключение к МойСклад</h3>
             <p class="text-sm text-gray-400 mb-6">Введите API-токен или логин:пароль</p>
-            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none" placeholder="user@domain.com:password">
-            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg mt-4">Сохранить</button>
-            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3">Отмена</button>
+            <input type="text" id="api-token" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white outline-none mb-4" placeholder="user@domain.com:password">
+            <button onclick="saveToken()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">Сохранить</button>
+            <button onclick="closeConnectionModal()" class="w-full text-gray-400 hover:text-white text-sm py-3 mt-2">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно справки по графику -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="glass p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
+                <h2 class="text-xl font-bold text-white">Как читать матрицу ABC-XYZ</h2>
+                <button onclick="document.getElementById('help-modal').classList.remove('active')" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div class="overflow-y-auto scrollbar-thin pr-2 space-y-4 text-sm text-gray-300">
+                <p>Матрица совмещает два показателя: прибыльность товара (ABC) и стабильность его продаж (XYZ).</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-800/50 p-4 rounded-lg">
+                        <h4 class="font-bold text-white mb-2">Ось Y: ABC (Прибыльность)</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><span class="text-green-400 font-bold">A</span> — Топ товары, приносящие 80% всей прибыли.</li>
+                            <li><span class="text-blue-400 font-bold">B</span> — Товары среднего сегмента (следующие 15% прибыли).</li>
+                            <li><span class="text-slate-400 font-bold">C</span> — Аутсайдеры, приносящие последние 5% прибыли.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-800/50 p-4 rounded-lg">
+                        <h4 class="font-bold text-white mb-2">Ось X: XYZ (Стабильность)</h4>
+                        <p class="mb-2">Оценивается через оборачиваемость запасов.</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><span class="font-bold text-white">X</span> — Высокая оборачиваемость (>3). Стабильный спрос.</li>
+                            <li><span class="font-bold text-white">Y</span> — Средняя оборачиваемость (1-3). Умеренный спрос.</li>
+                            <li><span class="font-bold text-white">Z</span> — Низкая оборачиваемость (<1). Нестабильный спрос или залежалый товар.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4 class="font-bold text-white mt-4 mb-2">Расшифровка квадрантов:</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div class="p-2 rounded bg-green-900/20 border border-green-900/50">
+                        <div class="font-bold q-ax">AX</div>
+                        <div class="text-xs">Лидеры. Высокая прибыль, стабильные продажи. Требуют постоянного наличия.</div>
+                    </div>
+                    <div class="p-2 rounded bg-yellow-900/20 border border-yellow-900/50">
+                        <div class="font-bold q-ay">AY</div>
+                        <div class="text-xs">Прибыльные, но спрос колеблется. Нужен страховой запас.</div>
+                    </div>
+                    <div class="p-2 rounded bg-red-900/20 border border-red-900/50">
+                        <div class="font-bold q-az">AZ</div>
+                        <div class="text-xs">Высокая маржа, но редкие продажи. Риск заморозки денег.</div>
+                    </div>
+                    <div class="p-2 rounded bg-blue-900/20 border border-blue-900/50">
+                        <div class="font-bold q-bx">BX</div>
+                        <div class="text-xs">Хорошая оборачиваемость, средняя прибыль. "Рабочие лошадки".</div>
+                    </div>
+                    <div class="p-2 rounded bg-purple-900/20 border border-purple-900/50">
+                        <div class="font-bold q-by">BY</div>
+                        <div class="text-xs">Средняя прибыль и средняя стабильность. Стандартный ассортимент.</div>
+                    </div>
+                    <div class="p-2 rounded bg-orange-900/20 border border-orange-900/50">
+                        <div class="font-bold q-bz">BZ</div>
+                        <div class="text-xs">Средняя прибыль, низкая оборачиваемость. Кандидаты на вывод.</div>
+                    </div>
+                    <div class="p-2 rounded bg-slate-800/50 border border-slate-700">
+                        <div class="font-bold q-cx">CX</div>
+                        <div class="text-xs">Низкая прибыль, но стабильный спрос. Нужны для ассортимента.</div>
+                    </div>
+                    <div class="p-2 rounded bg-slate-700/50 border border-slate-600">
+                        <div class="font-bold q-cy">CY</div>
+                        <div class="text-xs">Низкая прибыль, нестабильный спрос. Балласт.</div>
+                    </div>
+                    <div class="p-2 rounded bg-slate-900/50 border border-slate-800">
+                        <div class="font-bold q-cz">CZ</div>
+                        <div class="text-xs">Аутсайдеры. Низкая прибыль, нет оборотов. К выводу из ассортимента.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-700 text-right">
+                <button onclick="document.getElementById('help-modal').classList.remove('active')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm">Понятно</button>
+            </div>
         </div>
     </div>
 
@@ -286,23 +366,31 @@
         const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let apiToken = localStorage.getItem('moysklad_token') || '';
-        let mainChart = null;
+        let abcChart = null;
+        let currentItems = []; 
+        let supplierItems = [];
 
         // UI Helpers
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
         const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
+        
         const abcCheckbox = document.getElementById('abc-checkbox');
         const supplierCheckbox = document.getElementById('supplier-checkbox');
         const btnAnalyze = document.getElementById('btn-analyze');
+        const btnResetZoom = document.getElementById('btn-reset-zoom');
 
-        // Инициализация дат (последние 90 дней)
+        // Инициализация дат (последние 90 дней по умолчанию)
         window.addEventListener('DOMContentLoaded', () => {
             const today = new Date();
             const past = new Date();
             past.setDate(today.getDate() - 90);
-            document.getElementById('date-from').valueAsDate = past;
+            
             document.getElementById('date-to').valueAsDate = today;
+            document.getElementById('date-from').valueAsDate = past;
+
+            if (!apiToken) {
+                showConnectionModal();
+            }
             updateAnalyzeButtonState();
         });
 
@@ -318,6 +406,9 @@
             }
         }
 
+        abcCheckbox.addEventListener('change', updateAnalyzeButtonState);
+        supplierCheckbox.addEventListener('change', updateAnalyzeButtonState);
+
         function showLoader(text, subtext) {
             document.getElementById('loader-text').textContent = text;
             document.getElementById('loader-subtext').textContent = subtext;
@@ -330,6 +421,13 @@
             apiToken = document.getElementById('api-token').value.trim(); 
             localStorage.setItem('moysklad_token', apiToken); 
             closeConnectionModal(); 
+        }
+        
+        function resetZoom() {
+            if (abcChart) {
+                abcChart.resetZoom();
+                btnResetZoom.classList.add('hidden');
+            }
         }
 
         // =====================================================
@@ -357,13 +455,16 @@
             let allRows = [];
             let offset = 0;
             const limit = 1000;
+            
             while (true) {
                 const separator = baseUrl.includes('?') ? '&' : '?';
                 const url = `${baseUrl}${separator}limit=${limit}&offset=${offset}`;
+                
                 const res = await proxyFetch(url, headers);
                 const json = await res.json();
                 const rows = json.rows || [];
                 allRows = allRows.concat(rows);
+                
                 if (rows.length < limit || allRows.length >= (json.meta?.size || 0)) break;
                 offset += limit;
             }
@@ -371,30 +472,30 @@
         }
 
         // =====================================================
-        // MAIN LOGIC
+        // ANALYSIS LOGIC
         // =====================================================
         async function runAnalysis() {
             if (!apiToken) { showConnectionModal(); return; }
             
             const dateFrom = document.getElementById('date-from').value;
             const dateTo = document.getElementById('date-to').value;
-            if (!dateFrom || !dateTo) { alert('Выберите даты'); return; }
+            
+            if (!dateFrom || !dateTo) { alert('Выберите диапазон дат'); return; }
 
             const doAbc = abcCheckbox.checked;
             const doSupplier = supplierCheckbox.checked;
             if (!doAbc && !doSupplier) return;
 
-            showLoader('Загрузка данных...', 'Обращение к API МойСклад');
+            showLoader('Загрузка данных...', 'Сбор информации о прибыльности и оборотах');
             
             try {
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Формируем промисы
                 const promises = [];
                 
-                // Для ABC-XYZ нужны profit и turnover
+                // ABC Analysis Data
                 if (doAbc) {
                     promises.push(fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers));
                     promises.push(fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers));
@@ -403,65 +504,72 @@
                     promises.push(Promise.resolve(null));
                 }
 
-                // Для сравнения поставщиков нужны supply (приемки)
+                // Supplier Analysis Data via byoperations (filter type=supply)
                 if (doSupplier) {
-                    // Загружаем приемки с expand=positions.assortment
-                    promises.push(fetchAllPages(`${MOYSKLAD_API}/entity/supply?expand=positions.assortment&filter=moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)}`, headers));
+                    const supplyUrl = `${MOYSKLAD_API}/report/turnover/byoperations?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&filter=type=supply`;
+                    promises.push(fetchAllPages(supplyUrl, headers));
                 } else {
                     promises.push(Promise.resolve(null));
                 }
 
-                const [profitRows, turnoverRows, supplies] = await Promise.all(promises);
+                const [profitRows, turnoverRows, supplyOps] = await Promise.all(promises);
 
-                if (doAbc) processAbc(profitRows, turnoverRows);
-                
-                // ИСПРАВЛЕНИЕ: Передаем profitRows в processSupplierData
-                if (doSupplier) processSupplierData(profitRows, supplies);
+                if (doAbc) processData(profitRows, turnoverRows);
+                if (doSupplier) processSupplierData(supplyOps);
 
-            } catch (error) {
-                console.error(error);
-                alert('Ошибка: ' + error.message);
+                document.getElementById('analysis-placeholder').classList.add('hidden');
+                document.getElementById('analysis-results').classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка анализа: ' + err.message);
             } finally {
                 hideLoader();
             }
         }
 
-        // =====================================================
-        // ABC-XYZ PROCESSING
-        // =====================================================
-        function processAbc(profitRows, turnoverRows) {
+        // --- ABC Logic ---
+        function processData(profitRows, turnoverRows) {
             const productMap = new Map();
 
             profitRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
+                
+                const profit = (row.profit || 0) / 100;
+                const revenue = (row.sellSum || 0) / 100;
+                
                 productMap.set(id, {
                     name: row.assortment.name || 'Без названия',
-                    profit: (row.profit || 0) / 100,
-                    revenue: (row.sellSum || 0) / 100
+                    profit: profit,
+                    revenue: revenue,
+                    sellQuantity: row.sellQuantity || 0
                 });
             });
 
             turnoverRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
-                
+
                 const incomeQty = row.income?.quantity || 0;
                 const outcomeQty = row.outcome?.quantity || 0;
                 const startQty = row.onPeriodStart?.quantity || 0;
                 const endQty = row.onPeriodEnd?.quantity || 0;
+
                 let avgStock = (startQty + endQty) / 2;
                 if (avgStock <= 0) avgStock = 0.1;
                 
                 const turnoverRate = outcomeQty > 0 ? (outcomeQty / avgStock) : 0;
 
                 if (productMap.has(id)) {
-                    productMap.get(id).turnoverRate = turnoverRate;
+                    const item = productMap.get(id);
+                    item.turnoverRate = turnoverRate;
                 } else {
                     productMap.set(id, {
                         name: row.assortment.name || 'Без названия',
                         profit: 0,
                         revenue: 0,
+                        sellQuantity: 0,
                         turnoverRate: turnoverRate
                     });
                 }
@@ -489,18 +597,17 @@
                 else item.xyz = 'Z';
             });
 
-            renderAbcChart(items);
-            renderAbcTable(items);
+            currentItems = items;
+            renderChart(items);
+            renderTable(items);
             
-            document.getElementById('analysis-placeholder').classList.add('hidden');
-            document.getElementById('analysis-results').classList.remove('hidden');
             document.getElementById('abc-chart-container').classList.remove('hidden');
             document.getElementById('abc-table-container').classList.remove('hidden');
         }
 
-        function renderAbcChart(items) {
-            const ctx = document.getElementById('main-chart').getContext('2d');
-            if (mainChart) mainChart.destroy();
+        function renderChart(items) {
+            const ctx = document.getElementById('abc-chart').getContext('2d');
+            if (abcChart) abcChart.destroy();
 
             const datasets = [
                 { label: 'AX', color: '#4ade80', data: [] },
@@ -527,15 +634,15 @@
                 }
             });
 
-            mainChart = new Chart(ctx, {
+            abcChart = new Chart(ctx, {
                 type: 'scatter',
                 data: {
                     datasets: datasets.map(ds => ({
                         label: ds.label,
                         data: ds.data,
                         backgroundColor: ds.color,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
+                        pointRadius: 6,
+                        pointHoverRadius: 8
                     }))
                 },
                 options: {
@@ -543,25 +650,47 @@
                     maintainAspectRatio: false,
                     plugins: {
                         zoom: {
-                            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'xy' },
-                            pan: { enabled: true, mode: 'xy' }
+                            zoom: {
+                                wheel: { enabled: true },
+                                pinch: { enabled: true },
+                                mode: 'xy',
+                                onZoom: () => btnResetZoom.classList.remove('hidden')
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'xy',
+                                onPan: () => btnResetZoom.classList.remove('hidden')
+                            }
                         },
                         tooltip: {
-                            callbacks: { 
-                                label: (ctx) => `${ctx.raw.name}: ${formatMoney(ctx.raw.profit)}` 
+                            callbacks: {
+                                label: (ctx) => {
+                                    const raw = ctx.raw;
+                                    return `${raw.name}: Прибыль ${formatMoney(raw.profit)} (${ctx.dataset.label})`;
+                                }
                             }
-                        }
+                        },
+                        legend: { position: 'bottom', labels: { color: '#94a3b8' } }
                     },
                     scales: {
-                        x: { title: { display: true, text: 'Оборачиваемость' }, grid: { color: '#334155' } },
-                        y: { title: { display: true, text: 'Доля прибыли (%)' }, grid: { color: '#334155' } }
+                        x: { 
+                            title: { display: true, text: 'Оборачиваемость (Стабильность)', color: '#94a3b8' },
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: { 
+                            title: { display: true, text: 'Доля в прибыли (%)', color: '#94a3b8' },
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        }
                     }
                 }
             });
         }
 
-        function renderAbcTable(items) {
+        function renderTable(items) {
             const tbody = document.getElementById('abc-table-body');
+            
             tbody.innerHTML = items.map(item => {
                 const qClass = `q-${item.abc.toLowerCase()}${item.xyz.toLowerCase()}`;
                 return `
@@ -577,75 +706,51 @@
             }).join('');
         }
 
-        // =====================================================
-        // SUPPLIER COMPARISON LOGIC
-        // =====================================================
-        function processSupplierData(profitRows, supplies) {
-            // Если profitRows нет (например, галочка ABC не стояла, но мы все равно грузим его для поставщиков сейчас),
-            // то нам нужно получить buyPrice. В profitRows есть buyPrice.
-            // Создаем карту цен закупки из отчета прибыльности
-            const priceMap = new Map();
-            if (profitRows) {
-                profitRows.forEach(row => {
-                    const id = row.assortment?.meta?.href;
-                    if (id) {
-                        // sellCost - это себестоимость продажи. 
-                        // Для сравнения поставщиков лучше использовать цену из приемки, 
-                        // но так как в profit/byproduct нет разбивки по поставщикам, 
-                        // мы будем использовать данные из supplies ниже.
-                    }
-                });
-            }
-
-            // Группируем по товару -> поставщику
-            // Структура: Map<productId, Map<supplierName, {price, date, name}>>
+        // --- Supplier Logic ---
+        function processSupplierData(supplyOps) {
+            // Group by Product ID -> Supplier Name -> {price, date}
             const productSuppliers = new Map();
 
-            if (supplies) {
-                supplies.forEach(supply => {
-                    const supplierName = supply.agent?.name || 'Неизвестный';
-                    const supplyDate = new Date(supply.moment);
-                    
-                    const positions = supply.positions?.rows || [];
-                    positions.forEach(pos => {
-                        const productId = pos.assortment?.meta?.href;
-                        if (!productId) return;
+            supplyOps.forEach(op => {
+                const productId = op.assortment?.meta?.href;
+                const supplierName = op.operation?.agent?.name;
+                const cost = (op.cost || 0) / 100; // Cost in kopecks -> rubles
+                const moment = new Date(op.operation?.moment);
 
-                        const productName = pos.assortment?.name || 'Без названия';
-                        const price = (pos.price || 0) / 100; // Цена в копейках -> рубли
+                if (!productId || !supplierName) return;
 
-                        if (!productSuppliers.has(productId)) {
-                            productSuppliers.set(productId, new Map());
-                        }
-                        
-                        const prodMap = productSuppliers.get(productId);
-                        const existing = prodMap.get(supplierName);
-
-                        // Обновляем если это более новая приемка
-                        if (!existing || existing.date < supplyDate) {
-                            prodMap.set(supplierName, {
-                                price: price,
-                                date: supplyDate,
-                                name: productName
-                            });
-                        }
+                if (!productSuppliers.has(productId)) {
+                    productSuppliers.set(productId, {
+                        name: op.assortment.name || 'Без названия',
+                        suppliers: new Map()
                     });
-                });
-            }
+                }
 
-            // Фильтруем товары, у которых > 1 поставщика
-            const comparisonList = [];
-            productSuppliers.forEach((suppliersMap, productId) => {
-                if (suppliersMap.size > 1) {
-                    const suppliersArr = Array.from(suppliersMap.entries())
-                        .map(([name, data]) => ({ name, ...data }))
-                        .sort((a, b) => a.price - b.price); // Сортировка по цене (лучшая первая)
+                const prodData = productSuppliers.get(productId);
+                const existing = prodData.suppliers.get(supplierName);
 
-                    const best = suppliersArr[0];
-                    const alternatives = suppliersArr.slice(1);
+                // Keep latest price for this supplier within the period
+                if (!existing || existing.date < moment) {
+                    prodData.suppliers.set(supplierName, {
+                        price: cost,
+                        date: moment
+                    });
+                }
+            });
 
-                    comparisonList.push({
-                        name: best.name, // Название товара берем из любой записи
+            // Filter products with > 1 supplier and find best price
+            supplierItems = [];
+            productSuppliers.forEach((data, id) => {
+                if (data.suppliers.size > 1) {
+                    const supList = Array.from(data.suppliers.entries())
+                        .map(([name, info]) => ({ name, price: info.price }))
+                        .sort((a, b) => a.price - b.price); // Sort by price ascending
+
+                    const best = supList[0];
+                    const alternatives = supList.slice(1);
+
+                    supplierItems.push({
+                        name: data.name,
                         bestSupplier: best.name,
                         bestPrice: best.price,
                         alternatives: alternatives
@@ -653,10 +758,10 @@
                 }
             });
 
-            renderSupplierTable(comparisonList);
+            // Initial sort by name
+            supplierItems.sort((a, b) => a.name.localeCompare(b.name));
             
-            document.getElementById('analysis-placeholder').classList.add('hidden');
-            document.getElementById('analysis-results').classList.remove('hidden');
+            renderSupplierTable(supplierItems);
             document.getElementById('supplier-analysis-container').classList.remove('hidden');
         }
 
@@ -667,24 +772,20 @@
                 return;
             }
 
-            tbody.innerHTML = items.map(item => {
-                const altHtml = item.alternatives.map(a => 
-                    `<div class="text-xs text-gray-400">${escapeHtml(a.name)}: ${formatMoney(a.price)}</div>`
-                ).join('');
-
-                return `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
-                        <td class="px-4 py-3 text-green-400 font-medium">${escapeHtml(item.bestSupplier)}</td>
-                        <td class="px-4 py-3 text-right text-green-400 font-bold">${formatMoney(item.bestPrice)}</td>
-                        <td class="px-4 py-3 text-right text-xs">${altHtml || '-'}</td>
-                    </tr>
-                `;
-            }).join('');
+            tbody.innerHTML = items.map(item => `
+                <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                    <td class="px-4 py-3 font-medium text-white">${escapeHtml(item.name)}</td>
+                    <td class="px-4 py-3 text-green-400 font-bold">${escapeHtml(item.bestSupplier)}</td>
+                    <td class="px-4 py-3 text-right text-green-400 font-bold">${formatMoney(item.bestPrice)}</td>
+                    <td class="px-4 py-3 text-right text-xs text-gray-400">
+                        ${item.alternatives.map(a => `<div>${escapeHtml(a.name)}: ${formatMoney(a.price)}</div>`).join('')}
+                    </td>
+                </tr>
+            `).join('');
         }
 
         // =====================================================
-        // SORTING & FILTERING
+        // TABLE SORTING & FILTERING (ABC)
         // =====================================================
         let currentSortCol = 'profit';
         let currentSortDir = 'desc';
@@ -696,13 +797,61 @@
                 currentSortCol = col;
                 currentSortDir = 'desc';
             }
-            updateSortIcons('abc', col);
-            // Перерисовка таблицы ABC (упрощенно, в реальном приложении нужна пересортировка массива items)
-            // Здесь мы полагаемся на то, что пользователь перезапустит анализ или мы сохранили items глобально
-            // Для простоты в этом примере перерисовка требует повторного запуска или сохранения state
-            // Но чтобы не усложнять, оставим базовую реализацию.
+            
+            document.querySelectorAll('#abc-table-container .sort-icon').forEach(el => {
+                el.classList.remove('active');
+                el.textContent = '↕';
+            });
+            const activeIcon = document.getElementById(`sort-${col}`);
+            if (activeIcon) {
+                activeIcon.classList.add('active');
+                activeIcon.textContent = currentSortDir === 'asc' ? '↑' : '↓';
+            }
+
+            sortAndRender();
         }
 
+        function sortAndRender() {
+            const sorted = [...currentItems].sort((a, b) => {
+                let valA, valB;
+                switch(currentSortCol) {
+                    case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
+                    case 'class': valA = a.abc + a.xyz; valB = b.abc + b.xyz; break;
+                    case 'revenue': valA = a.revenue; valB = b.revenue; break;
+                    case 'profit': valA = a.profit; valB = b.profit; break;
+                    case 'share': valA = a.profitShare; valB = b.profitShare; break;
+                    case 'turnover': valA = a.turnoverRate || 0; valB = b.turnoverRate || 0; break;
+                    default: valA = 0; valB = 0;
+                }
+
+                if (valA < valB) return currentSortDir === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
+            renderTable(sorted);
+        }
+
+        function filterTable(input, colIndex) {
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('abc-table-body');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const cell = rows[i].getElementsByTagName('td')[colIndex];
+                if (cell) {
+                    const txtValue = cell.textContent || cell.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        // =====================================================
+        // SUPPLIER TABLE SORTING & FILTERING
+        // =====================================================
         let currentSupSortCol = 'name';
         let currentSupSortDir = 'asc';
 
@@ -711,52 +860,55 @@
                 currentSupSortDir = currentSupSortDir === 'asc' ? 'desc' : 'asc';
             } else {
                 currentSupSortCol = col;
-                currentSupSortDir = 'asc';
+                currentSupSortDir = col === 'name' || col === 'bestSupplier' ? 'asc' : 'desc';
             }
-            updateSortIcons('sup', col);
-            // Аналогично, для полноценной сортировки нужен доступ к массиву данных
-        }
-
-        function updateSortIcons(prefix, activeCol) {
-            document.querySelectorAll(`#${prefix}-table-container .sort-icon, #supplier-analysis-container .sort-icon`).forEach(el => {
+            
+            document.querySelectorAll('#supplier-analysis-container .sort-icon').forEach(el => {
                 el.classList.remove('active');
                 el.textContent = '↕';
             });
-            const activeIcon = document.getElementById(`${prefix}-sort-${activeCol}`);
+            const activeIcon = document.getElementById(`sup-sort-${col}`);
             if (activeIcon) {
                 activeIcon.classList.add('active');
-                activeIcon.textContent = currentSortDir === 'asc' ? '↑' : '↓';
+                activeIcon.textContent = currentSupSortDir === 'asc' ? '↑' : '↓';
             }
+
+            sortSupplierAndRender();
         }
 
-        function filterTable(input, colIndex) {
-            const filter = input.value.toLowerCase();
-            const table = document.getElementById('abc-table-body');
-            const rows = table.getElementsByTagName('tr');
-            for (let i = 0; i < rows.length; i++) {
-                const cell = rows[i].getElementsByTagName('td')[colIndex];
-                if (cell) {
-                    const txtValue = cell.textContent || cell.innerText;
-                    rows[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+        function sortSupplierAndRender() {
+            const sorted = [...supplierItems].sort((a, b) => {
+                let valA, valB;
+                switch(currentSupSortCol) {
+                    case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
+                    case 'bestSupplier': valA = a.bestSupplier.toLowerCase(); valB = b.bestSupplier.toLowerCase(); break;
+                    case 'bestPrice': valA = a.bestPrice; valB = b.bestPrice; break;
+                    default: valA = 0; valB = 0;
                 }
-            }
+
+                if (valA < valB) return currentSupSortDir === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSupSortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
+            renderSupplierTable(sorted);
         }
 
         function filterSupplierTable(input, colIndex) {
             const filter = input.value.toLowerCase();
             const table = document.getElementById('supplier-table-body');
             const rows = table.getElementsByTagName('tr');
+
             for (let i = 0; i < rows.length; i++) {
                 const cell = rows[i].getElementsByTagName('td')[colIndex];
                 if (cell) {
                     const txtValue = cell.textContent || cell.innerText;
-                    rows[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
                 }
             }
-        }
-
-        function resetZoom() {
-            if (mainChart) mainChart.resetZoom();
         }
     </script>
 </body>
