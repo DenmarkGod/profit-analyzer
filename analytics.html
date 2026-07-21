@@ -27,7 +27,7 @@
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
         .chart-container { position: relative; height: 600px; width: 100%; }
         .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        
+
         /* Цвета квадрантов */
         .q-ax { color: #4ade80; } .q-ay { color: #facc15; } .q-az { color: #f87171; }
         .q-bx { color: #60a5fa; } .q-by { color: #a78bfa; } .q-bz { color: #fb923c; }
@@ -53,11 +53,6 @@
         .sort-icon { cursor: pointer; opacity: 0.3; transition: opacity 0.2s; user-select: none; }
         .sort-icon:hover { opacity: 0.8; }
         .sort-icon.active { opacity: 1; color: #60a5fa; }
-
-        /* Бейджи поставщиков */
-        .badge { display: inline-block; font-size: 9px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
-        .badge-best { background: rgba(74,222,128,0.18); color: #4ade80; }
-        .badge-last { background: rgba(96,165,250,0.18); color: #60a5fa; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -74,9 +69,6 @@
             </a>
             <a href="analytics.html" class="nav-item active w-full text-left px-6 py-3 text-sm font-medium">
                 <span class="text-lg">🔍</span> Аналитика
-            </a>
-            <a href="monitoring.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
-                <span class="text-lg">📡</span> Мониторинг
             </a>
             <a href="finance.html" class="nav-item w-full text-left px-6 py-3 text-sm font-medium text-gray-400">
                 <span class="text-lg">💰</span> Финансы
@@ -99,7 +91,6 @@
     <div class="md:hidden fixed bottom-0 w-full bg-slate-900/95 border-t border-slate-800 flex justify-around p-2 z-50 overflow-x-auto">
         <a href="index.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📊</span>Главная</a>
         <a href="analytics.html" class="flex flex-col items-center p-2 text-blue-400 text-xs min-w-[60px]"><span class="text-lg">🔍</span>Аналитика</a>
-        <a href="monitoring.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📡</span>Мониторинг</a>
         <a href="finance.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">💰</span>Финансы</a>
         <a href="stock.html" class="flex flex-col items-center p-2 text-gray-400 text-xs min-w-[60px]"><span class="text-lg">📦</span>Склад</a>
     </div>
@@ -109,7 +100,7 @@
         <div class="bg-slate-900/80 border-b border-slate-800 p-4 sticky top-0 z-10 backdrop-blur-md">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h2 class="text-xl md:text-2xl font-bold text-white">ABC-XYZ Анализ</h2>
-                
+
                 <div class="flex flex-wrap items-center gap-3">
                     <!-- РУЧНОЙ ВЫБОР ДИАПАЗОНА -->
                     <div class="flex items-center gap-2 bg-slate-800 p-1.5 rounded-lg">
@@ -123,11 +114,6 @@
                         <span class="text-sm text-gray-300">Построить матрицу</span>
                     </label>
 
-                    <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" id="supplier-checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-slate-900">
-                        <span class="text-sm text-gray-300">Сравнение поставщиков</span>
-                    </label>
-                    
                     <button onclick="runAnalysis()" id="btn-analyze" disabled class="px-4 py-2 text-xs font-semibold bg-slate-700 text-gray-400 rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50">
                         🚀 Сформировать
                     </button>
@@ -136,7 +122,7 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 scrollbar-thin">
-            
+
             <!-- Плейсхолдер -->
             <div id="analysis-placeholder" class="flex flex-col items-center justify-center h-[60vh] text-center">
                 <div class="text-6xl mb-4">📉</div>
@@ -146,143 +132,88 @@
 
             <!-- Результаты анализа -->
             <div id="analysis-results" class="hidden space-y-6">
-                
-                <!-- ===== БЛОК ABC-XYZ (обёрнут, показывается по чекбоксу) ===== -->
-                <div id="abc-section" class="hidden space-y-6">
-                    <!-- График -->
-                    <div class="glass p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center gap-3">
-                                <div>
-                                    <h3 class="text-lg font-bold text-white">Матрица ABC-XYZ</h3>
-                                    <p class="text-xs text-gray-400 mt-1">Ось X: Оборачиваемость (стабильность) | Ось Y: Вклад в прибыль (%)</p>
-                                </div>
-                                <!-- Кнопка справки -->
-                                <button onclick="showChartHelp()" class="text-gray-400 hover:text-white transition" title="Как читать график?">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </button>
+
+                <!-- График -->
+                <div class="glass p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-3">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Матрица ABC-XYZ</h3>
+                                <p class="text-xs text-gray-400 mt-1">Ось X: Оборачиваемость (стабильность) | Ось Y: Вклад в прибыль (%)</p>
                             </div>
-                            <button onclick="resetZoom()" id="btn-reset-zoom" class="hidden px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition">
-                                🔍 Сброс зума
+                            <!-- Кнопка справки -->
+                            <button onclick="showChartHelp()" class="text-gray-400 hover:text-white transition" title="Как читать график?">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
                             </button>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="abc-chart"></canvas>
-                        </div>
+                        <button onclick="resetZoom()" id="btn-reset-zoom" class="hidden px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition">
+                            🔍 Сброс зума
+                        </button>
                     </div>
+                    <div class="chart-container">
+                        <canvas id="abc-chart"></canvas>
+                    </div>
+                </div>
 
-                    <!-- Таблица с фильтрами и сортировкой -->
-                    <div class="glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">Детальная таблица</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
-                                    <tr>
-                                        <th class="px-4 py-3">
-                                            <div class="flex items-center justify-between">
-                                                Товар
-                                                <span class="sort-icon" onclick="toggleSort('name')" id="sort-name">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="Поиск..." class="table-filter-input" oninput="filterTable(this, 0)">
-                                        </th>
-                                        <th class="px-4 py-3 text-center">
-                                            <div class="flex items-center justify-center gap-1">
-                                                Класс
-                                                <span class="sort-icon" onclick="toggleSort('class')" id="sort-class">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="Напр. AX" class="table-filter-input" oninput="filterTable(this, 1)">
-                                        </th>
-                                        <th class="px-4 py-3 text-right">
-                                            <div class="flex items-center justify-end gap-1">
-                                                Выручка
-                                                <span class="sort-icon" onclick="toggleSort('revenue')" id="sort-revenue">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="₽" class="table-filter-input" oninput="filterTable(this, 2)">
-                                        </th>
-                                        <th class="px-4 py-3 text-right">
-                                            <div class="flex items-center justify-end gap-1">
-                                                Прибыль
-                                                <span class="sort-icon" onclick="toggleSort('profit')" id="sort-profit">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="₽" class="table-filter-input" oninput="filterTable(this, 3)">
-                                        </th>
-                                        <th class="px-4 py-3 text-right">
-                                            <div class="flex items-center justify-end gap-1">
-                                                Доля прибыли
-                                                <span class="sort-icon" onclick="toggleSort('share')" id="sort-share">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="%" class="table-filter-input" oninput="filterTable(this, 4)">
-                                        </th>
-                                        <th class="px-4 py-3 text-right">
-                                            <div class="flex items-center justify-end gap-1">
-                                                Оборачиваемость
-                                                <span class="sort-icon" onclick="toggleSort('turnover')" id="sort-turnover">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="Коэф." class="table-filter-input" oninput="filterTable(this, 5)">
-                                        </th>
-                                    </tr>
+                <!-- Таблица с фильтрами и сортировкой -->
+                <div class="glass p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">Детальная таблица</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
+                                <tr>
+                                    <th class="px-4 py-3">
+                                        <div class="flex items-center justify-between">
+                                            Товар
+                                            <span class="sort-icon" onclick="toggleSort('name')" id="sort-name">↕</span>
+                                        </div>
+                                        <input type="text" placeholder="Поиск..." class="table-filter-input" oninput="filterTable(this, 0)">
+                                    </th>
+                                    <th class="px-4 py-3 text-center">
+                                        <div class="flex items-center justify-center gap-1">
+                                            Класс
+                                            <span class="sort-icon" onclick="toggleSort('class')" id="sort-class">↕</span>
+                                        </div>
+                                        <input type="text" placeholder="Напр. AX" class="table-filter-input" oninput="filterTable(this, 1)">
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            Выручка
+                                            <span class="sort-icon" onclick="toggleSort('revenue')" id="sort-revenue">↕</span>
+                                        </div>
+                                        <input type="text" placeholder="₽" class="table-filter-input" oninput="filterTable(this, 2)">
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            Прибыль
+                                            <span class="sort-icon" onclick="toggleSort('profit')" id="sort-profit">↕</span>
+                                        </div>
+                                        <input type="text" placeholder="₽" class="table-filter-input" oninput="filterTable(this, 3)">
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            Доля прибыли
+                                            <span class="sort-icon" onclick="toggleSort('share')" id="sort-share">↕</span>
+                                        </div>
+                                        <input type="text" placeholder="%" class="table-filter-input" oninput="filterTable(this, 4)">
+                                    </th>
+                                    <th class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            Оборачиваемость
+                                            <span class="sort-icon" onclick="toggleSort('turnover')" id="sort-turnover">↕</span>
+                                        </div>
+                                        <input type="text" placeholder="Коэф." class="table-filter-input" oninput="filterTable(this, 5)">
+                                    </th>
                                 </tr>
-                                </thead>
-                                <tbody id="abc-table-body" class="divide-y divide-slate-700">
-                                    <!-- Rows injected here -->
-                                </tbody>
-                            </table>
-                        </div>
+                            </thead>
+                            <tbody id="abc-table-body" class="divide-y divide-slate-700">
+                                <!-- Rows injected here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-                <!-- ===== БЛОК СРАВНЕНИЯ ПОСТАВЩИКОВ ===== -->
-                <div id="supplier-section" class="hidden space-y-6">
-                    <div class="glass p-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-lg font-bold text-white">Сравнение цен поставщиков</h3>
-                            <span class="text-xs text-gray-500">За всё время · <span class="badge badge-best">✓ выгоднее</span> = мин. цена · <span class="badge badge-last">🕐 последний</span> = последняя закупка</span>
-                        </div>
-                        <p class="text-xs text-gray-400 mb-4">Товары, которые закупались у 2+ поставщиков. Каждая строка — связка «товар + поставщик» с последней ценой закупки.</p>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-gray-400 uppercase bg-slate-800/50">
-                                    <tr>
-                                        <th class="px-4 py-3">
-                                            <div class="flex items-center justify-between">
-                                                Товар
-                                                <span class="sort-icon" onclick="toggleSupSort('name')" id="sup-sort-name">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="Поиск..." class="table-filter-input" oninput="filterSupTable(this, 0)">
-                                        </th>
-                                        <th class="px-4 py-3">
-                                            <div class="flex items-center justify-between">
-                                                Поставщик
-                                                <span class="sort-icon" onclick="toggleSupSort('supplier')" id="sup-sort-supplier">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="Поставщик..." class="table-filter-input" oninput="filterSupTable(this, 1)">
-                                        </th>
-                                        <th class="px-4 py-3 text-right">
-                                            <div class="flex items-center justify-end gap-1">
-                                                Последняя цена
-                                                <span class="sort-icon" onclick="toggleSupSort('price')" id="sup-sort-price">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="₽" class="table-filter-input" oninput="filterSupTable(this, 2)">
-                                        </th>
-                                        <th class="px-4 py-3">
-                                            <div class="flex items-center justify-between">
-                                                Дата последней закупки
-                                                <span class="sort-icon" onclick="toggleSupSort('date')" id="sup-sort-date">↕</span>
-                                            </div>
-                                            <input type="text" placeholder="дата" class="table-filter-input" oninput="filterSupTable(this, 3)">
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody id="supplier-table-body" class="divide-y divide-slate-700">
-                                    <!-- Rows injected here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </main>
@@ -307,7 +238,7 @@
             </div>
             <div class="overflow-y-auto scrollbar-thin pr-2 space-y-4 text-sm text-gray-300">
                 <p>Матрица совмещает два показателя: прибыльность товара (ABC) и стабильность его продаж (XYZ).</p>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-slate-800/50 p-4 rounded-lg">
                         <h4 class="font-bold text-white mb-2">Ось Y: ABC (Прибыльность)</h4>
@@ -386,19 +317,17 @@
         // =====================================================
         // CONFIG & STATE
         // =====================================================
-        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev';
+        const PROXY_URL = 'https://moysklad-proxy.helsinkyofficial.workers.dev'; // Обновите URL, если изменился
         const MOYSKLAD_API = 'https://api.moysklad.ru/api/remap/1.2';
         let apiToken = localStorage.getItem('moysklad_token') || '';
         let abcChart = null;
-        let currentItems = [];      // данные ABC-XYZ
-        let supplierRows = [];      // данные таблицы поставщиков (плоский список)
+        let currentItems = []; // Храним данные для перерисовки таблицы при сортировке
 
         // UI Helpers
         const formatMoney = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n || 0);
         const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        
-        const abcCheckbox = document.getElementById('abc-checkbox');
-        const supplierCheckbox = document.getElementById('supplier-checkbox');
+
+        const checkbox = document.getElementById('abc-checkbox');
         const btnAnalyze = document.getElementById('btn-analyze');
         const btnResetZoom = document.getElementById('btn-reset-zoom');
 
@@ -407,50 +336,110 @@
             const today = new Date();
             const past = new Date();
             past.setDate(today.getDate() - 90);
-            
+
             document.getElementById('date-to').valueAsDate = today;
             document.getElementById('date-from').valueAsDate = past;
 
             if (!apiToken) {
                 showConnectionModal();
             }
-            updateAnalyzeButtonState();
         });
 
-        // Кнопка активна, если отмечен ХОТЯ БЫ ОДИН чекбокс
-        function updateAnalyzeButtonState() {
-            const any = abcCheckbox.checked || supplierCheckbox.checked;
-            btnAnalyze.disabled = !any;
-            if (!any) {
+        checkbox.addEventListener('change', () => {
+            btnAnalyze.disabled = !checkbox.checked;
+            if (!checkbox.checked) {
                 btnAnalyze.classList.add('bg-slate-700', 'text-gray-400');
                 btnAnalyze.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
             } else {
                 btnAnalyze.classList.remove('bg-slate-700', 'text-gray-400');
                 btnAnalyze.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
             }
-        }
-        abcCheckbox.addEventListener('change', updateAnalyzeButtonState);
-        supplierCheckbox.addEventListener('change', updateAnalyzeButtonState);
+        });
 
         function showLoader(text, subtext) {
             document.getElementById('loader-text').textContent = text;
             document.getElementById('loader-subtext').textContent = subtext;
             document.getElementById('global-loader').classList.add('active');
         }
-        function setLoaderSubtext(subtext) {
-            document.getElementById('loader-subtext').textContent = subtext;
-        }
         function hideLoader() { document.getElementById('global-loader').classList.remove('active'); }
         function showConnectionModal() { document.getElementById('api-token').value = apiToken; document.getElementById('connection-modal').classList.add('active'); }
         function closeConnectionModal() { document.getElementById('connection-modal').classList.remove('active'); }
-        function saveToken() { 
-            apiToken = document.getElementById('api-token').value.trim(); 
-            localStorage.setItem('moysklad_token', apiToken); 
-            closeConnectionModal(); 
+        function saveToken() {
+            apiToken = document.getElementById('api-token').value.trim();
+            localStorage.setItem('moysklad_token', apiToken);
+            closeConnectionModal();
         }
-        
+
         function showChartHelp() {
             document.getElementById('help-modal').classList.add('active');
+        }
+
+        // =====================================================
+        // API: Ограничитель параллельных запросов (копия из index.html)
+        // =====================================================
+        const REQUEST_LIMIT_ANALYTICS = 3; // Меньше лимит для аналитики, т.к. она может быть тяжелее
+        let activeRequestsAnalytics = 0;
+        const requestQueueAnalytics = [];
+
+        function executeRequestAnalytics(requestFn) {
+            return new Promise((resolve, reject) => {
+                const task = { requestFn, resolve, reject };
+
+                if (activeRequestsAnalytics < REQUEST_LIMIT_ANALYTICS) {
+                    startRequestAnalytics(task);
+                } else {
+                    requestQueueAnalytics.push(task);
+                }
+            });
+        }
+
+        function startRequestAnalytics(task) {
+            activeRequestsAnalytics++;
+            task.requestFn()
+                .then(result => {
+                    task.resolve(result);
+                })
+                .catch(error => {
+                    task.reject(error);
+                })
+                .finally(() => {
+                    activeRequestsAnalytics--;
+                    if (requestQueueAnalytics.length > 0) {
+                        startRequestAnalytics(requestQueueAnalytics.shift());
+                    }
+                });
+        }
+
+        // =====================================================
+        // API: Кэширование на клиенте (копия из index.html)
+        // =====================================================
+        function cacheGet(key) {
+            try {
+                const cached = sessionStorage.getItem(key);
+                if (!cached) return null;
+                const parsed = JSON.parse(cached);
+                if (parsed.expires < Date.now()) {
+                    sessionStorage.removeItem(key);
+                    return null;
+                }
+                return parsed.data;
+            } catch (e) {
+                console.warn("Cache get error:", e);
+                sessionStorage.removeItem(key);
+                return null;
+            }
+        }
+
+        function cacheSet(key, data, ttlMinutes = 10) { // Увеличен TTL для аналитики
+            try {
+                const item = {
+                    data: data,
+                    expires: Date.now() + ttlMinutes * 60 * 1000
+                };
+                sessionStorage.setItem(key, JSON.stringify(item));
+            } catch (e) {
+                console.warn("Cache set error:", e);
+            }
         }
 
         // =====================================================
@@ -470,6 +459,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url, headers, method: 'GET' })
             });
+             if (response.status === 429) {
+                console.warn("Received 429 in analytics, retrying after delay...");
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                return proxyFetch(url, headers);
+            }
             if (!response.ok) throw new Error(`API Error ${response.status}`);
             return response;
         }
@@ -478,16 +472,16 @@
             let allRows = [];
             let offset = 0;
             const limit = 1000;
-            
+
             while (true) {
                 const separator = baseUrl.includes('?') ? '&' : '?';
                 const url = `${baseUrl}${separator}limit=${limit}&offset=${offset}`;
-                
+
                 const res = await proxyFetch(url, headers);
                 const json = await res.json();
                 const rows = json.rows || [];
                 allRows = allRows.concat(rows);
-                
+
                 if (rows.length < limit || allRows.length >= (json.meta?.size || 0)) break;
                 offset += limit;
             }
@@ -495,47 +489,45 @@
         }
 
         // =====================================================
-        // ЗАПУСК АНАЛИЗА (условно по чекбоксам)
+        // ANALYSIS LOGIC (Оптимизированное)
         // =====================================================
         async function runAnalysis() {
             if (!apiToken) { showConnectionModal(); return; }
-            
+
             const dateFrom = document.getElementById('date-from').value;
             const dateTo = document.getElementById('date-to').value;
-            
+
             if (!dateFrom || !dateTo) { alert('Выберите диапазон дат'); return; }
 
-            const doAbc = abcCheckbox.checked;
-            const doSupplier = supplierCheckbox.checked;
-            if (!doAbc && !doSupplier) return;
+            showLoader('Загрузка данных...', 'Сбор информации о прибыльности и оборотах');
 
-            // Скрываем блоки перед новым запуском
-            document.getElementById('abc-section').classList.add('hidden');
-            document.getElementById('supplier-section').classList.add('hidden');
-
-            showLoader('Загрузка данных...', 'Подготовка...');
-            
             try {
                 const momentFrom = `${dateFrom} 00:00:00`;
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // --- ABC-XYZ (логика не тронута) ---
-                if (doAbc) {
-                    setLoaderSubtext('Сбор прибыльности и оборотов...');
-                    const [profitRows, turnoverRows] = await Promise.all([
-                        fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers),
-                        fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)
-                    ]);
-                    processData(profitRows, turnoverRows);
+                // Формируем кэш-ключи
+                const cacheKeyProfit = `profit_by_product_${momentFrom}_${momentTo}`;
+                const cacheKeyTurnover = `turnover_all_${momentFrom}_${momentTo}`;
+
+                // Проверяем кэш
+                let [profitRows, turnoverRows] = await Promise.all([
+                    cacheGet(cacheKeyProfit) || executeRequestAnalytics(() => fetchAllPages(`${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers)),
+                    cacheGet(cacheKeyTurnover) || executeRequestAnalytics(() => fetchAllPages(`${MOYSKLAD_API}/report/turnover/all?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}`, headers))
+                ]);
+
+                // Кэшируем результаты, если они были загружены
+                if (!Array.isArray(profitRows)) {
+                    cacheSet(cacheKeyProfit, profitRows);
+                    profitRows = JSON.parse(profitRows);
+                }
+                if (!Array.isArray(turnoverRows)) {
+                    cacheSet(cacheKeyTurnover, turnoverRows);
+                    turnoverRows = JSON.parse(turnoverRows);
                 }
 
-                // --- Сравнение поставщиков (за всё время) ---
-                if (doSupplier) {
-                    await loadSupplierData(headers);
-                }
 
-                document.getElementById('analysis-results').classList.remove('hidden');
+                processData(profitRows, turnoverRows);
 
             } catch (err) {
                 console.error(err);
@@ -545,9 +537,6 @@
             }
         }
 
-        // =====================================================
-        // ABC-XYZ (ЛОГИКА НЕ ТРОНУТА)
-        // =====================================================
         function processData(profitRows, turnoverRows) {
             const productMap = new Map();
 
@@ -555,10 +544,10 @@
             profitRows.forEach(row => {
                 const id = row.assortment?.meta?.href;
                 if (!id) return;
-                
+
                 const profit = (row.profit || 0) / 100;
                 const revenue = (row.sellSum || 0) / 100;
-                
+
                 productMap.set(id, {
                     name: row.assortment.name || 'Без названия',
                     profit: profit,
@@ -579,7 +568,7 @@
 
                 let avgStock = (startQty + endQty) / 2;
                 if (avgStock <= 0) avgStock = 0.1; // Защита от деления на 0
-                
+
                 // Оборачиваемость = Продажи / Средний остаток
                 const turnoverRate = outcomeQty > 0 ? (outcomeQty / avgStock) : 0;
 
@@ -599,22 +588,22 @@
 
             // 3. Классификация
             const items = Array.from(productMap.values()).filter(i => i.revenue > 0 || i.profit !== 0 || i.turnoverRate > 0);
-            
+
             // Сортировка по прибыли для ABC
             items.sort((a, b) => b.profit - a.profit);
-            
+
             const totalProfit = items.reduce((sum, i) => sum + Math.max(0, i.profit), 0);
             let cumulativeProfit = 0;
-            
+
             items.forEach(item => {
                 // ABC
                 const profitShare = totalProfit > 0 ? (Math.max(0, item.profit) / totalProfit) * 100 : 0;
                 cumulativeProfit += profitShare;
-                
+
                 if (cumulativeProfit <= 80) item.abc = 'A';
                 else if (cumulativeProfit <= 95) item.abc = 'B';
                 else item.abc = 'C';
-                
+
                 item.profitShare = profitShare;
 
                 // XYZ (по оборачиваемости)
@@ -628,7 +617,8 @@
             renderChart(items);
             renderTable(items);
 
-            document.getElementById('abc-section').classList.remove('hidden');
+            document.getElementById('analysis-placeholder').classList.add('hidden');
+            document.getElementById('analysis-results').classList.remove('hidden');
         }
 
         function resetZoom() {
@@ -706,12 +696,12 @@
                         legend: { position: 'bottom', labels: { color: '#94a3b8' } }
                     },
                     scales: {
-                        x: { 
+                        x: {
                             title: { display: true, text: 'Оборачиваемость (Стабильность)', color: '#94a3b8' },
                             grid: { color: '#334155' },
                             ticks: { color: '#94a3b8' }
                         },
-                        y: { 
+                        y: {
                             title: { display: true, text: 'Доля в прибыли (%)', color: '#94a3b8' },
                             grid: { color: '#334155' },
                             ticks: { color: '#94a3b8' }
@@ -723,7 +713,7 @@
 
         function renderTable(items) {
             const tbody = document.getElementById('abc-table-body');
-            
+
             tbody.innerHTML = items.map(item => {
                 const qClass = `q-${item.abc.toLowerCase()}${item.xyz.toLowerCase()}`;
                 return `
@@ -740,118 +730,7 @@
         }
 
         // =====================================================
-        // СРАВНЕНИЕ ПОСТАВЩИКОВ (за всё время)
-        // Корень прошлой пустой таблицы: в СПИСКЕ /entity/supply
-        // поле positions приходит БЕЗ rows (expand не раскрывает коллекции в списке).
-        // Поэтому позиции каждой приемки грузим отдельным запросом по id.
-        // =====================================================
-        async function loadSupplierData(headers) {
-            setLoaderSubtext('Загрузка списка приемок за всё время...');
-
-            // 1) Список всех приемок за всё время (без фильтра по датам)
-            const supplies = await fetchAllPages(`${MOYSKLAD_API}/entity/supply`, headers);
-
-            if (supplies.length === 0) {
-                supplierRows = [];
-                renderSupplierTable();
-                document.getElementById('supplier-section').classList.remove('hidden');
-                return;
-            }
-
-            // 2) Для каждой приемки — её позиции (отдельный запрос по id, т.к. в списке позиции не раскрываются)
-            // productId -> { name, suppliers: Map<supplierName, { price, date }> }
-            const productSuppliers = new Map();
-            const BATCH = 6; // параллельность, чтобы не уронить прокси
-
-            for (let i = 0; i < supplies.length; i += BATCH) {
-                const batch = supplies.slice(i, i + BATCH);
-                await Promise.all(batch.map(async (s) => {
-                    const supplierName = (s.agent && s.agent.name) ? s.agent.name : 'Без поставщика';
-                    const moment = s.moment;
-                    try {
-                        const positions = await fetchAllPages(
-                            `${MOYSKLAD_API}/entity/supply/${s.id}/positions?expand=assortment`,
-                            headers
-                        );
-                        positions.forEach(pos => {
-                            const pid = pos.assortment?.meta?.href;
-                            if (!pid) return;
-                            const pname = pos.assortment?.name || 'Без названия';
-                            const price = (pos.price || 0) / 100; // цена в копейках -> рубли
-
-                            if (!productSuppliers.has(pid)) {
-                                productSuppliers.set(pid, { name: pname, suppliers: new Map() });
-                            }
-                            const supMap = productSuppliers.get(pid).suppliers;
-                            const ex = supMap.get(supplierName);
-                            // храним ПОСЛЕДНЮЮ цену каждого поставщика
-                            if (!ex || new Date(ex.date) < new Date(moment)) {
-                                supMap.set(supplierName, { price: price, date: moment });
-                            }
-                        });
-                    } catch (e) {
-                        // отдельная приемка не прочиталась — пропускаем, не валим весь анализ
-                    }
-                }));
-                setLoaderSubtext(`Обработка приемок: ${Math.min(i + BATCH, supplies.length)} из ${supplies.length}`);
-            }
-
-            // 3) Оставляем только товары с 2+ поставщиками и формируем плоский список строк
-            supplierRows = [];
-            productSuppliers.forEach((data) => {
-                if (data.suppliers.size < 2) return;
-
-                const supList = Array.from(data.suppliers.entries())
-                    .map(([name, info]) => ({ name, price: info.price, date: info.date }));
-
-                const bestPrice = Math.min(...supList.map(s => s.price));
-                const lastDate = supList.reduce((m, s) => (!m || new Date(s.date) > new Date(m)) ? s.date : m, null);
-
-                supList.forEach(s => {
-                    supplierRows.push({
-                        productName: data.name,
-                        supplierName: s.name,
-                        lastPrice: s.price,
-                        lastDate: s.date,
-                        isBest: s.price === bestPrice,
-                        isLast: s.date === lastDate
-                    });
-                });
-            });
-
-            // сортировка по умолчанию: по товару, затем по цене
-            supplierRows.sort((a, b) => a.productName.localeCompare(b.productName, 'ru') || a.lastPrice - b.lastPrice);
-
-            renderSupplierTable();
-            document.getElementById('supplier-section').classList.remove('hidden');
-        }
-
-        function renderSupplierTable() {
-            const tbody = document.getElementById('supplier-table-body');
-            if (!supplierRows || supplierRows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Нет товаров, которые закупались у двух и более поставщиков за всё время.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = supplierRows.map(r => {
-                const badges =
-                    (r.isBest ? '<span class="badge badge-best">✓ выгоднее</span>' : '') +
-                    (r.isLast ? '<span class="badge badge-last">🕐 последний</span>' : '');
-                const priceClass = r.isBest ? 'text-green-400 font-bold' : 'text-gray-300';
-                const dateStr = r.lastDate ? new Date(r.lastDate).toLocaleDateString('ru-RU') : '—';
-                return `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(r.productName)}</td>
-                        <td class="px-4 py-3 text-gray-300">${escapeHtml(r.supplierName)}${badges}</td>
-                        <td class="px-4 py-3 text-right ${priceClass}">${formatMoney(r.lastPrice)}</td>
-                        <td class="px-4 py-3 text-gray-400">${dateStr}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        // =====================================================
-        // СОРТИРОВКА / ФИЛЬТР — таблица ABC-XYZ (не тронута)
+        // TABLE SORTING & FILTERING
         // =====================================================
         let currentSortCol = 'profit';
         let currentSortDir = 'desc';
@@ -863,8 +742,9 @@
                 currentSortCol = col;
                 currentSortDir = 'desc';
             }
-            
-            document.querySelectorAll('#abc-section .sort-icon').forEach(el => {
+
+            // Обновляем иконки
+            document.querySelectorAll('.sort-icon').forEach(el => {
                 el.classList.remove('active');
                 el.textContent = '↕';
             });
@@ -900,87 +780,6 @@
         function filterTable(input, colIndex) {
             const filter = input.value.toLowerCase();
             const table = document.getElementById('abc-table-body');
-            const rows = table.getElementsByTagName('tr');
-
-            for (let i = 0; i < rows.length; i++) {
-                const cell = rows[i].getElementsByTagName('td')[colIndex];
-                if (cell) {
-                    const txtValue = cell.textContent || cell.innerText;
-                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                        rows[i].style.display = "";
-                    } else {
-                        rows[i].style.display = "none";
-                    }
-                }
-            }
-        }
-
-        // =====================================================
-        // СОРТИРОВКА / ФИЛЬТР — таблица поставщиков
-        // =====================================================
-        let currentSupSortCol = 'name';
-        let currentSupSortDir = 'asc';
-
-        function toggleSupSort(col) {
-            if (currentSupSortCol === col) {
-                currentSupSortDir = currentSupSortDir === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSupSortCol = col;
-                currentSupSortDir = (col === 'price') ? 'asc' : 'asc';
-            }
-
-            document.querySelectorAll('#supplier-section .sort-icon').forEach(el => {
-                el.classList.remove('active');
-                el.textContent = '↕';
-            });
-            const activeIcon = document.getElementById(`sup-sort-${col}`);
-            if (activeIcon) {
-                activeIcon.classList.add('active');
-                activeIcon.textContent = currentSupSortDir === 'asc' ? '↑' : '↓';
-            }
-
-            supSortAndRender();
-        }
-
-        function supSortAndRender() {
-            const sorted = [...supplierRows].sort((a, b) => {
-                let valA, valB;
-                switch (currentSupSortCol) {
-                    case 'name': valA = a.productName.toLowerCase(); valB = b.productName.toLowerCase(); break;
-                    case 'supplier': valA = a.supplierName.toLowerCase(); valB = b.supplierName.toLowerCase(); break;
-                    case 'price': valA = a.lastPrice; valB = b.lastPrice; break;
-                    case 'date': valA = a.lastDate ? new Date(a.lastDate).getTime() : 0; valB = b.lastDate ? new Date(b.lastDate).getTime() : 0; break;
-                    default: valA = 0; valB = 0;
-                }
-                if (valA < valB) return currentSupSortDir === 'asc' ? -1 : 1;
-                if (valA > valB) return currentSupSortDir === 'asc' ? 1 : -1;
-                return 0;
-            });
-            renderSupplierTableRows(sorted);
-        }
-
-        function renderSupplierTableRows(rows) {
-            const tbody = document.getElementById('supplier-table-body');
-            tbody.innerHTML = rows.map(r => {
-                const badges =
-                    (r.isBest ? '<span class="badge badge-best">✓ выгоднее</span>' : '') +
-                    (r.isLast ? '<span class="badge badge-last">🕐 последний</span>' : '');
-                const priceClass = r.isBest ? 'text-green-400 font-bold' : 'text-gray-300';
-                const dateStr = r.lastDate ? new Date(r.lastDate).toLocaleDateString('ru-RU') : '—';
-                return `
-                    <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-                        <td class="px-4 py-3 font-medium text-white">${escapeHtml(r.productName)}</td>
-                        <td class="px-4 py-3 text-gray-300">${escapeHtml(r.supplierName)}${badges}</td>
-                        <td class="px-4 py-3 text-right ${priceClass}">${formatMoney(r.lastPrice)}</td>
-                        <td class="px-4 py-3 text-gray-400">${dateStr}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function filterSupTable(input, colIndex) {
-            const filter = input.value.toLowerCase();
-            const table = document.getElementById('supplier-table-body');
             const rows = table.getElementsByTagName('tr');
 
             for (let i = 0; i < rows.length; i++) {
