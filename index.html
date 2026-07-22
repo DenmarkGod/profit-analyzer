@@ -147,7 +147,7 @@
                 <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки и прибыли</h3>
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
@@ -400,18 +400,17 @@
                 const headers = getAuthHeaders();
 
                 // Параллельная загрузка отчетов
-                const [dashboardData, salesSeries, profitData, profitPlotSeries, checksData] = await Promise.all([
+                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
                     loadDashboardMetrics(headers),
                     loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitByProduct(headers, momentFrom, momentTo),
-                    loadProfitPlotSeries(headers, momentFrom, momentTo), // <-- Новый отчёт для графика
+                    loadProfitByProduct(headers, momentFrom, momentTo), // <-- Источник прибыли и себестоимости
                     loadRecentChecks(headers, momentFrom, momentTo)
                 ]);
 
-                dashboardCache = { dashboardData, salesSeries, profitData, profitPlotSeries, checksData };
+                dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
                 updateKPIs(dashboardData, salesSeries, profitData);
-                updateMainChart(salesSeries, profitPlotSeries); // <-- Передаём оба массива для графика
+                updateMainChart(salesSeries); // <-- Только выручка
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
@@ -446,15 +445,6 @@
             return data.rows || [];
         }
 
-        // --- НОВАЯ ФУНКЦИЯ: Загрузка динамики прибыли ---
-        async function loadProfitPlotSeries(headers, momentFrom, momentTo) {
-            const interval = currentPeriod === 'today' ? 'hour' : 'day';
-            const url = `${MOYSKLAD_API}/report/profit/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.series || [];
-        }
-
         async function loadRecentChecks(headers, momentFrom, momentTo) {
             const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
             const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=20&order=moment,desc`;
@@ -476,22 +466,22 @@
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
             document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
-            document.getElementById('kpi-profit').textContent = formatMoney(totalProfit); // <-- Теперь показывает реальную прибыль
+            document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
             document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
-            document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%'; // <-- Теперь показывает реальную маржу
+            document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
             
             ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
                 document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
             });
         }
 
-        // --- ИСПРАВЛЕНО: Строим две линии из salesSeries и profitPlotSeries ---
-        function updateMainChart(salesSeries, profitPlotSeries) {
+        // --- ИСПРАВЛЕНО: Только одна линия - выручка ---
+        function updateMainChart(salesSeries) {
             const canvas = document.getElementById('main-chart');
             if (charts.main) charts.main.destroy();
 
-            if (!salesSeries.length && !profitPlotSeries.length) {
+            if (!salesSeries.length) {
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#64748b';
@@ -501,25 +491,8 @@
                 return;
             }
 
-            // Объединяем данные по дате
-            const combinedDataMap = new Map();
-            salesSeries.forEach(row => {
-                const date = row.date;
-                combinedDataMap.set(date, { date, revenue: (row.sum || 0) / 100, profit: 0 });
-            });
-            profitPlotSeries.forEach(row => {
-                const date = row.date;
-                if (combinedDataMap.has(date)) {
-                    combinedDataMap.get(date).profit = (row.profit || 0) / 100;
-                } else {
-                    combinedDataMap.set(date, { date, revenue: 0, profit: (row.profit || 0) / 100 });
-                }
-            });
-
-            const sortedData = Array.from(combinedDataMap.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
-            const labels = sortedData.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
-            const revenue = sortedData.map(row => row.revenue);
-            const profit = sortedData.map(row => row.profit);
+            const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
+            const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
 
             charts.main = new Chart(canvas, {
                 type: 'line',
@@ -535,17 +508,6 @@
                             tension: 0.35,
                             pointRadius: 3,
                             pointHoverRadius: 5
-                        },
-                        {
-                            label: 'Прибыль',
-                            data: profit,
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'transparent',
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
                         }
                     ]
                 },
@@ -553,7 +515,6 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: { duration: 500 },
-                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         tooltip: {
                             callbacks: { 
