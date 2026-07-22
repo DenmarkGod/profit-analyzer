@@ -147,7 +147,7 @@
                 <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки и прибыли</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
@@ -402,14 +402,16 @@
                 const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
                     loadDashboardMetrics(headers),
                     loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitByProduct(headers, momentFrom, momentTo),
+                    // --- ИЗМЕНЕНО: Загружаем profit/byproduct с executionMoments ---
+                    loadProfitByProductExpanded(headers, momentFrom, momentTo),
                     loadRecentChecks(headers, momentFrom, momentTo)
                 ]);
 
                 dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
                 updateKPIs(dashboardData, salesSeries, profitData);
-                updateMainChart(salesSeries);
+                // --- ИЗМЕНЕНО: Передаём profitData для агрегации прибыли по датам ---
+                updateMainChart(salesSeries, profitData);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
@@ -437,8 +439,9 @@
             return data.series || [];
         }
 
-        async function loadProfitByProduct(headers, momentFrom, momentTo) {
-            const url = `${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
+        // --- НОВАЯ ФУНКЦИЯ: Загрузка profit/byproduct с executionMoments ---
+        async function loadProfitByProductExpanded(headers, momentFrom, momentTo) {
+            const url = `${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&expand=executionMoments&limit=1000`;
             const response = await proxyFetch(url, headers);
             const data = await response.json();
             return data.rows || [];
@@ -457,7 +460,8 @@
         // =====================================================
         function updateKPIs(dashboardData, salesSeries, profitData) {
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
-            const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
+            // --- ИЗМЕНЕНО: Суммируем profit из rows ---
+            const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0), 0) / 100;
             const totalChecks = dashboardData.sales?.count || 0;
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
@@ -474,7 +478,8 @@
             });
         }
 
-        function updateMainChart(salesSeries) {
+        // --- ИЗМЕНЕНО: Добавлена агрегация прибыли по датам из executionMoments и построение 2-й линии ---
+        function updateMainChart(salesSeries, profitData) {
             const canvas = document.getElementById('main-chart');
             if (charts.main) charts.main.destroy();
 
@@ -488,8 +493,26 @@
                 return;
             }
 
+            // --- АГРЕГАЦИЯ ПРИБЫЛИ ПО ДАТАМ ИЗ EXECUTIONMOMENTS ---
+            const profitByDate = new Map();
+            profitData.forEach(row => {
+                const moments = row.executionMoments?.rows || [];
+                moments.forEach(momentObj => {
+                    const date = momentObj.moment.substring(0, 10); // YYYY-MM-DD
+                    if (!profitByDate.has(date)) {
+                        profitByDate.set(date, 0);
+                    }
+                    profitByDate.set(date, profitByDate.get(date) + (momentObj.profit || 0));
+                });
+            });
+
             const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
             const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
+            // Агрегируем прибыль по тем же датам, что и выручка
+            const profit = salesSeries.map(row => {
+                const date = new Date(row.date).toISOString().split('T')[0]; // YYYY-MM-DD
+                return (profitByDate.get(date) || 0) / 100; // Копейки -> Рубли
+            });
 
             charts.main = new Chart(canvas, {
                 type: 'line',
@@ -502,6 +525,17 @@
                             borderColor: '#4ade80',
                             backgroundColor: 'rgba(74,222,128,0.1)',
                             fill: true,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
+                        },
+                        {
+                            label: 'Прибыль',
+                            data: profit,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'rgba(96,165,250,0.1)',
+                            borderDash: [5, 5],
+                            fill: false,
                             tension: 0.35,
                             pointRadius: 3,
                             pointHoverRadius: 5
@@ -539,12 +573,12 @@
             
             container.innerHTML = rows.map(row => {
                 const profit = (row.profit || 0) / 100;
-                const cost = (row.sellCostSum || 0) / 100; // <-- Поле из report/profit/byproduct
+                const cost = (row.sellCostSum || 0) / 100;
                 return `
                     <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
                         <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
                         <div class="flex justify-between items-center mt-1">
-                            <div class="text-xs text-orange-400">Себест.: ${formatMoney(cost)}</div> <!-- <-- НОВОЕ -->
+                            <div class="text-xs text-orange-400">Себест.: ${formatMoney(cost)}</div>
                             <div class="text-sm text-blue-400">+${formatMoney(profit)}</div>
                         </div>
                     </div>
@@ -574,7 +608,7 @@
         function generateInsights(dashboardData, salesSeries, profitData) {
             const container = document.getElementById('ai-insights');
             const revenue = salesSeries.reduce((sum, row) => sum + (row.sum || 0) / 100, 0);
-            const profit = profitData.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
+            const profit = profitData.reduce((sum, row) => sum + (row.profit || 0), 0) / 100;
             const margin = revenue > 0 ? (profit / revenue * 100) : 0;
             
             const insights = [];
