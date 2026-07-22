@@ -398,20 +398,18 @@
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Параллельная загрузка 3 легких отчетов (максимальная скорость)
+                // --- ИЗМЕНЕНО: Загружаем только salesSeries с profit ---
                 const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
                     loadDashboardMetrics(headers),
-                    loadSalesSeries(headers, momentFrom, momentTo),
-                    // --- ИЗМЕНЕНО: Загружаем profit/byproduct с executionMoments ---
-                    loadProfitByProductExpanded(headers, momentFrom, momentTo),
+                    loadSalesSeriesWithProfit(headers, momentFrom, momentTo),
+                    loadProfitByProduct(headers, momentFrom, momentTo),
                     loadRecentChecks(headers, momentFrom, momentTo)
                 ]);
 
                 dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
                 updateKPIs(dashboardData, salesSeries, profitData);
-                // --- ИЗМЕНЕНО: Передаём profitData для агрегации прибыли по датам ---
-                updateMainChart(salesSeries, profitData);
+                updateMainChart(salesSeries); // <-- Теперь salesSeries содержит profit
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
@@ -431,17 +429,18 @@
             return await response.json();
         }
 
-        async function loadSalesSeries(headers, momentFrom, momentTo) {
+        // --- НОВАЯ ФУНКЦИЯ: Загрузка sales/plotseries с profit ---
+        async function loadSalesSeriesWithProfit(headers, momentFrom, momentTo) {
             const interval = currentPeriod === 'today' ? 'hour' : 'day';
-            const url = `${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
+            // --- ДОБАВЛЕН ПАРАМЕТР expand=profit ---
+            const url = `${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}&expand=profit`;
             const response = await proxyFetch(url, headers);
             const data = await response.json();
             return data.series || [];
         }
 
-        // --- НОВАЯ ФУНКЦИЯ: Загрузка profit/byproduct с executionMoments ---
-        async function loadProfitByProductExpanded(headers, momentFrom, momentTo) {
-            const url = `${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&expand=executionMoments&limit=1000`;
+        async function loadProfitByProduct(headers, momentFrom, momentTo) {
+            const url = `${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
             const response = await proxyFetch(url, headers);
             const data = await response.json();
             return data.rows || [];
@@ -459,9 +458,9 @@
         // ГЛАВНАЯ — ОБНОВЛЕНИЕ UI
         // =====================================================
         function updateKPIs(dashboardData, salesSeries, profitData) {
+            // --- ИЗМЕНЕНО: Суммируем profit из salesSeries ---
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
-            // --- ИЗМЕНЕНО: Суммируем profit из rows ---
-            const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0), 0) / 100;
+            const totalProfit = salesSeries.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
             const totalChecks = dashboardData.sales?.count || 0;
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
@@ -472,14 +471,13 @@
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
             document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
             
-            // Имитация трендов (можно доработать при наличии данных за прошлый период)
             ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
                 document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
             });
         }
 
-        // --- ИЗМЕНЕНО: Добавлена агрегация прибыли по датам из executionMoments и построение 2-й линии ---
-        function updateMainChart(salesSeries, profitData) {
+        // --- ИЗМЕНЕНО: Используем profit из salesSeries ---
+        function updateMainChart(salesSeries) {
             const canvas = document.getElementById('main-chart');
             if (charts.main) charts.main.destroy();
 
@@ -493,26 +491,9 @@
                 return;
             }
 
-            // --- АГРЕГАЦИЯ ПРИБЫЛИ ПО ДАТАМ ИЗ EXECUTIONMOMENTS ---
-            const profitByDate = new Map();
-            profitData.forEach(row => {
-                const moments = row.executionMoments?.rows || [];
-                moments.forEach(momentObj => {
-                    const date = momentObj.moment.substring(0, 10); // YYYY-MM-DD
-                    if (!profitByDate.has(date)) {
-                        profitByDate.set(date, 0);
-                    }
-                    profitByDate.set(date, profitByDate.get(date) + (momentObj.profit || 0));
-                });
-            });
-
             const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
             const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
-            // Агрегируем прибыль по тем же датам, что и выручка
-            const profit = salesSeries.map(row => {
-                const date = new Date(row.date).toISOString().split('T')[0]; // YYYY-MM-DD
-                return (profitByDate.get(date) || 0) / 100; // Копейки -> Рубли
-            });
+            const profit = salesSeries.map(row => (Number(row.profit) || 0) / 100); // <-- Прямое использование
 
             charts.main = new Chart(canvas, {
                 type: 'line',
@@ -608,7 +589,7 @@
         function generateInsights(dashboardData, salesSeries, profitData) {
             const container = document.getElementById('ai-insights');
             const revenue = salesSeries.reduce((sum, row) => sum + (row.sum || 0) / 100, 0);
-            const profit = profitData.reduce((sum, row) => sum + (row.profit || 0), 0) / 100;
+            const profit = salesSeries.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
             const margin = revenue > 0 ? (profit / revenue * 100) : 0;
             
             const insights = [];
