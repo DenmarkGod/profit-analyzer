@@ -364,7 +364,7 @@
                 return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
                 if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Уменьшили задержку для скорости
                     return fetchWithRetry(url, options, retries - 1);
                 }
                 throw new Error('Сеть сбрасывает соединение.');
@@ -553,12 +553,16 @@
                 return;
             }
             
-            container.innerHTML = rows.map(row => `
-                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                    <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
-                    <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
-                </div>
-            `).join('');
+            container.innerHTML = rows.map(row => {
+                const cost = (row.sellCostSum || 0) / 100; // <-- Себестоимость
+                return `
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                        <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
+                        <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
+                        <div class="text-xs text-orange-400">Себест.: ${formatMoney(cost)}</div> <!-- <-- Новая строка -->
+                    </div>
+                `;
+            }).join('');
         }
 
         function updateRecentChecks(checks) {
