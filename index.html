@@ -399,18 +399,18 @@
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Параллельная загрузка отчетов
+                // Параллельная загрузка 4 легких отчетов (максимальная скорость)
                 const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
                     loadDashboardMetrics(headers),
                     loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitByProduct(headers, momentFrom, momentTo), // <-- Источник прибыли и себестоимости
+                    loadProfitByProduct(headers, momentFrom, momentTo),
                     loadRecentChecks(headers, momentFrom, momentTo)
                 ]);
 
                 dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
                 updateKPIs(dashboardData, salesSeries, profitData);
-                updateMainChart(salesSeries); // <-- Только выручка
+                updateMainChart(salesSeries);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
@@ -458,11 +458,9 @@
         // =====================================================
         function updateKPIs(dashboardData, salesSeries, profitData) {
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
-            // --- ИСПРАВЛЕНО: Прибыль суммируется из profitData ---
             const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
             const totalChecks = dashboardData.sales?.count || 0;
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
-            // --- ИСПРАВЛЕНО: Маржа считается из totalProfit и totalRevenue ---
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
             document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
@@ -471,25 +469,15 @@
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
             document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
             
+            // Имитация трендов (можно доработать при наличии данных за прошлый период)
             ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
                 document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
             });
         }
 
-        // --- ИСПРАВЛЕНО: Только одна линия - выручка ---
         function updateMainChart(salesSeries) {
             const canvas = document.getElementById('main-chart');
-            if (charts.main) charts.main.destroy();
-
-            if (!salesSeries.length) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#64748b';
-                ctx.font = '16px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText('Нет данных за выбранный период', canvas.width / 2, canvas.height / 2);
-                return;
-            }
+            if (charts.main) charts.main.destroy(); // Предотвращение утечек памяти
 
             const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
             const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
@@ -498,28 +486,24 @@
                 type: 'line',
                 data: {
                     labels,
-                    datasets: [
-                        {
-                            label: 'Выручка',
-                            data: revenue,
-                            borderColor: '#4ade80',
-                            backgroundColor: 'rgba(74,222,128,0.1)',
-                            fill: true,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Выручка',
+                        data: revenue,
+                        borderColor: '#4ade80',
+                        backgroundColor: 'rgba(74,222,128,0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 500 },
+                    animation: { duration: 500 }, // Ускоренная анимация для отзывчивости
                     plugins: {
                         tooltip: {
-                            callbacks: { 
-                                label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` 
-                            }
+                            callbacks: { label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` }
                         }
                     },
                     scales: {
@@ -539,16 +523,12 @@
                 return;
             }
             
-            container.innerHTML = rows.map(row => {
-                const cost = (row.sellCostSum || 0) / 100; // <-- Себестоимость
-                return `
-                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                        <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
-                        <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
-                        <div class="text-xs text-orange-400">Себест.: ${formatMoney(cost)}</div> <!-- <-- Новая строка -->
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = rows.map(row => `
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                    <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
+                    <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
+                </div>
+            `).join('');
         }
 
         function updateRecentChecks(checks) {
@@ -573,7 +553,6 @@
         function generateInsights(dashboardData, salesSeries, profitData) {
             const container = document.getElementById('ai-insights');
             const revenue = salesSeries.reduce((sum, row) => sum + (row.sum || 0) / 100, 0);
-            // --- ИСПРАВЛЕНО: Прибыль для инсайта из profitData ---
             const profit = profitData.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
             const margin = revenue > 0 ? (profit / revenue * 100) : 0;
             
@@ -617,7 +596,6 @@
                     <div class="bg-slate-900 rounded-lg p-4 mb-2 border border-slate-800">
                         <div class="font-medium text-white">${escapeHtml(position.assortment?.name || 'Товар')}</div>
                         <div class="text-sm text-gray-400 mt-1">${formatNumber(position.quantity)} шт × ${formatMoney((position.price || 0) / 100)}</div>
-                        <div class="text-green-400 font-bold mt-2">${formatMoney((position.sum || 0) / 100)}</div>
                     </div>
                 `).join('');
 
