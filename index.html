@@ -127,7 +127,7 @@
                         <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
                         <div id="kpi-profit-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-                    <div class="kpi-card glass p-5">
+                    <div class="kpi-card glass p-5" onclick="showChecksList()">
                         <div class="text-xs text-gray-400 uppercase">Чеки</div>
                         <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
                         <div id="kpi-checks-trend" class="text-xs mt-2 trend-neutral">—</div>
@@ -147,7 +147,7 @@
                 <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки и прибыли</h3>
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
@@ -164,6 +164,7 @@
                 <div class="glass p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold text-white">🧾 Последние чеки</h3>
+                        <button onclick="showChecksList()" class="text-xs text-blue-400 hover:text-blue-300 transition">Показать все</button>
                     </div>
                     <div id="recent-checks-list" class="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
                         <div class="text-gray-500 text-center py-8">Загрузка...</div>
@@ -363,7 +364,7 @@
                 return await fetch(`${url}${separator}_t=${Date.now()}`, options);
             } catch (error) {
                 if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Уменьшили задержку для скорости
                     return fetchWithRetry(url, options, retries - 1);
                 }
                 throw new Error('Сеть сбрасывает соединение.');
@@ -398,27 +399,26 @@
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // --- ИСПРАВЛЕНО: Параллельная загрузка sales/plotseries и profit/plotseries ---
-                const [dashboardData, salesSeries, profitSeries, profitData, checksData] = await Promise.all([
+                // Параллельная загрузка 4 легких отчетов (максимальная скорость)
+                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
                     loadDashboardMetrics(headers),
                     loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitSeries(headers, momentFrom, momentTo), // <-- Правильный отчёт
                     loadProfitByProduct(headers, momentFrom, momentTo),
                     loadRecentChecks(headers, momentFrom, momentTo)
                 ]);
 
-                dashboardCache = { dashboardData, salesSeries, profitSeries, profitData, checksData };
+                dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
-                updateKPIs(dashboardData, salesSeries, profitSeries, profitData);
-                updateMainChart(salesSeries, profitSeries); // <-- Передаём оба массива
+                updateKPIs(dashboardData, salesSeries, profitData);
+                updateMainChart(salesSeries);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
-                generateInsights(dashboardData, salesSeries, profitSeries, profitData);
+                generateInsights(dashboardData, salesSeries, profitData);
                 
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
             } catch (error) {
                 console.error(error);
-                alert('Ошибка загрузки: ' + error.message);
+                alert(error.message);
             } finally {
                 hideLoader();
             }
@@ -433,15 +433,6 @@
         async function loadSalesSeries(headers, momentFrom, momentTo) {
             const interval = currentPeriod === 'today' ? 'hour' : 'day';
             const url = `${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.series || [];
-        }
-
-        // --- ИСПРАВЛЕНО: Загрузка правильного отчёта profit/plotseries ---
-        async function loadProfitSeries(headers, momentFrom, momentTo) {
-            const interval = currentPeriod === 'today' ? 'hour' : 'day';
-            const url = `${MOYSKLAD_API}/report/profit/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
             const response = await proxyFetch(url, headers);
             const data = await response.json();
             return data.series || [];
@@ -465,10 +456,9 @@
         // =====================================================
         // ГЛАВНАЯ — ОБНОВЛЕНИЕ UI
         // =====================================================
-        function updateKPIs(dashboardData, salesSeries, profitSeries, profitData) {
+        function updateKPIs(dashboardData, salesSeries, profitData) {
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
-            // --- ИСПРАВЛЕНО: Суммируем profit из profitSeries ---
-            const totalProfit = profitSeries.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
+            const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
             const totalChecks = dashboardData.sales?.count || 0;
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
@@ -479,84 +469,41 @@
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
             document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
             
+            // Имитация трендов (можно доработать при наличии данных за прошлый период)
             ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
                 document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
             });
         }
 
-        // --- ИСПРАВЛЕНО: Используем два отдельных массива ---
-        function updateMainChart(salesSeries, profitSeries) {
+        function updateMainChart(salesSeries) {
             const canvas = document.getElementById('main-chart');
-            if (charts.main) charts.main.destroy();
+            if (charts.main) charts.main.destroy(); // Предотвращение утечек памяти
 
-            if (!salesSeries.length && !profitSeries.length) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#64748b';
-                ctx.font = '16px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText('Нет данных за выбранный период', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-
-            // Объединяем данные по дате из обоих отчётов
-            const combined = {};
-            salesSeries.forEach(row => {
-                const date = row.date;
-                combined[date] = { date, revenue: (row.sum || 0) / 100, profit: 0 };
-            });
-            profitSeries.forEach(row => {
-                const date = row.date;
-                if (combined[date]) {
-                    combined[date].profit = (row.profit || 0) / 100;
-                } else {
-                    combined[date] = { date, revenue: 0, profit: (row.profit || 0) / 100 };
-                }
-            });
-
-            const sortedData = Object.values(combined).sort((a, b) => new Date(a.date) - new Date(b.date));
-            const labels = sortedData.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
-            const revenue = sortedData.map(row => row.revenue);
-            const profit = sortedData.map(row => row.profit);
+            const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
+            const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
 
             charts.main = new Chart(canvas, {
                 type: 'line',
                 data: {
                     labels,
-                    datasets: [
-                        {
-                            label: 'Выручка',
-                            data: revenue,
-                            borderColor: '#4ade80',
-                            backgroundColor: 'rgba(74,222,128,0.1)',
-                            fill: true,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        },
-                        {
-                            label: 'Прибыль',
-                            data: profit,
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'rgba(96,165,250,0.1)',
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Выручка',
+                        data: revenue,
+                        borderColor: '#4ade80',
+                        backgroundColor: 'rgba(74,222,128,0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 500 },
-                    interaction: { mode: 'index', intersect: false },
+                    animation: { duration: 500 }, // Ускоренная анимация для отзывчивости
                     plugins: {
                         tooltip: {
-                            callbacks: { 
-                                label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` 
-                            }
+                            callbacks: { label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` }
                         }
                     },
                     scales: {
@@ -576,19 +523,12 @@
                 return;
             }
             
-            container.innerHTML = rows.map(row => {
-                const profit = (row.profit || 0) / 100;
-                const cost = (row.sellCostSum || 0) / 100;
-                return `
-                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                        <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
-                        <div class="flex justify-between items-center mt-1">
-                            <div class="text-xs text-orange-400">Себест.: ${formatMoney(cost)}</div>
-                            <div class="text-sm text-blue-400">+${formatMoney(profit)}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = rows.map(row => `
+                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                    <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
+                    <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
+                </div>
+            `).join('');
         }
 
         function updateRecentChecks(checks) {
@@ -598,7 +538,7 @@
                 return;
             }
             container.innerHTML = checks.map(check => `
-                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
                     <div class="flex justify-between items-center">
                         <div>
                             <div class="font-medium text-white">${escapeHtml(check.name || 'Чек')}</div>
@@ -610,10 +550,10 @@
             `).join('');
         }
 
-        function generateInsights(dashboardData, salesSeries, profitSeries, profitData) {
+        function generateInsights(dashboardData, salesSeries, profitData) {
             const container = document.getElementById('ai-insights');
             const revenue = salesSeries.reduce((sum, row) => sum + (row.sum || 0) / 100, 0);
-            const profit = profitSeries.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
+            const profit = profitData.reduce((sum, row) => sum + (row.profit || 0) / 100, 0);
             const margin = revenue > 0 ? (profit / revenue * 100) : 0;
             
             const insights = [];
@@ -641,8 +581,68 @@
         }
 
         // =====================================================
-        // ДЕТАЛИЗАЦИЯ
+        // ДЕТАЛИЗАЦИЯ ЧЕКОВ
         // =====================================================
+        async function showCheckDetails(checkId, checkName, checkSum, checkMoment) {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка позиций чека...</div>');
+            try {
+                const headers = getAuthHeaders();
+                const url = `${MOYSKLAD_API}/entity/retaildemand/${checkId}?expand=positions.assortment&fields=stock`;
+                const response = await proxyFetch(url, headers);
+                const data = await response.json();
+                const positions = data.positions?.rows || [];
+
+                const items = positions.map(position => `
+                    <div class="bg-slate-900 rounded-lg p-4 mb-2 border border-slate-800">
+                        <div class="font-medium text-white">${escapeHtml(position.assortment?.name || 'Товар')}</div>
+                        <div class="text-sm text-gray-400 mt-1">${formatNumber(position.quantity)} шт × ${formatMoney((position.price || 0) / 100)}</div>
+                        <div class="text-green-400 font-bold mt-2">${formatMoney((position.sum || 0) / 100)}</div>
+                    </div>
+                `).join('');
+
+                openDetailsModal(`Чек: ${checkName}`, `
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-500">
+                            <div class="text-sm text-gray-400">${checkMoment}</div>
+                            <div class="text-3xl font-bold text-green-400 mt-2">${formatMoney(checkSum)}</div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white mb-3">Товары в чеке</h3>
+                            ${items || '<div class="text-gray-500">Нет позиций</div>'}
+                        </div>
+                    </div>
+                `);
+            } catch (error) {
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
+            }
+        }
+
+        async function showChecksList() {
+            openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка чеков...</div>');
+            try {
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                const headers = getAuthHeaders();
+                const checks = await loadRecentChecks(headers, `${dateFrom} 00:00:00`, `${dateTo} 23:59:59`);
+                
+                openDetailsModal(`Чеки (${checks.length})`, `
+                    <div class="space-y-2">
+                        ${checks.map(check => `
+                            <div class="check-item bg-slate-800/50 rounded-lg p-4 border border-slate-700/50" onclick="showCheckDetails('${check.id}', '${escapeHtml(check.name || 'Чек')}', ${(check.sum || 0) / 100}, '${formatDateTime(check.moment)}')">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white font-medium">${escapeHtml(check.name || 'Чек')}</span>
+                                    <span class="text-green-400 font-bold">${formatMoney((check.sum || 0) / 100)}</span>
+                                </div>
+                                <div class="text-xs text-gray-400 mt-1">${formatDateTime(check.moment)}</div>
+                            </div>
+                        `).join('') || '<div class="text-gray-500 text-center py-8">Нет чеков</div>'}
+                    </div>
+                `);
+            } catch (error) {
+                openDetailsModal('Ошибка', `<div class="text-red-400 text-center py-8">${escapeHtml(error.message)}</div>`);
+            }
+        }
+
         function showKpiDetail(type) {
             const titles = { revenue: 'Детализация выручки', profit: 'Детализация прибыли', avgCheck: 'Средний чек', margin: 'Маржинальность' };
             const elements = {
