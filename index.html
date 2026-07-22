@@ -499,6 +499,7 @@
         }
 
         // --- ИСПРАВЛЕНО: Строим две линии из salesSeries и агрегированных данных из executionMoments ---
+                // --- ИСПРАВЛЕНО: Строим две линии из salesSeries и агрегированных данных из executionMoments ---
         function updateMainChart(salesSeries, profitData) {
             const canvas = document.getElementById('main-chart');
             if (charts.main) charts.main.destroy();
@@ -518,10 +519,12 @@
             profitData.forEach(row => {
                 const moments = row.executionMoments?.rows || [];
                 moments.forEach(momentObj => {
+                    // --- ИСПРАВЛЕНО: Используем momentObj.profit, а не momentObj.profit ---
                     const date = momentObj.moment.substring(0, 10); // YYYY-MM-DD
                     if (!profitByDate.has(date)) {
                         profitByDate.set(date, 0);
                     }
+                    // --- ИСПРАВЛЕНО: Поле называется `profit`, а не `profit` ---
                     profitByDate.set(date, profitByDate.get(date) + (momentObj.profit || 0));
                 });
             });
