@@ -127,7 +127,7 @@
                         <div id="kpi-profit" class="text-2xl md:text-3xl font-bold text-white mt-2">0 ₽</div>
                         <div id="kpi-profit-trend" class="text-xs mt-2 trend-neutral">—</div>
                     </div>
-                    <div class="kpi-card glass p-5" onclick="showChecksList()"> <!-- Изменено: onclick для карточки чеков -->
+                    <div class="kpi-card glass p-5" onclick="showChecksList()">
                         <div class="text-xs text-gray-400 uppercase">Чеки</div>
                         <div id="kpi-checks" class="text-2xl md:text-3xl font-bold text-white mt-2">0</div>
                         <div id="kpi-checks-trend" class="text-xs mt-2 trend-neutral">—</div>
@@ -147,7 +147,7 @@
                 <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки и прибыли</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
@@ -164,7 +164,7 @@
                 <div class="glass p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold text-white">🧾 Последние чеки</h3>
-                        <button onclick="showChecksList()" class="text-xs text-blue-400 hover:text-blue-300 transition">Показать все</button> <!-- Кнопка "Показать все" -->
+                        <button onclick="showChecksList()" class="text-xs text-blue-400 hover:text-blue-300 transition">Показать все</button>
                     </div>
                     <div id="recent-checks-list" class="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin">
                         <div class="text-gray-500 text-center py-8">Загрузка...</div>
@@ -385,36 +385,6 @@
             return response;
         }
 
-        // --- Функция для загрузки ВСЕХ чеков за период ---
-        async function fetchAllChecks(headers, momentFrom, momentTo) {
-            let allChecks = [];
-            let offset = 0;
-            const limit = 1000; // Максимальный лимит за один запрос
-            let totalSize = null;
-
-            while (totalSize === null || allChecks.length < totalSize) {
-                const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
-                const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=${limit}&offset=${offset}&order=moment,desc`;
-                const response = await proxyFetch(url, headers);
-                const data = await response.json();
-                
-                const rows = data.rows || [];
-                allChecks = allChecks.concat(rows);
-                
-                if (totalSize === null) {
-                    totalSize = data.meta?.size || 0;
-                }
-                
-                if (rows.length < limit) {
-                    break; // Больше страниц нет
-                }
-                
-                offset += limit;
-            }
-            
-            return allChecks;
-        }
-
         // =====================================================
         // ГЛАВНАЯ — ЗАГРУЗКА ДАННЫХ
         // =====================================================
@@ -432,18 +402,17 @@
                 // Параллельная загрузка 4 легких отчетов (максимальная скорость)
                 const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
                     loadDashboardMetrics(headers),
-                    loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitByProduct(headers, momentFrom, momentTo),
-                    // --- ЗАГРУЗКА ВСЕХ ЧЕКОВ ---
+                    loadSalesSeries(headers, momentFrom, momentTo), // <-- Теперь всегда interval=day
+                    loadProfitByProductWithMoments(headers, momentFrom, momentTo), // <-- Новый метод с executionMoments
                     fetchAllChecks(headers, momentFrom, momentTo)
                 ]);
 
-                dashboardCache = { dashboardData, salesSeries, profitData, checksData }; // Сохраняем все чеки
+                dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
-                updateKPIs(dashboardData, salesSeries, profitData, checksData); // Передаем checksData для подсчета общего количества
-                updateMainChart(salesSeries);
+                updateKPIs(dashboardData, salesSeries, profitData);
+                updateMainChart(salesSeries, profitData); // <-- Передаем оба массива для построения двух линий
                 updateTopProducts(profitData);
-                updateRecentChecks(checksData); // Отображаем все чеки
+                updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
                 
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
@@ -461,73 +430,151 @@
             return await response.json();
         }
 
+        // --- ИСПРАВЛЕНО: Всегда используем interval=day для графика ---
         async function loadSalesSeries(headers, momentFrom, momentTo) {
-            const interval = currentPeriod === 'today' ? 'hour' : 'day';
-            const url = `${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
+            const url = `${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=day`;
             const response = await proxyFetch(url, headers);
             const data = await response.json();
             return data.series || [];
         }
 
-        async function loadProfitByProduct(headers, momentFrom, momentTo) {
-            const url = `${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&limit=1000`;
+        // --- НОВАЯ ФУНКЦИЯ: Загрузка profit/byproduct с executionMoments ---
+        async function loadProfitByProductWithMoments(headers, momentFrom, momentTo) {
+            const url = `${MOYSKLAD_API}/report/profit/byproduct?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&expand=executionMoments&limit=1000`;
             const response = await proxyFetch(url, headers);
             const data = await response.json();
             return data.rows || [];
         }
 
+        // --- Функция для загрузки ВСЕХ чеков за период ---
+        async function fetchAllChecks(headers, momentFrom, momentTo) {
+            let allChecks = [];
+            let offset = 0;
+            const limit = 1000;
+            let totalSize = null;
+
+            while (totalSize === null || allChecks.length < totalSize) {
+                const filter = `moment>=${encodeURIComponent(momentFrom)};moment<=${encodeURIComponent(momentTo)};applicable=true`;
+                const url = `${MOYSKLAD_API}/entity/retaildemand?filter=${filter}&limit=${limit}&offset=${offset}&order=moment,desc`;
+                const response = await proxyFetch(url, headers);
+                const data = await response.json();
+                
+                const rows = data.rows || [];
+                allChecks = allChecks.concat(rows);
+                
+                if (totalSize === null) {
+                    totalSize = data.meta?.size || 0;
+                }
+                
+                if (rows.length < limit) {
+                    break;
+                }
+                
+                offset += limit;
+            }
+            
+            return allChecks;
+        }
+
         // =====================================================
         // ГЛАВНАЯ — ОБНОВЛЕНИЕ UI
         // =====================================================
-        function updateKPIs(dashboardData, salesSeries, profitData, allChecks) { // Принимаем allChecks
+        function updateKPIs(dashboardData, salesSeries, profitData) {
             const totalRevenue = salesSeries.reduce((sum, row) => sum + (Number(row.sum) || 0) / 100, 0);
+            // --- ИСПРАВЛЕНО: Прибыль суммируется из profitData ---
             const totalProfit = profitData.reduce((sum, row) => sum + (Number(row.profit) || 0) / 100, 0);
-            // --- ИСПРАВЛЕНО: Количество чеков теперь из allChecks ---
-            const totalChecks = allChecks.length;
+            const totalChecks = dashboardData.sales?.count || 0;
             const averageCheck = totalChecks > 0 ? totalRevenue / totalChecks : 0;
             const margin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
 
             document.getElementById('kpi-revenue').textContent = formatMoney(totalRevenue);
             document.getElementById('kpi-profit').textContent = formatMoney(totalProfit);
-            document.getElementById('kpi-checks').textContent = formatNumber(totalChecks); // Обновляем количество
+            document.getElementById('kpi-checks').textContent = formatNumber(totalChecks);
             document.getElementById('kpi-avg-check').textContent = formatMoney(averageCheck);
             document.getElementById('kpi-margin').textContent = margin.toFixed(1) + '%';
             
-            // Имитация трендов (можно доработать при наличии данных за прошлый период)
             ['revenue', 'profit', 'checks', 'avg-check', 'margin'].forEach(id => {
                 document.getElementById(`kpi-${id}-trend`).innerHTML = `<span class="trend-neutral">—</span>`;
             });
         }
 
-        function updateMainChart(salesSeries) {
+        // --- ИСПРАВЛЕНО: Строим две линии из salesSeries и агрегированных данных из executionMoments ---
+        function updateMainChart(salesSeries, profitData) {
             const canvas = document.getElementById('main-chart');
-            if (charts.main) charts.main.destroy(); // Предотвращение утечек памяти
+            if (charts.main) charts.main.destroy();
 
-            const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
-            const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
+            if (!salesSeries.length) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#64748b';
+                ctx.font = '16px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('Нет данных за выбранный период', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            // Агрегируем прибыль по дням из executionMoments
+            const profitByDate = new Map();
+            profitData.forEach(row => {
+                const moments = row.executionMoments?.rows || [];
+                moments.forEach(momentObj => {
+                    const date = momentObj.moment.substring(0, 10); // YYYY-MM-DD
+                    if (!profitByDate.has(date)) {
+                        profitByDate.set(date, 0);
+                    }
+                    profitByDate.set(date, profitByDate.get(date) + (momentObj.profit || 0));
+                });
+            });
+
+            // Создаем единый список дат из salesSeries и profitByDate
+            const allDates = new Set([...salesSeries.map(r => r.date), ...profitByDate.keys()]);
+            const sortedDates = Array.from(allDates).sort();
+
+            const labels = sortedDates.map(date => new Date(date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
+            const revenue = sortedDates.map(date => {
+                const row = salesSeries.find(r => r.date === date);
+                return (row?.sum || 0) / 100;
+            });
+            const profit = sortedDates.map(date => (profitByDate.get(date) || 0) / 100);
 
             charts.main = new Chart(canvas, {
                 type: 'line',
                 data: {
                     labels,
-                    datasets: [{
-                        label: 'Выручка',
-                        data: revenue,
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74,222,128,0.1)',
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3,
-                        pointHoverRadius: 5
-                    }]
+                    datasets: [
+                        {
+                            label: 'Выручка',
+                            data: revenue,
+                            borderColor: '#4ade80',
+                            backgroundColor: 'rgba(74,222,128,0.1)',
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
+                        },
+                        {
+                            label: 'Прибыль',
+                            data: profit,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'transparent',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 500 }, // Ускоренная анимация для отзывчивости
+                    animation: { duration: 500 },
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         tooltip: {
-                            callbacks: { label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` }
+                            callbacks: { 
+                                label: context => `${context.dataset.label}: ${formatMoney(context.parsed.y)}` 
+                            }
                         }
                     },
                     scales: {
@@ -547,17 +594,20 @@
                 return;
             }
             
-            container.innerHTML = rows.map(row => `
-                <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                    <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
-                    <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
-                </div>
-            `).join('');
+            container.innerHTML = rows.map(row => {
+                const cost = (row.sellCostSum || 0) / 100;
+                return `
+                    <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                        <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
+                        <div class="text-sm text-blue-400 mt-1">Прибыль: ${formatMoney((row.profit || 0) / 100)}</div>
+                        <div class="text-xs text-orange-400">Себест.: ${formatMoney(cost)}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function updateRecentChecks(allChecks) { // Принимаем массив всех чеков
+        function updateRecentChecks(allChecks) {
             const container = document.getElementById('recent-checks-list');
-            // Берем первые 20 для отображения на главной, как раньше
             const checksToShow = allChecks.slice(0, 20);
             
             if (!checksToShow.length) {
@@ -646,9 +696,7 @@
         async function showChecksList() {
             openDetailsModal('Загрузка...', '<div class="text-center py-8">Загрузка чеков...</div>');
             try {
-                // Берем все чеки из кэша
                 const allChecks = dashboardCache.checksData || [];
-                
                 openDetailsModal(`Чеки (${allChecks.length})`, `
                     <div class="space-y-2">
                         ${allChecks.map(check => `
