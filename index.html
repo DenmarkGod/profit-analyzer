@@ -147,7 +147,7 @@
                 <!-- График и Топ товаров -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass p-6">
-                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки и прибыли</h3>
+                        <h3 class="text-lg font-bold text-white mb-4">📈 Динамика выручки</h3>
                         <div class="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
@@ -398,19 +398,18 @@
                 const momentTo = `${dateTo} 23:59:59`;
                 const headers = getAuthHeaders();
 
-                // Параллельная загрузка 4 легких отчетов (максимальная скорость)
-                const [dashboardData, salesSeries, profitSeries, profitData, checksData] = await Promise.all([
+                // Параллельная загрузка 3 легких отчетов (максимальная скорость)
+                const [dashboardData, salesSeries, profitData, checksData] = await Promise.all([
                     loadDashboardMetrics(headers),
                     loadSalesSeries(headers, momentFrom, momentTo),
-                    loadProfitSeries(headers, momentFrom, momentTo),
                     loadProfitByProduct(headers, momentFrom, momentTo),
                     loadRecentChecks(headers, momentFrom, momentTo)
                 ]);
 
-                dashboardCache = { dashboardData, salesSeries, profitSeries, profitData, checksData };
+                dashboardCache = { dashboardData, salesSeries, profitData, checksData };
                 
                 updateKPIs(dashboardData, salesSeries, profitData);
-                updateMainChart(salesSeries, profitSeries);
+                updateMainChart(salesSeries);
                 updateTopProducts(profitData);
                 updateRecentChecks(checksData);
                 generateInsights(dashboardData, salesSeries, profitData);
@@ -433,15 +432,6 @@
         async function loadSalesSeries(headers, momentFrom, momentTo) {
             const interval = currentPeriod === 'today' ? 'hour' : 'day';
             const url = `${MOYSKLAD_API}/report/sales/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
-            const response = await proxyFetch(url, headers);
-            const data = await response.json();
-            return data.series || [];
-        }
-
-        // --- НОВАЯ ФУНКЦИЯ: Загрузка прибыли по дням ---
-        async function loadProfitSeries(headers, momentFrom, momentTo) {
-            const interval = currentPeriod === 'today' ? 'hour' : 'day';
-            const url = `${MOYSKLAD_API}/report/profit/plotseries?momentFrom=${encodeURIComponent(momentFrom)}&momentTo=${encodeURIComponent(momentTo)}&interval=${interval}`;
             const response = await proxyFetch(url, headers);
             const data = await response.json();
             return data.series || [];
@@ -484,11 +474,11 @@
             });
         }
 
-        function updateMainChart(salesSeries, profitSeries) {
+        function updateMainChart(salesSeries) {
             const canvas = document.getElementById('main-chart');
             if (charts.main) charts.main.destroy();
 
-            if (!salesSeries.length && !profitSeries.length) {
+            if (!salesSeries.length) {
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#64748b';
@@ -498,25 +488,8 @@
                 return;
             }
 
-            // Объединяем данные по дате
-            const combined = {};
-            salesSeries.forEach(row => {
-                const date = row.date;
-                combined[date] = { date, revenue: (row.sum || 0) / 100, profit: 0 };
-            });
-            profitSeries.forEach(row => {
-                const date = row.date;
-                if (combined[date]) {
-                    combined[date].profit = (row.profit || 0) / 100;
-                } else {
-                    combined[date] = { date, revenue: 0, profit: (row.profit || 0) / 100 };
-                }
-            });
-
-            const sortedData = Object.values(combined).sort((a, b) => new Date(a.date) - new Date(b.date));
-            const labels = sortedData.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
-            const revenue = sortedData.map(row => row.revenue);
-            const profit = sortedData.map(row => row.profit);
+            const labels = salesSeries.map(row => new Date(row.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }));
+            const revenue = salesSeries.map(row => (Number(row.sum) || 0) / 100);
 
             charts.main = new Chart(canvas, {
                 type: 'line',
@@ -529,17 +502,6 @@
                             borderColor: '#4ade80',
                             backgroundColor: 'rgba(74,222,128,0.1)',
                             fill: true,
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5
-                        },
-                        {
-                            label: 'Прибыль',
-                            data: profit,
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'transparent',
-                            borderDash: [5, 5],
-                            fill: false,
                             tension: 0.35,
                             pointRadius: 3,
                             pointHoverRadius: 5
@@ -577,7 +539,7 @@
             
             container.innerHTML = rows.map(row => {
                 const profit = (row.profit || 0) / 100;
-                const cost = (row.sellCostSum || 0) / 100; // <-- НОВОЕ ПОЛЕ
+                const cost = (row.sellCostSum || 0) / 100; // <-- Поле из report/profit/byproduct
                 return `
                     <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
                         <div class="font-medium text-white truncate">${escapeHtml(row.assortment?.name || 'Без названия')}</div>
